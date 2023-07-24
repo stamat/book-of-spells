@@ -13,12 +13,7 @@ const {
   propertyIsFunction, 
   transformDashToCamelCase, 
   stringToPrimitive,
-  stringToType,
-  stringToBoolean,
-  stringToNumber,
-  stringToArray,
-  stringToObject,
-  stringToRegex
+  stringToType
 } = require('../helpers')
 
 const a = { 
@@ -58,8 +53,6 @@ test('deepMerge', () => {
   const testB = clone(b)
 
   deepMerge(testA, testB)
-
-  console.log(testA)
 
   expect(testA).toEqual({
     foo: 'qux',
