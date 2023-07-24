@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>slide - Documentation</title>
+    <title>cookies - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,7 +29,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">slide</h1>
+    <h1 class="page-title">cookies</h1>
     
 
     
@@ -46,10 +46,6 @@
 <article>
     <div class="container-overview">
     
-        
-            <div class="description"><p>A collection of functions for sliding elements up and down.
-Substitutes for jQuery's slideUp(), slideDown(), and slideToggle() functions.
-Leans onto CSS transitions, reading the height transition duration and setting a timer based on that to clear the height property on animation end.</p></div>
         
 
         
@@ -84,7 +80,7 @@ Leans onto CSS transitions, reading the height transition duration and setting a
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="slide.mjs.html">slide.mjs</a>, <a href="slide.mjs.html#line1">line 1</a>
+        <a href="cookies.js.html">cookies.js</a>, <a href="cookies.js.html#line1">line 1</a>
     </li></ul></dd>
     
 
@@ -121,16 +117,14 @@ Leans onto CSS transitions, reading the height transition duration and setting a
 
     
 
-    <h4 class="name" id=".slideDown"><span class="type-signature">(static) </span>slideDown<span class="signature">(element)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".cookieExpirationDate"><span class="type-signature">(static) </span>cookieExpirationDate<span class="signature">(days)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    <p>Slides down an element. The element must have a CSS transition set for the height property.
-The transition duration is used to determine how long the slide down animation will take.
-Substitutes for jQuery's slideDown() function.</p>
+    <p>Returns a string with the expiration date for a cookie.</p>
 </div>
 
 
@@ -166,7 +160,7 @@ Substitutes for jQuery's slideDown() function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="slide.mjs.html">slide.mjs</a>, <a href="slide.mjs.html#line79">line 79</a>
+        <a href="cookies.js.html">cookies.js</a>, <a href="cookies.js.html#line11">line 11</a>
     </li></ul></dd>
     
 
@@ -210,13 +204,13 @@ Substitutes for jQuery's slideDown() function.</p>
 
         <tr>
             
-                <td class="name"><code>element</code></td>
+                <td class="name"><code>days</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><code>HTMLElement</code></span>
+<span class="param-type"><code>int</code></span>
 
 
             
@@ -248,13 +242,26 @@ Substitutes for jQuery's slideDown() function.</p>
 
 
 
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+
+<div class="param-desc">
+    <p>string - The expiration date for a cookie in UTC format or an empty string if days is not provided</p>
+</div>
+
+    
+</div>
 
 
 
 <div class="section-examples">
 <h5>Example</h5>
 
-    <pre class="prettyprint"><code>slideDown(element)</code></pre>
+    <pre class="prettyprint"><code>cookieExpirationDate(7) // Returns a string in the format '; expires=Thu, 01 Jan 1970 00:00:00 UTC' for 7 days from now</code></pre>
 
 </div>
 
@@ -265,16 +272,14 @@ Substitutes for jQuery's slideDown() function.</p>
 
     
 
-    <h4 class="name" id=".slideToggle"><span class="type-signature">(static) </span>slideToggle<span class="signature">(element)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".deleteCookie"><span class="type-signature">(static) </span>deleteCookie<span class="signature">(name)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    <p>Toggles the slide state of an element. The element must have a CSS transition set for the height property.
-The transition duration is used to determine how long the slide animation will take.
-Substitutes for jQuery's slideToggle() function.</p>
+    <p>Erases a cookie with the given name.</p>
 </div>
 
 
@@ -310,7 +315,7 @@ Substitutes for jQuery's slideToggle() function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="slide.mjs.html">slide.mjs</a>, <a href="slide.mjs.html#line123">line 123</a>
+        <a href="cookies.js.html">cookies.js</a>, <a href="cookies.js.html#line57">line 57</a>
     </li></ul></dd>
     
 
@@ -354,13 +359,13 @@ Substitutes for jQuery's slideToggle() function.</p>
 
         <tr>
             
-                <td class="name"><code>element</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><code>HTMLElement</code></span>
+<span class="param-type"><code>string</code></span>
 
 
             
@@ -392,13 +397,28 @@ Substitutes for jQuery's slideToggle() function.</p>
 
 
 
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+
+<div class="param-desc">
+    <p>void</p>
+</div>
+
+    
+</div>
 
 
 
 <div class="section-examples">
 <h5>Example</h5>
 
-    <pre class="prettyprint"><code>slideToggle(element)</code></pre>
+    <pre class="prettyprint"><code>setCookie('foo', 'bar', 7)
+deleteCookie('foo') // Erases the cookie named 'foo'
+getCookie('foo') // Returns null</code></pre>
 
 </div>
 
@@ -409,16 +429,14 @@ Substitutes for jQuery's slideToggle() function.</p>
 
     
 
-    <h4 class="name" id=".slideUp"><span class="type-signature">(static) </span>slideUp<span class="signature">(element)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".getCookie"><span class="type-signature">(static) </span>getCookie<span class="signature">(name)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    <p>Slides up an element. The element must have a CSS transition set for the height property.
-The transition duration is used to determine how long the slide up animation will take.
-Substitutes for jQuery's slideUp() function.</p>
+    <p>Gets a cookie with the given name.</p>
 </div>
 
 
@@ -454,7 +472,7 @@ Substitutes for jQuery's slideUp() function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="slide.mjs.html">slide.mjs</a>, <a href="slide.mjs.html#line46">line 46</a>
+        <a href="cookies.js.html">cookies.js</a>, <a href="cookies.js.html#line42">line 42</a>
     </li></ul></dd>
     
 
@@ -498,13 +516,13 @@ Substitutes for jQuery's slideUp() function.</p>
 
         <tr>
             
-                <td class="name"><code>element</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><code>HTMLElement</code></span>
+<span class="param-type"><code>string</code></span>
 
 
             
@@ -536,13 +554,28 @@ Substitutes for jQuery's slideUp() function.</p>
 
 
 
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+
+<div class="param-desc">
+    <p>string|null</p>
+</div>
+
+    
+</div>
 
 
 
 <div class="section-examples">
 <h5>Example</h5>
 
-    <pre class="prettyprint"><code>slideUp(element)</code></pre>
+    <pre class="prettyprint"><code>setCookie('foo', 'bar', 7)
+getCookie('foo') // Returns the value of the cookie named 'foo'
+getCookie('bar') // Returns null if the cookie named 'bar' doesn't exist</code></pre>
 
 </div>
 
@@ -553,14 +586,14 @@ Substitutes for jQuery's slideUp() function.</p>
 
     
 
-    <h4 class="name" id="~clearSlideTimer"><span class="type-signature">(inner) </span>clearSlideTimer<span class="signature">(element)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".setCookie"><span class="type-signature">(static) </span>setCookie<span class="signature">(name, value, days)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    <p>Clears the height slide timer of an element. Timer ID is stored in the element's dataset.</p>
+    <p>Sets a cookie with the given name and value. If days is provided, it will set the expiration date.</p>
 </div>
 
 
@@ -596,7 +629,7 @@ Substitutes for jQuery's slideUp() function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="slide.mjs.html">slide.mjs</a>, <a href="slide.mjs.html#line16">line 16</a>
+        <a href="cookies.js.html">cookies.js</a>, <a href="cookies.js.html#line28">line 28</a>
     </li></ul></dd>
     
 
@@ -640,13 +673,65 @@ Substitutes for jQuery's slideUp() function.</p>
 
         <tr>
             
-                <td class="name"><code>element</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><code>HTMLElement</code></span>
+<span class="param-type"><code>string</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                
+                
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>string</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                
+                
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>days</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>int</code></span>
 
 
             
@@ -679,7 +764,27 @@ Substitutes for jQuery's slideUp() function.</p>
 
 
 
+<div class="section-returns">
+<h5>Returns:</h5>
 
+        
+
+
+<div class="param-desc">
+    <p>void</p>
+</div>
+
+    
+</div>
+
+
+
+<div class="section-examples">
+<h5>Example</h5>
+
+    <pre class="prettyprint"><code>setCookie('foo', 'bar', 7) // Sets a cookie named 'foo' with the value 'bar' that expires in 7 days</code></pre>
+
+</div>
 
 </div>
         
@@ -688,15 +793,14 @@ Substitutes for jQuery's slideUp() function.</p>
 
     
 
-    <h4 class="name" id="~setSlideDuration"><span class="type-signature">(inner) </span>setSlideDuration<span class="signature">(element)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".updateCookie"><span class="type-signature">(static) </span>updateCookie<span class="signature">(name, value, days)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    <p>Sets the slide duration of an element. The element must have a CSS transition set for the height property.
-The CSS transition duration is used to determine how long the slide animation will take.</p>
+    <p>Updates a cookie with the given name and value. If days is provided, it will set the expiration date.</p>
 </div>
 
 
@@ -732,7 +836,7 @@ The CSS transition duration is used to determine how long the slide animation wi
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="slide.mjs.html">slide.mjs</a>, <a href="slide.mjs.html#line29">line 29</a>
+        <a href="cookies.js.html">cookies.js</a>, <a href="cookies.js.html#line87">line 87</a>
     </li></ul></dd>
     
 
@@ -776,13 +880,68 @@ The CSS transition duration is used to determine how long the slide animation wi
 
         <tr>
             
-                <td class="name"><code>element</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><code>HTMLElement</code></span>
+<span class="param-type"><code>string</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                
+                
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>string</code></span>
+|
+
+<span class="param-type"><code>number</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                
+                
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>days</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>int</code></span>
 
 
             
@@ -815,7 +974,181 @@ The CSS transition duration is used to determine how long the slide animation wi
 
 
 
+<div class="section-returns">
+<h5>Returns:</h5>
 
+        
+
+
+<div class="param-desc">
+    <p>void</p>
+</div>
+
+    
+</div>
+
+
+
+<div class="section-examples">
+<h5>Example</h5>
+
+    <pre class="prettyprint"><code>setCookie('foo', 'bar', 7)
+updateCookie('foo', 'baz', 7) // Updates the cookie named 'foo' with the value 'baz' that expires in 7 days
+getCookie('foo') // Returns 'baz'</code></pre>
+
+</div>
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="~hasCookie"><span class="type-signature">(inner) </span>hasCookie<span class="signature">(name)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Checks if a cookie with the given name exists.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="cookies.js.html">cookies.js</a>, <a href="cookies.js.html#line71">line 71</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+
+<div class="param-desc">
+    <p>boolean</p>
+</div>
+
+    
+</div>
+
+
+
+<div class="section-examples">
+<h5>Example</h5>
+
+    <pre class="prettyprint"><code>setCookie('foo', 'bar', 7)
+hasCookie('foo') // Returns true
+hasCookie('bar') // Returns false</code></pre>
+
+</div>
 
 </div>
         

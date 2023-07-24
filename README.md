@@ -29,3 +29,10 @@ npm i book-of-spells
 After 14+ years of JavaScript and copy-pasting my own undocumented code, I've decided to start documenting it. I'm not sure why I didn't do it sooner. Actually, I'm lying, I do know why. I am so lazy that I'd rather copy or write the same code over and over again than document it - which is, of course, much more work than keeping and maintaining it in one place and distributing it as a package.
 
 It's not only laziness, if you think about it. It is this omnipresent fear of change, of the unknown, of the new. But change is good. Being unconformable is good. It means you're growing. It means you're learning. It means you're alive.
+
+## Contributing
+
+If you have a function or a snippet that you think is useful, please open a PR. I'd love to see what you've got.
+
+With love 💖,
+Stamat
