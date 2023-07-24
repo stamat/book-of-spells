@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>helpers.mjs - Documentation</title>
+    <title>slide.mjs - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,7 +29,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">helpers.mjs</h1>
+    <h1 class="page-title">slide.mjs</h1>
     
 
     
@@ -39,157 +39,123 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/**
- * Shallow merges two objects together. Used to pass simple options to functions.
- * 
- * @param {object} target The target object to merge into
- * @param {object} source The source object to merge from
- * @returns object The merged object
- * @example
- * const target = { foo: 'bar' }
- * const source = { bar: 'baz' }
- * shallowMerge(target, source) // { foo: 'bar', bar: 'baz' }
- */
-export function shallowMerge(target, source) {
-  for (const key in source) {
-    target[key] = source[key]
-  }
+            <pre class="prettyprint source linenums"><code>/** @module slide */
+
+import { getTransitionDurations } from './helpers'
+
+function clearSlideTimer(element) {
+  if (!element) return
+  if (!element.dataset.heightTimer) return
+  clearTimeout(parseInt(element.dataset.heightTimer))
+  delete element.dataset.heightTimer
+}
+
+function setSlideDuration(element) {
+  if (!element) return
+  if (element.dataset.slideDuration) return
+  const transitionDurations = getTransitionDurations(element)
+  if (!transitionDurations.hasOwnProperty('height')) return
+  element.dataset.slideDuration = transitionDurations['height'].toString()
 }
 
 /**
- * Deep merge function that's mindful of arrays and objects
+ * Slides up an element. The element must have a CSS transition set for the height property. 
+ * The transition duration is used to determine how long the slide up animation will take.
+ * Substitutes for jQuery's slideUp() function.
  * 
- * @param {object} target The target object to merge into
- * @param {object} source The source object to merge from
- * @returns object The merged object
+ * @param {HTMLElement} element 
  * @example
- * const target = { foo: 'bar' }
- * const source = { bar: 'baz' }
- * deepMerge(target, source) // { foo: 'bar', bar: 'baz' }
+ * slideUp(element)
  */
-export function deepMerge(target, source) {
-  for (const key in source) {
-    if (source[key] instanceof Object) {
-      Object.assign(source[key], deepMerge(target[key], source[key]))
-    }
-  }
+export function slideUp(element) {
+  if (!element) return
+  clearSlideTimer(element)
+  const styles = getComputedStyle(element)
 
-  Object.assign(target || {}, source)
-  return target
-}
+  setSlideDuration(element)
+  if (!element.dataset.slideDuration) return
+  
+  element.style.overflow = 'hidden'
+  if (styles.height !== 'auto') element.style.height = `${element.offsetHeight}px`
 
-function _cloneObject(o) {
-  let res = {}
-  for (const i in o) {
-    res[i] = clone(o[i])
-  }
-  return res
-}
+  setTimeout(() => {
+    element.style.height = `0px`
+  }, 10)
 
-export function _cloneArray(a) {
-  let res = []
-  for(var i = 0; i &lt; a.length; i++) {
-    res[i] = clone(a[i])
-  }
-  return res
+  const timer = setTimeout(() => {
+    element.style.display = 'none'
+    element.style.height = 'auto'
+    element.style.removeProperty('overflow')
+    clearSlideTimer(element)
+  }, parseInt(element.dataset.slideDuration))
+  element.dataset.heightTimer = timer.toString()
 }
 
 /**
- * Deep clone function that's mindful of arrays and objects
+ * Slides down an element. The element must have a CSS transition set for the height property.
+ * The transition duration is used to determine how long the slide down animation will take.
+ * Substitutes for jQuery's slideDown() function.
  * 
- * @param {object} o The object to clone
- * @returns object The cloned object
+ * @param {HTMLElement} element
  * @example
- * const obj = { foo: 'bar' }
- * const clone = clone(obj)
- * clone.foo = 'baz'
- * console.log(obj.foo) // 'bar'
- * console.log(clone.foo) // 'baz'
- * @todo Check if faster than assign. This function is pretty old...
- */ 
-export function clone(o) {
-  let res = null
-  if(Array.isArray(o)) {
-    res = _cloneArray(o)
-  } else if(typeof o === 'object' &amp;&amp; o !== null) {
-    res = _cloneObject(o)
+ * slideDown(element)
+ */
+export function slideDown(element) {
+  if (!element) return
+  clearSlideTimer(element)
+  const styles = getComputedStyle(element)
+
+  setSlideDuration(element)
+  if (!element.dataset.slideDuration) return
+
+  let oldHeight = parseInt(styles.height)
+  if (isNaN(oldHeight)) oldHeight = 0
+
+  if (element.hasAttribute('hidden')) element.removeAttribute('hidden')
+  element.style.pointerEvents = 'none'
+  if (!oldHeight) element.style.visibility = 'hidden'
+  element.style.display = 'block'
+  element.style.height = 'auto'
+  element.style.overflow = 'hidden'
+  
+  const height = element.offsetHeight
+  element.style.height = oldHeight ? `${oldHeight}px` : '0px'
+
+  setTimeout(() => {
+    element.style.height = `${height}px`
+    element.style.visibility = 'visible'
+    element.style.removeProperty('pointer-events')
+  }, 10)
+
+  const timer = setTimeout(() => {
+    element.style.height = 'auto'
+    element.style.removeProperty('overflow')
+    clearSlideTimer(element)
+  }, parseInt(element.dataset.slideDuration))
+  element.dataset.heightTimer = timer.toString()
+}
+
+/**
+ * Toggles the slide state of an element. The element must have a CSS transition set for the height property.
+ * The transition duration is used to determine how long the slide animation will take.
+ * Substitutes for jQuery's slideToggle() function.
+ * 
+ * @param {HTMLElement} element
+ * @example
+ * slideToggle(element)
+ */
+export function slideToggle(element) {
+  if (!element) return
+  const styles = getComputedStyle(element)
+
+  setSlideDuration(element)
+  if (!element.dataset.slideDuration) return
+
+  if (styles.display === 'none' || parseInt(styles.height) === 0) {
+    slideDown(element)
   } else {
-    res = o;
+    slideUp(element)
   }
-  return res;
-}
-
-/**
- * Check if an object is empty
- * 
- * @param {object} o The object to check
- * @returns boolean True if the object is empty, false otherwise
- * @example
- * isEmptyObject({}) // => true
- * isEmptyObject({ foo: 'bar' }) // => false
- */
-export function isEmptyObject(o) {
-  for (const i in o) {
-    return false
-  }
-  return true
-}
-
-/**
- * If provided variable is an object
- * 
- * @param {any} o 
- * @returns boolean
- * @example
- * isObject({}) // => true
- * isObject([]) // => false
- * isObject(null) // => false
- */
-export function isObject(o) {
-  return o &amp;&amp; typeof o === 'object' &amp;&amp; !Array.isArray(o) &amp;&amp; o !== null
-}
-
-/**
- * If provided variable is a function
- * 
- * @param {any} o
- * @returns boolean
- * @example
- * isFunction(function() {}) // => true
- * isFunction({}) // => false
- */
-export function isFunction(o) {
-  return o &amp;&amp; typeof o === 'function'
-}
-
-/**
- * If object property is a function
- * 
- * @param {object} obj
- * @param {string} propertyName
- * @returns boolean
- * @example
- * const obj = { foo: 'bar', baz: function() {} }
- * propertyIsFunction(obj, 'foo') // => false
- * propertyIsFunction(obj, 'baz') // => true
- */
-export function propertyIsFunction(obj, propertyName) {
-  return o.hasOwnProperty(propertyName) &amp;&amp; isFunction(obj[propertyName])
-}
-
-/**
- * Transforms a dash-case string to camelCase
- *
- * @param {string} str
- * @returns boolean
- * @example
- * transformDashToCamelCase('foo-bar') // => 'fooBar'
- * transformDashToCamelCase('foo-bar-baz') // => 'fooBarBaz'
- * transformDashToCamelCase('foo') // => 'foo'
- * transformDashToCamelCase('fooBarBaz-qux') // => 'fooBarBazQux'
- */
-export function transformDashToCamelCase(str) {
-  return str.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase() });
 }
 </code></pre>
         </article>
@@ -203,7 +169,7 @@ export function transformDashToCamelCase(str) {
 <br class="clear">
 
 <footer>
-    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Mon Jul 24 2023 18:56:16 GMT+0200 (Central European Summer Time) using the Minami theme.
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Mon Jul 24 2023 19:41:22 GMT+0200 (Central European Summer Time) using the Minami theme.
 </footer>
 
 <script>prettyPrint();</script>

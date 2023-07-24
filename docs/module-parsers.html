@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>slide.mjs - Documentation</title>
+    <title>parsers - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,137 +29,253 @@
 
 <div id="main">
     
-    <h1 class="page-title">slide.mjs</h1>
+    <h1 class="page-title">parsers</h1>
     
 
     
 
 
 
+
+<section>
+
+<header>
     
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>/** @module slide */
+</header>
 
-import { getTransitionDurations } from './helpers'
+<article>
+    <div class="container-overview">
+    
+        
 
-function clearSlideTimer(element) {
-  if (!element) return
-  if (!element.dataset.heightTimer) return
-  clearTimeout(parseInt(element.dataset.heightTimer))
-  delete element.dataset.heightTimer
-}
+        
 
-function setSlideDuration(element) {
-  if (!element) return
-  if (element.dataset.slideDuration) return
-  const transitionDurations = getTransitionDurations(element)
-  if (!transitionDurations.hasOwnProperty('height')) return
-  element.dataset.slideDuration = transitionDurations['height'].toString()
-}
 
-/**
- * Slides up an element. The element must have a CSS transition set for the height property. 
- * The transition duration is used to determine how long the slide up animation will take.
- * Substitutes for jQuery's slideUp() function.
- * 
- * @param {HTMLElement} element 
- * @example
- * slideUp(element)
- */
-export function slideUp(element) {
-  if (!element) return
-  clearSlideTimer(element)
-  const styles = getComputedStyle(element)
+<dl class="details">
 
-  setSlideDuration(element)
-  if (!element.dataset.slideDuration) return
-  
-  element.style.overflow = 'hidden'
-  if (styles.height !== 'auto') element.style.height = `${element.offsetHeight}px`
+    
 
-  setTimeout(() => {
-    element.style.height = `0px`
-  }, 10)
+    
 
-  const timer = setTimeout(() => {
-    element.style.display = 'none'
-    element.style.height = 'auto'
-    element.style.removeProperty('overflow')
-    clearSlideTimer(element)
-  }, parseInt(element.dataset.slideDuration))
-  element.dataset.heightTimer = timer.toString()
-}
+    
 
-/**
- * Slides down an element. The element must have a CSS transition set for the height property.
- * The transition duration is used to determine how long the slide down animation will take.
- * Substitutes for jQuery's slideDown() function.
- * 
- * @param {HTMLElement} element
- * @example
- * slideDown(element)
- */
-export function slideDown(element) {
-  if (!element) return
-  clearSlideTimer(element)
-  const styles = getComputedStyle(element)
+    
 
-  setSlideDuration(element)
-  if (!element.dataset.slideDuration) return
+    
 
-  let oldHeight = parseInt(styles.height)
-  if (isNaN(oldHeight)) oldHeight = 0
+    
 
-  if (element.hasAttribute('hidden')) element.removeAttribute('hidden')
-  element.style.pointerEvents = 'none'
-  if (!oldHeight) element.style.visibility = 'hidden'
-  element.style.display = 'block'
-  element.style.height = 'auto'
-  element.style.overflow = 'hidden'
-  
-  const height = element.offsetHeight
-  element.style.height = oldHeight ? `${oldHeight}px` : '0px'
+    
 
-  setTimeout(() => {
-    element.style.height = `${height}px`
-    element.style.visibility = 'visible'
-    element.style.removeProperty('pointer-events')
-  }, 10)
+    
 
-  const timer = setTimeout(() => {
-    element.style.height = 'auto'
-    element.style.removeProperty('overflow')
-    clearSlideTimer(element)
-  }, parseInt(element.dataset.slideDuration))
-  element.dataset.heightTimer = timer.toString()
-}
+    
 
-/**
- * Toggles the slide state of an element. The element must have a CSS transition set for the height property.
- * The transition duration is used to determine how long the slide animation will take.
- * Substitutes for jQuery's slideToggle() function.
- * 
- * @param {HTMLElement} element
- * @example
- * slideToggle(element)
- */
-export function slideToggle(element) {
-  if (!element) return
-  const styles = getComputedStyle(element)
+    
 
-  setSlideDuration(element)
-  if (!element.dataset.slideDuration) return
+    
 
-  if (styles.display === 'none' || parseInt(styles.height) === 0) {
-    slideDown(element)
-  } else {
-    slideUp(element)
-  }
-}
-</code></pre>
-        </article>
-    </section>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="parsers.mjs.html">parsers.mjs</a>, <a href="parsers.mjs.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id=".parseAttributes"><span class="type-signature">(static) </span>parseAttributes<span class="signature">(str)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Parse a string of attributes and return an object</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="parsers.mjs.html">parsers.mjs</a>, <a href="parsers.mjs.html#line12">line 12</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>str</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>string</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+
+<div class="param-desc">
+    <p>object</p>
+</div>
+
+    
+</div>
+
+
+
+<div class="section-examples">
+<h5>Example</h5>
+
+    <pre class="prettyprint"><code>parseAttributes('button text="Click me" data='{"key": \"value"}' class="btn btn-primary"')
+// => { button: null, text: 'Click me', data: '{"key": "value"}', class: 'btn btn-primary' }</code></pre>
+
+</div>
+
+</div>
+        
+    
+
+    
+
+    
+</article>
+
+</section>
 
 
 
@@ -169,7 +285,7 @@ export function slideToggle(element) {
 <br class="clear">
 
 <footer>
-    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Mon Jul 24 2023 18:56:16 GMT+0200 (Central European Summer Time) using the Minami theme.
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Mon Jul 24 2023 19:41:22 GMT+0200 (Central European Summer Time) using the Minami theme.
 </footer>
 
 <script>prettyPrint();</script>

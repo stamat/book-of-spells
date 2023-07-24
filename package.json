@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "test": "npx jest",
-    "docs": "npx jsdoc --configure .jsdoc.json --verbose"
+    "docs": "npx jsdoc --configure jsdoc.json --verbose"
   },
   "devDependencies": {
     "esm": "^3.2.25",

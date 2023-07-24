@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>parsers.mjs - Documentation</title>
+    <title>dom.mjs - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,7 +29,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">parsers.mjs</h1>
+    <h1 class="page-title">dom.mjs</h1>
     
 
     
@@ -39,43 +39,229 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/** @module parsers */
+            <pre class="prettyprint source linenums"><code>/** @module dom */
+
+import { transformDashToCamelCase } from './helpers'
 
 /**
- * Parse a string of attributes and return an object
+ * Checks if an element is empty
  * 
- * @param {string} str
- * @returns object
+ * @param {HTMLElement} element 
+ * @returns boolean
  * @example
- * parseAttributes('button text="Click me" data='{"key": \"value"}' class="btn btn-primary"')
- * // => { button: null, text: 'Click me', data: '{"key": "value"}', class: 'btn btn-primary' }
+ * document.body.innerHTML = `
+ *  &lt;div id="empty-element">&lt;/div>
+ *  &lt;div id="non-empty-element1">foo&lt;/div>
+ *  &lt;div id="non-empty-element2">&lt;br>&lt;/div>`
+ * 
+ * isEmptyElement(document.getElementById('empty-element')) // => true
+ * isEmptyElement(document.getElementById('non-empty-element1')) // => false
+ * isEmptyElement(document.getElementById('non-empty-element2')) // => false
  */
-export function parseAttributes(str) {
-	const re = /\s*(?:([a-z_]{1}[a-z0-9\-_]*)=?(?:"([^"]+)"|'([^']+)')*)\s*/gi
-	const reWithoutValue = /^\s*([a-z_]{1}[a-z0-9\-_]*)\s*$/i
-	const reHasValue = /^\s*([a-z_]{1}[a-z0-9\-_]*)=("[^"]+"|'[^']+')\s*$/i
-	const reReplaceFirstAndLastQuote = /^["']|["']$/g
-	
-	const res = {}
-	const match = str.match(re)
+export function isEmptyElement(element) {
+  return element.innerHTML.trim() === ''
+}
 
-	for (let i = 0; i &lt; match.length; i++) {
-		const m = match[i]
-		if (m === '') continue
+/**
+ * Removes all elements matching a selector from the DOM
+ * 
+ * @param {string|HTMLElement|Element} selector The selector to select elements to remove
+ * @example
+ * document.body.innerHTML = `
+ * &lt;div id="foo">&lt;/div>
+ * &lt;div id="bar">&lt;/div>
+ * &lt;div id="baz">&lt;/div>`
+ * `
+ * remove('#foo, #bar') // => removes #foo and #bar
+ */
+export function remove(selector) {
+  const elements = query(selector)
+  for (const element of elements) {
+    element.remove()
+  }
+}
 
-		if (reWithoutValue.test(m)) {
-			const [, key] = m.match(reWithoutValue)
-			res[key] = null
-			reWithoutValue.lastIndex = 0
-		} else if (reHasValue.test(m)) {
-			const [, key, value] = m.match(reHasValue)
-			res[key] = value.replace(reReplaceFirstAndLastQuote, '')
-			reReplaceFirstAndLastQuote.lastIndex = 0
-			reHasValue.lastIndex = 0
-		}
-	}
+/**
+ * Queries the DOM for a single element and returns it. Substitutes for `document.querySelector(selector)` and JQuery's `$(selector).first()`
+ * 
+ * @param {string|HTMLElement|Element|Array&lt;HTMLElement|Element>|NodeList} selector The selector to select an element
+ * @returns {HTMLElement|Element}
+ * @example
+ * document.body.innerHTML = `
+ * &lt;div id="foo">&lt;/div>
+ * &lt;div id="bar">&lt;/div>
+ * &lt;div id="baz">&lt;/div>`
+ * 
+ * querySingle('#foo') // => &lt;div id="foo">&lt;/div>
+ * querySingle(document.getElementById('foo')) // => &lt;div id="foo">&lt;/div>
+ * querySingle(document.querySelector('#foo')) // => &lt;div id="foo">&lt;/div>
+ */
+export function querySingle(selector) {
+  if (selector instanceof Element) return selector
+  return document.querySelector(selector)
+}
 
-	return res
+/**
+ * Queries the DOM for elements and returns them. Substitutes for `document.querySelectorAll(selector)` and JQuery's `$(selector)`
+ * 
+ * @param {string|HTMLElement|Element|Array&lt;HTMLElement|Element>|NodeList} selector The selector to select elements
+ * @returns {Array&lt;Element>|NodeList}
+ * @example
+ * document.body.innerHTML = `
+ * &lt;div id="foo">&lt;/div>
+ * &lt;div id="bar">&lt;/div>
+ * &lt;div id="baz">&lt;/div>`
+ * 
+ * query('#foo') // => [&lt;div id="foo">&lt;/div>]
+ * query(document.getElementById('foo')) // => [&lt;div id="foo">&lt;/div>]
+ * query('div') // => [&lt;div id="foo">&lt;/div>, &lt;div id="bar">&lt;/div>, &lt;div id="baz">&lt;/div>]
+ */
+export function query(selector) {
+  if (selector instanceof Array) return selector
+  if (selector instanceof Element) return [selector]
+  return document.querySelectorAll(selector)
+}
+
+/**
+ * Sets element styles from passed object of styles. Can also transform dash-case to camelCase for CSS properties
+ * 
+ * @param {HTMLElement} element The element to set styles on
+ * @param {object} styles The object of styles to set
+ * @param {boolean} transform Whether to transform dash-case to camelCase for CSS properties
+ * @example
+ * css(document.getElementById('foo'), { 'background-color': 'red', 'font-size': '16px' }, true) // => sets background-color and font-size
+ * css(document.getElementById('foo'), { backgroundColor: 'red', fontSize: '16px' }) // => sets background-color and font-size
+ */
+export function css(element, styles, transform = false) {
+  for (let property in styles) {
+    if (transform) property = transformDashToCamelCase(property)
+    element.style[property] = styles[property]
+  }
+}
+
+/**
+ * Decodes HTML entities in a string
+ * 
+ * @param {string} html The HTML string to decode
+ * @returns {string} The decoded HTML string
+ * @example
+ * decodeHTML('&amp;lt;div&amp;gt;foo&amp;lt;/div&amp;gt;') // => '&lt;div>foo&lt;/div>'
+ * decodeHTML('&amp;lt;div&amp;gt;foo&amp;lt;/div&amp;gt;&amp;lt;div&amp;gt;bar&amp;lt;/div&amp;gt;') // => '&lt;div>foo&lt;/div>&lt;div>bar&lt;/div>'
+ */
+export function decodeHTML(html) {
+  const txt = document.createElement('textarea')
+  txt.innerHTML = html
+  const res = txt.value
+  txt.remove()
+  return res
+}
+
+/**
+ * Inserts an element before another element
+ * 
+ * @param {HTMLElement} targetElement The element to insert before
+ * @param {HTMLElement} newElement The element to insert
+ * @example
+ * const target = document.getElementById('target')
+ * const newElement = document.createElement('div')
+ * newElement.id = 'newElement'
+ * insertBeforeElement(target, newElement)
+ * // &lt;div id="newElement">&lt;/div>
+ * // &lt;div id="target">&lt;/div>
+ */
+export function insertBeforeElement(targetElement, newElement) {
+  targetElement.parentNode?.insertBefore(newElement, targetElement);
+}
+
+/**
+ * Toggles an attribute value on an element
+ * 
+ * @param {HTMLElement} element The element to toggle the attribute on
+ * @param {string} attribute The attribute to toggle
+ * @param {string} on Default: 'true'
+ * @param {string} off Default: 'false'
+ * @example
+ * toggleAttributeValue(element, 'aria-expanded', 'true', 'false')
+ * toggleAttributeValue(element, 'aria-expanded')
+ */
+export function toggleAttributeValue(element, attribute, on = 'true', off = 'false') {
+  if (!element.hasAttribute(attribute)) return
+
+  if (element.getAttribute(attribute) === on) {
+    element.setAttribute(attribute, off)
+  } else {
+    element.setAttribute(attribute, on)
+  }
+}
+
+/**
+ * Converts a duration string to milliseconds integer
+ * 
+ * @param {string} duration The duration string to convert, e.g. '1s', '100ms', '0.5s'
+ * @returns {number} The duration in milliseconds
+ * @example
+ * convertToMilliseconds('1s') // 1000
+ * convertToMilliseconds('100ms') // 100
+ * convertToMilliseconds('0.5s') // 500
+ * convertToMilliseconds('0.5') // 0
+ * convertToMilliseconds('foo') // 0
+ */
+export function cssTimeToMilliseconds(duration) {
+  const regExp = new RegExp('([0-9.]+)([a-z]+)', 'i')
+  const matches = regExp.exec(duration)
+  if (!matches) return 0
+  
+  const unit = matches[2]
+  switch (unit) {
+    case 'ms':
+      return parseFloat(matches[1])
+    case 's':
+      return parseFloat(matches[1]) * 1000
+    default:
+      return 0
+  }
+}
+
+/**
+ * Returns a map of transition properties and durations
+ * 
+ * @param {HTMLElement} element The element to get the transition properties and durations from
+ * @returns {object&lt;string, number>} A map of transition properties and durations
+ * @example
+ * getTransitionDurations(element) // { height: 1000 } if transition in CSS is set to 'height 1s'
+ * getTransitionDurations(element) // { height: 500, opacity: 1000 } if transition in CSS is set to 'height 0.5s, opacity 1s'
+ */
+function getTransitionDurations(element) {
+  if (!element) {}
+  const styles = getComputedStyle(element)
+  const transitionProperties = styles.getPropertyValue('transition-property').split(',')
+  const transitionDurations = styles.getPropertyValue('transition-duration').split(',')
+  
+  const map = {}
+  
+  for (let i = 0; i &lt; transitionProperties.length; i++) {
+    const property = transitionProperties[i].trim()
+    map[property] = transitionDurations.hasOwnProperty(i) ? cssTimeToMilliseconds(transitionDurations[i].trim()) : null
+  }
+  
+  return map
+}
+
+
+/**
+ * Detaches an element from the DOM and returns it
+ * 
+ * @param {HTMLElement} element The element to detach
+ * @example
+ * detachElement(element)
+ * // => element
+ * console.log(element.parentNode) // => null
+ */
+function detachElement(element) {
+  if (element &amp;&amp; element.parentNode) {
+    element.parentNode.removeChild(element);
+  }
+  return element
 }
 </code></pre>
         </article>
@@ -89,7 +275,7 @@ export function parseAttributes(str) {
 <br class="clear">
 
 <footer>
-    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Mon Jul 24 2023 18:56:16 GMT+0200 (Central European Summer Time) using the Minami theme.
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Mon Jul 24 2023 19:41:22 GMT+0200 (Central European Summer Time) using the Minami theme.
 </footer>
 
 <script>prettyPrint();</script>
