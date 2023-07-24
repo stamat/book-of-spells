@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>helpers.mjs - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <li class="nav-link nav-home-link"><a href="index.html">Home</a></li><li class="nav-heading">Modules</li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-dom.html">dom</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#.css">css</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#.cssTimeToMilliseconds">cssTimeToMilliseconds</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#.decodeHTML">decodeHTML</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#.insertBeforeElement">insertBeforeElement</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#.isEmptyElement">isEmptyElement</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#.query">query</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#.querySingle">querySingle</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#.remove">remove</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#.toggleAttributeValue">toggleAttributeValue</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#~detachElement">detachElement</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-dom.html#~getTransitionDurations">getTransitionDurations</a></span></li><li class="nav-heading"><span class="nav-item-type type-module">M</span><span class="nav-item-name"><a href="module-parsers.html">parsers</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="module-parsers.html#.parseAttributes">parseAttributes</a></span></li><li class="nav-heading"><a href="global.html">Globals</a></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#clone">clone</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#deepMerge">deepMerge</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#isEmptyObject">isEmptyObject</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#isFunction">isFunction</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#isObject">isObject</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#propertyIsFunction">propertyIsFunction</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#shallowMerge">shallowMerge</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#transformDashToCamelCase">transformDashToCamelCase</a></span></li>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">helpers.mjs</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Shallow merges two objects together. Used to pass simple options to functions.
+ * 
+ * @param {object} target The target object to merge into
+ * @param {object} source The source object to merge from
+ * @returns object The merged object
+ * @example
+ * const target = { foo: 'bar' }
+ * const source = { bar: 'baz' }
+ * shallowMerge(target, source) // { foo: 'bar', bar: 'baz' }
+ */
+export function shallowMerge(target, source) {
+  for (const key in source) {
+    target[key] = source[key]
+  }
+}
+
+/**
+ * Deep merge function that's mindful of arrays and objects
+ * 
+ * @param {object} target The target object to merge into
+ * @param {object} source The source object to merge from
+ * @returns object The merged object
+ * @example
+ * const target = { foo: 'bar' }
+ * const source = { bar: 'baz' }
+ * deepMerge(target, source) // { foo: 'bar', bar: 'baz' }
+ */
+export function deepMerge(target, source) {
+  for (const key in source) {
+    if (source[key] instanceof Object) {
+      Object.assign(source[key], deepMerge(target[key], source[key]))
+    }
+  }
+
+  Object.assign(target || {}, source)
+  return target
+}
+
+function _cloneObject(o) {
+  let res = {}
+  for (const i in o) {
+    res[i] = clone(o[i])
+  }
+  return res
+}
+
+export function _cloneArray(a) {
+  let res = []
+  for(var i = 0; i &lt; a.length; i++) {
+    res[i] = clone(a[i])
+  }
+  return res
+}
+
+/**
+ * Deep clone function that's mindful of arrays and objects
+ * 
+ * @param {object} o The object to clone
+ * @returns object The cloned object
+ * @example
+ * const obj = { foo: 'bar' }
+ * const clone = clone(obj)
+ * clone.foo = 'baz'
+ * console.log(obj.foo) // 'bar'
+ * console.log(clone.foo) // 'baz'
+ * @todo Check if faster than assign. This function is pretty old...
+ */ 
+export function clone(o) {
+  let res = null
+  if(Array.isArray(o)) {
+    res = _cloneArray(o)
+  } else if(typeof o === 'object' &amp;&amp; o !== null) {
+    res = _cloneObject(o)
+  } else {
+    res = o;
+  }
+  return res;
+}
+
+/**
+ * Check if an object is empty
+ * 
+ * @param {object} o The object to check
+ * @returns boolean True if the object is empty, false otherwise
+ * @example
+ * isEmptyObject({}) // => true
+ * isEmptyObject({ foo: 'bar' }) // => false
+ */
+export function isEmptyObject(o) {
+  for (const i in o) {
+    return false
+  }
+  return true
+}
+
+/**
+ * If provided variable is an object
+ * 
+ * @param {any} o 
+ * @returns boolean
+ * @example
+ * isObject({}) // => true
+ * isObject([]) // => false
+ * isObject(null) // => false
+ */
+export function isObject(o) {
+  return o &amp;&amp; typeof o === 'object' &amp;&amp; !Array.isArray(o) &amp;&amp; o !== null
+}
+
+/**
+ * If provided variable is a function
+ * 
+ * @param {any} o
+ * @returns boolean
+ * @example
+ * isFunction(function() {}) // => true
+ * isFunction({}) // => false
+ */
+export function isFunction(o) {
+  return o &amp;&amp; typeof o === 'function'
+}
+
+/**
+ * If object property is a function
+ * 
+ * @param {object} obj
+ * @param {string} propertyName
+ * @returns boolean
+ * @example
+ * const obj = { foo: 'bar', baz: function() {} }
+ * propertyIsFunction(obj, 'foo') // => false
+ * propertyIsFunction(obj, 'baz') // => true
+ */
+export function propertyIsFunction(obj, propertyName) {
+  return o.hasOwnProperty(propertyName) &amp;&amp; isFunction(obj[propertyName])
+}
+
+/**
+ * Transforms a dash-case string to camelCase
+ *
+ * @param {string} str
+ * @returns boolean
+ * @example
+ * transformDashToCamelCase('foo-bar') // => 'fooBar'
+ * transformDashToCamelCase('foo-bar-baz') // => 'fooBarBaz'
+ * transformDashToCamelCase('foo') // => 'foo'
+ * transformDashToCamelCase('fooBarBaz-qux') // => 'fooBarBazQux'
+ */
+export function transformDashToCamelCase(str) {
+  return str.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase() });
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Mon Jul 24 2023 17:56:00 GMT+0200 (Central European Summer Time) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
