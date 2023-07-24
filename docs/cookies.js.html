@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>parsers - Documentation</title>
+    <title>cookies.js - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,253 +29,107 @@
 
 <div id="main">
     
-    <h1 class="page-title">parsers</h1>
+    <h1 class="page-title">cookies.js</h1>
     
 
     
 
 
 
-
-<section>
-
-<header>
     
-</header>
-
-<article>
-    <div class="container-overview">
-    
-        
-
-        
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="parsers.mjs.html">parsers.mjs</a>, <a href="parsers.mjs.html#line1">line 1</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-        
-    
-    </div>
-
-    
-
-    
-
-    
-
-     
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        
-            
-<div class="section-method">
-
-    
-
-    <h4 class="name" id=".parseAttributes"><span class="type-signature">(static) </span>parseAttributes<span class="signature">(str)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Parse a string of attributes and return an object</p>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="parsers.mjs.html">parsers.mjs</a>, <a href="parsers.mjs.html#line12">line 12</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>str</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><code>string</code></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">
-                
-                
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="section-returns">
-<h5>Returns:</h5>
-
-        
-
-
-<div class="param-desc">
-    <p>object</p>
-</div>
-
-    
-</div>
-
-
-
-<div class="section-examples">
-<h5>Example</h5>
-
-    <pre class="prettyprint"><code>parseAttributes('button text="Click me" data='{"key": \"value"}' class="btn btn-primary"')
-// => { button: null, text: 'Click me', data: '{"key": "value"}', class: 'btn btn-primary' }</code></pre>
-
-</div>
-
-</div>
-        
-    
-
-    
-
-    
-</article>
-
-</section>
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Returns a string with the expiration date for a cookie.
+ * 
+ * @param {int} days
+ * @returns string - The expiration date for a cookie in UTC format or an empty string if days is not provided
+ * @example
+ * cookieExpirationDate(7) // Returns a string in the format '; expires=Thu, 01 Jan 1970 00:00:00 UTC' for 7 days from now
+ */
+export function cookieExpirationDate(days) {
+  if (!days) return ""
+  const date = new Date()
+  date.setTime(date.getTime() + days * 24 * 60 * 60 * 1e3)
+  return `; expires=${date.toUTCString()}`
+}
+
+/**
+ * Sets a cookie with the given name and value. If days is provided, it will set the expiration date.
+ * 
+ * @param {string} name 
+ * @param {string} value 
+ * @param {int} days
+ * @returns void
+ * @example
+ * setCookie('foo', 'bar', 7) // Sets a cookie named 'foo' with the value 'bar' that expires in 7 days
+ */
+export function setCookie(name, value, days) {
+  document.cookie = `${name}=${value || ""}${cookieExpirationDate(days)}; path=/`
+}
+
+/**
+ * Gets a cookie with the given name.
+ * 
+ * @param {string} name
+ * @returns string|null
+ * @example
+ * setCookie('foo', 'bar', 7)
+ * getCookie('foo') // Returns the value of the cookie named 'foo'
+ * getCookie('bar') // Returns null if the cookie named 'bar' doesn't exist
+ */
+export function getCookie(name) {
+  const matches = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}\\s*=\\s*([^;]+)`))
+  return matches ? matches[1] : null
+}
+
+/**
+ * Erases a cookie with the given name.
+ * 
+ * @param {string} name
+ * @returns void
+ * @example
+ * setCookie('foo', 'bar', 7)
+ * deleteCookie('foo') // Erases the cookie named 'foo'
+ * getCookie('foo') // Returns null
+ */
+export function deleteCookie(name) {
+  document.cookie = `${name}=; Max-Age=-99999999;`
+}
+
+/**
+ * Checks if a cookie with the given name exists.
+ * 
+ * @param name
+ * @returns boolean
+ * @example
+ * setCookie('foo', 'bar', 7)
+ * hasCookie('foo') // Returns true
+ * hasCookie('bar') // Returns false
+ */
+function hasCookie(name) {
+  return getCookie(name) !== null
+}
+
+/**
+ * Updates a cookie with the given name and value. If days is provided, it will set the expiration date.
+ * 
+ * @param {string} name
+ * @param {string|number} value
+ * @param {int} days
+ * @returns void
+ * @example
+ * setCookie('foo', 'bar', 7)
+ * updateCookie('foo', 'baz', 7) // Updates the cookie named 'foo' with the value 'baz' that expires in 7 days
+ * getCookie('foo') // Returns 'baz'
+ */
+export function updateCookie(name, value, days) {
+  if (!hasCookie(name)) return
+  setCookie(name, value, days)
+}
+</code></pre>
+        </article>
+    </section>
 
 
 
@@ -285,7 +139,7 @@
 <br class="clear">
 
 <footer>
-    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Mon Jul 24 2023 21:53:59 GMT+0200 (Central European Summer Time) using the Minami theme.
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Mon Jul 24 2023 21:53:58 GMT+0200 (Central European Summer Time) using the Minami theme.
 </footer>
 
 <script>prettyPrint();</script>

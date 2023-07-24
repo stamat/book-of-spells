@@ -1,7 +1,18 @@
-/** @module slide */
+/**  
+ * @module slide
+ * @description
+ * A collection of functions for sliding elements up and down.
+ * Substitutes for jQuery's slideUp(), slideDown(), and slideToggle() functions.
+ * Leans onto CSS transitions, reading the height transition duration and setting a timer based on that to clear the height property on animation end.
+ */
 
-import { getTransitionDurations } from './helpers'
+import { getTransitionDurations } from './dom'
 
+/**
+ * Clears the height slide timer of an element. Timer ID is stored in the element's dataset.
+ * 
+ * @param {HTMLElement} element
+ */
 function clearSlideTimer(element) {
   if (!element) return
   if (!element.dataset.heightTimer) return
@@ -9,6 +20,12 @@ function clearSlideTimer(element) {
   delete element.dataset.heightTimer
 }
 
+/**
+ * Sets the slide duration of an element. The element must have a CSS transition set for the height property.
+ * The CSS transition duration is used to determine how long the slide animation will take.
+ * 
+ * @param {HTMLElement} element
+ */
 function setSlideDuration(element) {
   if (!element) return
   if (element.dataset.slideDuration) return

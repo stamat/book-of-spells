@@ -27,30 +27,18 @@ export function shallowMerge(target, source) {
  * deepMerge(target, source) // { foo: 'bar', bar: 'baz' }
  */
 export function deepMerge(target, source) {
-  for (const key in source) {
-    if (source[key] instanceof Object) {
-      Object.assign(source[key], deepMerge(target[key], source[key]))
+  if (isObject(source) && isObject(target)) {
+    for (const key in source) {
+      target[key] = deepMerge(target[key], source[key])
     }
+  } else if (isArray(source) && isArray(target)) {
+    for (let i = 0; i < source.length; i++) {
+      target[i] = deepMerge(target[i], source[i])
+    }
+  } else {
+    target = source
   }
-
-  Object.assign(target || {}, source)
   return target
-}
-
-function _cloneObject(o) {
-  let res = {}
-  for (const i in o) {
-    res[i] = clone(o[i])
-  }
-  return res
-}
-
-export function _cloneArray(a) {
-  let res = []
-  for(var i = 0; i < a.length; i++) {
-    res[i] = clone(a[i])
-  }
-  return res
 }
 
 /**
@@ -64,18 +52,26 @@ export function _cloneArray(a) {
  * clone.foo = 'baz'
  * console.log(obj.foo) // 'bar'
  * console.log(clone.foo) // 'baz'
+ * console.log(obj === clone) // false
+ * console.log(JSON.stringify(obj) === JSON.stringify(clone)) // true
  * @todo Check if faster than assign. This function is pretty old...
  */ 
 export function clone(o) {
   let res = null
-  if(Array.isArray(o)) {
-    res = _cloneArray(o)
-  } else if(typeof o === 'object' && o !== null) {
-    res = _cloneObject(o)
+  if (isArray(o)) {
+    res = []
+    for (const i in o) {
+      res[i] = clone(o[i])
+    }
+  } else if (isObject(o)) {
+    res = {}
+    for (const i in o) {
+      res[i] = clone(o[i])
+    }
   } else {
-    res = o;
+    res = o
   }
-  return res;
+  return res
 }
 
 /**
@@ -95,6 +91,171 @@ export function isEmptyObject(o) {
 }
 
 /**
+ * Check if an array is empty, substitute for Array.length === 0
+ * 
+ * @param {array} o The array to check
+ * @returns boolean True if the array is empty, false otherwise
+ * @example
+ * isEmptyArray([]) // => true
+ * isEmptyArray([1, 2, 3]) // => false
+ */
+export function isEmptyArray(o) {
+  return o.length === 0
+}
+
+/**
+ * Check if a variable is empty
+ * 
+ * @param {any} o The variable to check
+ * @returns boolean True if the variable is empty, false otherwise
+ * @example
+ * isEmpty({}) // => true
+ * isEmpty([]) // => true
+ * isEmpty('') // => true
+ * isEmpty(null) // => false
+ * isEmpty(undefined) // => false
+ * isEmpty(0) // => false
+ */
+export function isEmpty(o) {
+  if (isObject(o)) {
+    return isEmptyObject(o)
+  } else if (isArray(o)) {
+    return isEmptyArray(o)
+  } else if (isString(o)) {
+    return o === ''
+  }
+  return false
+}
+
+/**
+ * Try to convert a string to a boolean
+ * 
+ * @param {string} str The string to convert
+ * @returns boolean The converted boolean or undefined if conversion failed
+ * @example
+ * stringToBoolean('true') // => true
+ * stringToBoolean('false') // => false
+ * stringToBoolean('foo') // => null
+ */
+export function stringToBoolean(str) {
+  if (/^\s*(true|false)\s*$/i.test(str)) return str === 'true'
+}
+
+/**
+ * Try to convert a string to a number
+ * 
+ * @param {string} str The string to convert
+ * @returns number The converted number or undefined if conversion failed
+ * @example
+ * stringToNumber('1') // => 1
+ * stringToNumber('1.5') // => 1.5
+ * stringToNumber('foo') // => null
+ * stringToNumber('1foo') // => null
+ */
+export function stringToNumber(str) {
+  if (/^\s*\d+\s*$/.test(str)) return parseInt(str)
+  if (/^\s*[\d.]+\s*$/.test(str)) return parseFloat(str)
+}
+
+/**
+ * Try to convert a string to an array
+ * 
+ * @param {string} str The string to convert
+ * @returns array The converted array or undefined if conversion failed
+ * @example
+ * stringToArray('[1, 2, 3]') // => [1, 2, 3]
+ * stringToArray('foo') // => null
+ * stringToArray('1') // => null
+ * stringToArray('{"foo": "bar"}') // => null
+ */
+export function stringToArray(str) {
+  if (!/^\s*\[.*\]\s*$/.test(str)) return
+  try {
+    return JSON.parse(str)
+  } catch (e) {}
+}
+
+/**
+ * Try to convert a string to an object
+ * 
+ * @param {string} str The string to convert
+ * @returns object The converted object or undefined if conversion failed
+ * @example
+ * stringToObject('{ "foo": "bar" }') // => { foo: 'bar' }
+ * stringToObject('foo') // => null
+ * stringToObject('1') // => null
+ * stringToObject('[1, 2, 3]') // => null
+ */
+export function stringToObject(str) {
+  if (!/^\s*\{.*\}\s*$/.test(str)) return
+  try {
+    return JSON.parse(str)
+  } catch (e) {}
+}
+
+/**
+ * Try to convert a string to a regex
+ * 
+ * @param {string} str The string to convert
+ * @returns regex The converted regex or undefined if conversion failed
+ * @example
+ * stringToRegex('/foo/i') // => /foo/i
+ * stringToRegex('foo') // => null
+ * stringToRegex('1') // => null
+ */
+export function stringToRegex(str) {
+  if (!/^\s*\/.*\/g?i?\s*$/.test(str)) return
+  try {
+    return new RegExp(str)
+  } catch (e) {}
+}
+
+/**
+ * Try to convert a string to a primitive
+ * 
+ * @param {string} str The string to convert
+ * @returns {null|boolean|int|float|string} The converted primitive or input string if conversion failed
+ * @example
+ * stringToPrimitive('null') // => null
+ * stringToPrimitive('true') // => true
+ * stringToPrimitive('false') // => false
+ * stringToPrimitive('1') // => 1
+ * stringToPrimitive('1.5') // => 1.5
+ * stringToPrimitive('foo') // => 'foo'
+ * stringToPrimitive('1foo') // => '1foo'
+ */
+export function stringToPrimitive(str) {
+  if (/^\s*null\s*$/.test(str)) return null
+  const bool = stringToBoolean(str)
+  if (bool !== undefined) return bool
+  return stringToNumber(str) || str
+}
+
+/**
+ * Try to convert a string to a data type
+ * 
+ * @param {string} str The string to convert
+ * @returns any The converted data type or input string if conversion failed
+ * @example
+ * stringToData('null') // => null
+ * stringToData('true') // => true
+ * stringToData('false') // => false
+ * stringToData('1') // => 1
+ * stringToData('1.5') // => 1.5
+ * stringToData('foo') // => 'foo'
+ * stringToData('1foo') // => '1foo'
+ * stringToData('[1, 2, 3]') // => [1, 2, 3]
+ * stringToData('{ "foo": "bar" }') // => { foo: 'bar' }
+ * stringToData('/foo/i') // => /foo/i
+ */
+export function stringToType(str) {
+  if (/^\s*null\s*$/.test(str)) return null
+  const bool = stringToBoolean(str)
+  if (bool !== undefined) return bool
+  return stringToNumber(str) || stringToArray(str) || stringToObject(str) || stringToRegex(str) || str
+}
+
+/**
  * If provided variable is an object
  * 
  * @param {any} o 
@@ -105,11 +266,37 @@ export function isEmptyObject(o) {
  * isObject(null) // => false
  */
 export function isObject(o) {
-  return o && typeof o === 'object' && !Array.isArray(o) && o !== null
+  return typeof o === 'object' && !Array.isArray(o) && o !== null
 }
 
 /**
- * If provided variable is a function
+ * If provided variable is an array. Just a wrapper for Array.isArray
+ * 
+ * @param {any} o
+ * @returns boolean
+ * @example
+ * isArray([]) // => true
+ * isArray({}) // => false
+ */
+export function isArray(o) {
+  return Array.isArray(o)
+}
+
+/**
+ * If provided variable is a string. Just a wrapper for typeof === 'string'
+ * 
+ * @param {any} o
+ * @returns boolean
+ * @example
+ * isString('foo') // => true
+ * isString({}) // => false
+ */
+export function isString(o) {
+  return typeof o === 'string'
+}
+
+/**
+ * If provided variable is a function, substitute for typeof === 'function'
  * 
  * @param {any} o
  * @returns boolean
@@ -118,7 +305,7 @@ export function isObject(o) {
  * isFunction({}) // => false
  */
 export function isFunction(o) {
-  return o && typeof o === 'function'
+  return typeof o === 'function'
 }
 
 /**
@@ -133,7 +320,7 @@ export function isFunction(o) {
  * propertyIsFunction(obj, 'baz') // => true
  */
 export function propertyIsFunction(obj, propertyName) {
-  return o.hasOwnProperty(propertyName) && isFunction(obj[propertyName])
+  return obj.hasOwnProperty(propertyName) && isFunction(obj[propertyName])
 }
 
 /**

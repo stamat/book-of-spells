@@ -92,6 +92,7 @@ export function query(selector) {
  * css(document.getElementById('foo'), { backgroundColor: 'red', fontSize: '16px' }) // => sets background-color and font-size
  */
 export function css(element, styles, transform = false) {
+  if (!element || !styles) return
   for (let property in styles) {
     if (transform) property = transformDashToCamelCase(property)
     element.style[property] = styles[property]
@@ -129,7 +130,8 @@ export function decodeHTML(html) {
  * // <div id="target"></div>
  */
 export function insertBeforeElement(targetElement, newElement) {
-  targetElement.parentNode?.insertBefore(newElement, targetElement);
+  if (!targetElement || !newElement) return
+  targetElement.parentNode.insertBefore(newElement, targetElement);
 }
 
 /**
@@ -190,7 +192,7 @@ export function cssTimeToMilliseconds(duration) {
  * getTransitionDurations(element) // { height: 1000 } if transition in CSS is set to 'height 1s'
  * getTransitionDurations(element) // { height: 500, opacity: 1000 } if transition in CSS is set to 'height 0.5s, opacity 1s'
  */
-function getTransitionDurations(element) {
+export function getTransitionDurations(element) {
   if (!element) {}
   const styles = getComputedStyle(element)
   const transitionProperties = styles.getPropertyValue('transition-property').split(',')
@@ -216,7 +218,7 @@ function getTransitionDurations(element) {
  * // => element
  * console.log(element.parentNode) // => null
  */
-function detachElement(element) {
+export function detachElement(element) {
   if (element && element.parentNode) {
     element.parentNode.removeChild(element);
   }
