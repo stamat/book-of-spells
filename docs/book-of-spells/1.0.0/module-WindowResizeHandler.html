@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>parsers - Documentation</title>
+    <title>WindowResizeHandler - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,7 +29,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">parsers</h1>
+    <h1 class="page-title">WindowResizeHandler</h1>
     
 
     
@@ -80,7 +80,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="parsers.mjs.html">parsers.mjs</a>, <a href="parsers.mjs.html#line1">line 1</a>
+        <a href="WindowResizeHandler.mjs.html">WindowResizeHandler.mjs</a>, <a href="WindowResizeHandler.mjs.html#line1">line 1</a>
     </li></ul></dd>
     
 
@@ -101,6 +101,13 @@
     
 
     
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="module-WindowResizeHandler-WindowResizeHandler.html">WindowResizeHandler</a></dt>
+            <dd></dd>
+        </dl>
+    
 
      
 
@@ -117,14 +124,14 @@
 
     
 
-    <h4 class="name" id=".parseAttributes"><span class="type-signature">(static) </span>parseAttributes<span class="signature">(str)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~inRange"><span class="type-signature">(inner) </span>inRange<span class="signature">(mediaQuery)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    <p>Parse a string of attributes and return an object</p>
+    <p>Check if the window width or height is within a certain range by providing a media query string.</p>
 </div>
 
 
@@ -160,7 +167,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="parsers.mjs.html">parsers.mjs</a>, <a href="parsers.mjs.html#line12">line 12</a>
+        <a href="WindowResizeHandler.mjs.html">WindowResizeHandler.mjs</a>, <a href="WindowResizeHandler.mjs.html#line119">line 119</a>
     </li></ul></dd>
     
 
@@ -204,15 +211,10 @@
 
         <tr>
             
-                <td class="name"><code>str</code></td>
+                <td class="name"><code>mediaQuery</code></td>
             
 
             <td class="type">
-            
-                
-<span class="param-type"><code>string</code></span>
-
-
             
             </td>
 
@@ -221,7 +223,7 @@
             
 
             <td class="description last">
-                
+                <p>A media query string or already parsed query array. Example: &quot;(min-width: 768px) and (max-width: 1024px)&quot;</p>
                 
             </td>
         </tr>
@@ -250,7 +252,7 @@
 
 
 <div class="param-desc">
-    <p>object</p>
+    <p>boolean</p>
 </div>
 
     
@@ -261,8 +263,481 @@
 <div class="section-examples">
 <h5>Example</h5>
 
-    <pre class="prettyprint"><code>parseAttributes('button text="Click me" data='{"key": \"value"}' class="btn btn-primary"')
-// => { button: null, text: 'Click me', data: '{"key": "value"}', class: 'btn btn-primary' }</code></pre>
+    <pre class="prettyprint"><code>const result = inRange('(min-width: 768px) and (max-width: 1024px)')
+console.log(result) // true if window width is greater than or equal to 768px and less than or equal to 1024px</code></pre>
+
+</div>
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="~parseMediaQueryString"><span class="type-signature">(private, inner) </span>parseMediaQueryString<span class="signature">(mediaQuery)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Parse a media query string into a query array. Query arrays contain query entry objects <code>QueryEntryObject</code> and strings for the operators 'and' and 'or'.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="WindowResizeHandler.mjs.html">WindowResizeHandler.mjs</a>, <a href="WindowResizeHandler.mjs.html#line13">line 13</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>mediaQuery</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                <p>A media query string. Example: &quot;(min-width: 768px) and (max-width: 1024px)&quot;</p>
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+
+<div class="param-desc">
+    <p>Array&lt;string | QueryEntryObject&gt;</p>
+</div>
+
+    
+</div>
+
+
+
+<div class="section-examples">
+<h5>Example</h5>
+
+    <pre class="prettyprint"><code>const query = this._parseMediaQueryString('(min-width: 768px) and (max-width: 1024px)')
+console.log(query) // [{ value: 768, feature: 'width', direction: 'min' }, 'and', { value: 1024, feature: 'width', direction: 'max' }]</code></pre>
+
+</div>
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="~validateMediaQuery"><span class="type-signature">(private, inner) </span>validateMediaQuery<span class="signature">(query)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Perform a query. You can use this to check if the window width or height is within a certain range by providing a query array.
+Query arrays are parsed from media query strings using <code>_parseMediaQueryString</code> and contain query entry objects <code>QueryEntryObject</code> and strings for the operators 'and' and 'or'.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="WindowResizeHandler.mjs.html">WindowResizeHandler.mjs</a>, <a href="WindowResizeHandler.mjs.html#line87">line 87</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>query</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                <p>A query array</p>
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+
+<div class="param-desc">
+    <p>boolean</p>
+</div>
+
+    
+</div>
+
+
+
+<div class="section-examples">
+<h5>Example</h5>
+
+    <pre class="prettyprint"><code>const query = [{
+ value: 768,
+ feature: 'width',
+ direction: 'min'
+},
+'or',
+{
+ value: 1024,
+ feature: 'width',
+ direction: 'max'
+}]
+
+const result = validateMediaQuery(query)
+console.log(result) // true if window width is greater than or equal to 768px or less than or equal to 1024px</code></pre>
+
+</div>
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="~validateMediaQueryEntry"><span class="type-signature">(private, inner) </span>validateMediaQueryEntry<span class="signature">(queryEntry)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Perform a single query entry condition check. You can use this to check if the window width or height is within a certain range by providing a query entry object <code>QueryEntryObject</code>
+Meaning, you can check if the window width is greater than or equal to 768px, or if the window height is less than or equal to 1024px.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="WindowResizeHandler.mjs.html">WindowResizeHandler.mjs</a>, <a href="WindowResizeHandler.mjs.html#line58">line 58</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>queryEntry</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                <p>A single query entry object</p>
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+
+<div class="param-desc">
+    <p>boolean</p>
+</div>
+
+    
+</div>
+
+
+
+<div class="section-examples">
+<h5>Example</h5>
+
+    <pre class="prettyprint"><code>const queryEntry = {
+ value: 768,
+ feature: 'width',
+ direction: 'min'
+}
+
+const result = validateMediaQueryEntry(queryEntry)
+console.log(result) // true if window width is greater than or equal to 768px</code></pre>
 
 </div>
 

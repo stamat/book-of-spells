@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>parsers.mjs - Documentation</title>
+    <title>slide - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,57 +29,529 @@
 
 <div id="main">
     
-    <h1 class="page-title">parsers.mjs</h1>
+    <h1 class="page-title">slide</h1>
     
 
     
 
 
 
+
+<section>
+
+<header>
     
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>/** @module parsers */
+</header>
 
-/**
- * Parse a string of attributes and return an object
- * 
- * @param {string} str
- * @returns object
- * @example
- * parseAttributes('button text="Click me" data='{"key": \"value"}' class="btn btn-primary"')
- * // => { button: null, text: 'Click me', data: '{"key": "value"}', class: 'btn btn-primary' }
- */
-export function parseAttributes(str) {
-	const re = /\s*(?:([a-z_]{1}[a-z0-9\-_]*)=?(?:"([^"]+)"|'([^']+)')*)\s*/gi
-	const reWithoutValue = /^\s*([a-z_]{1}[a-z0-9\-_]*)\s*$/i
-	const reHasValue = /^\s*([a-z_]{1}[a-z0-9\-_]*)=("[^"]+"|'[^']+')\s*$/i
-	const reReplaceFirstAndLastQuote = /^["']|["']$/g
-	
-	const res = {}
-	const match = str.match(re)
+<article>
+    <div class="container-overview">
+    
+        
 
-	for (let i = 0; i &lt; match.length; i++) {
-		const m = match[i]
-		if (m === '') continue
+        
 
-		if (reWithoutValue.test(m)) {
-			const [, key] = m.match(reWithoutValue)
-			res[key] = null
-			reWithoutValue.lastIndex = 0
-		} else if (reHasValue.test(m)) {
-			const [, key, value] = m.match(reHasValue)
-			res[key] = value.replace(reReplaceFirstAndLastQuote, '')
-			reReplaceFirstAndLastQuote.lastIndex = 0
-			reHasValue.lastIndex = 0
-		}
-	}
 
-	return res
-}
-</code></pre>
-        </article>
-    </section>
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="slide.mjs.html">slide.mjs</a>, <a href="slide.mjs.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id=".slideDown"><span class="type-signature">(static) </span>slideDown<span class="signature">(element)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Slides down an element. The element must have a CSS transition set for the height property.
+The transition duration is used to determine how long the slide down animation will take.
+Substitutes for jQuery's slideDown() function.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="slide.mjs.html">slide.mjs</a>, <a href="slide.mjs.html#line62">line 62</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>element</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>HTMLElement</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-examples">
+<h5>Example</h5>
+
+    <pre class="prettyprint"><code>slideDown(element)</code></pre>
+
+</div>
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id=".slideToggle"><span class="type-signature">(static) </span>slideToggle<span class="signature">(element)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Toggles the slide state of an element. The element must have a CSS transition set for the height property.
+The transition duration is used to determine how long the slide animation will take.
+Substitutes for jQuery's slideToggle() function.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="slide.mjs.html">slide.mjs</a>, <a href="slide.mjs.html#line106">line 106</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>element</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>HTMLElement</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-examples">
+<h5>Example</h5>
+
+    <pre class="prettyprint"><code>slideToggle(element)</code></pre>
+
+</div>
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id=".slideUp"><span class="type-signature">(static) </span>slideUp<span class="signature">(element)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Slides up an element. The element must have a CSS transition set for the height property.
+The transition duration is used to determine how long the slide up animation will take.
+Substitutes for jQuery's slideUp() function.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="slide.mjs.html">slide.mjs</a>, <a href="slide.mjs.html#line29">line 29</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>element</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>HTMLElement</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-examples">
+<h5>Example</h5>
+
+    <pre class="prettyprint"><code>slideUp(element)</code></pre>
+
+</div>
+
+</div>
+        
+    
+
+    
+
+    
+</article>
+
+</section>
 
 
 

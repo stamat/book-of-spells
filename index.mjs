@@ -1,3 +1,5 @@
 export * from './src/parsers.mjs'
 export * from './src/dom.mjs'
 export * from './src/helpers.mjs'
+export * from './src/slide.mjs'
+export * from './src/WindowResizeHandler.mjs'
