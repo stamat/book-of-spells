@@ -68,7 +68,7 @@ export function deleteCookie(name) {
  * hasCookie('foo') // Returns true
  * hasCookie('bar') // Returns false
  */
-function hasCookie(name) {
+export function hasCookie(name) {
   return getCookie(name) !== null
 }
 
