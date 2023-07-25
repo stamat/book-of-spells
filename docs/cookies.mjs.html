@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>WindowResizeHandler - Documentation</title>
+    <title>cookies.mjs - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,728 +29,109 @@
 
 <div id="main">
     
-    <h1 class="page-title">WindowResizeHandler</h1>
+    <h1 class="page-title">cookies.mjs</h1>
     
 
     
 
 
 
-
-<section>
-
-<header>
-    
-</header>
-
-<article>
-    <div class="container-overview">
-    
-        
-
-        
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="WindowResizeHandler.mjs.html">WindowResizeHandler.mjs</a>, <a href="WindowResizeHandler.mjs.html#line1">line 1</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-        
-    
-    </div>
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Classes</h3>
-
-        <dl>
-            <dt><a href="module-WindowResizeHandler-WindowResizeHandler.html">WindowResizeHandler</a></dt>
-            <dd></dd>
-        </dl>
-    
-
-     
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        
-            
-<div class="section-method">
-
-    
-
-    <h4 class="name" id="~inRange"><span class="type-signature">(inner) </span>inRange<span class="signature">(mediaQuery)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Check if the window width or height is within a certain range by providing a media query string.</p>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="WindowResizeHandler.mjs.html">WindowResizeHandler.mjs</a>, <a href="WindowResizeHandler.mjs.html#line121">line 121</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>mediaQuery</code></td>
-            
-
-            <td class="type">
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">
-                <p>A media query string or already parsed query array. Example: &quot;(min-width: 768px) and (max-width: 1024px)&quot;</p>
-                
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="section-returns">
-<h5>Returns:</h5>
-
-        
-
-
-<div class="param-desc">
-    <p>boolean</p>
-</div>
-
-    
-</div>
-
-
-
-<div class="section-examples">
-<h5>Example</h5>
-
-    <pre class="prettyprint"><code>const result = inRange('(min-width: 768px) and (max-width: 1024px)')
-console.log(result) // true if window width is greater than or equal to 768px and less than or equal to 1024px</code></pre>
-
-</div>
-
-</div>
-        
-            
-<div class="section-method">
-
-    
-
-    <h4 class="name" id="~parseMediaQueryString"><span class="type-signature">(private, inner) </span>parseMediaQueryString<span class="signature">(mediaQuery)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Parse a media query string into a query array. Query arrays contain query entry objects <code>QueryEntryObject</code> and strings for the operators 'and' and 'or'.</p>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="WindowResizeHandler.mjs.html">WindowResizeHandler.mjs</a>, <a href="WindowResizeHandler.mjs.html#line13">line 13</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>mediaQuery</code></td>
-            
-
-            <td class="type">
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">
-                <p>A media query string. Example: &quot;(min-width: 768px) and (max-width: 1024px)&quot;</p>
-                
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="section-returns">
-<h5>Returns:</h5>
-
-        
-
-
-<div class="param-desc">
-    <p>Array&lt;string | QueryEntryObject&gt;</p>
-</div>
-
-    
-</div>
-
-
-
-<div class="section-examples">
-<h5>Example</h5>
-
-    <pre class="prettyprint"><code>const query = this._parseMediaQueryString('(min-width: 768px) and (max-width: 1024px)')
-console.log(query) // [{ value: 768, feature: 'width', direction: 'min' }, 'and', { value: 1024, feature: 'width', direction: 'max' }]</code></pre>
-
-</div>
-
-</div>
-        
-            
-<div class="section-method">
-
-    
-
-    <h4 class="name" id="~validateMediaQuery"><span class="type-signature">(private, inner) </span>validateMediaQuery<span class="signature">(query)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Perform a query. You can use this to check if the window width or height is within a certain range by providing a query array.
-Query arrays are parsed from media query strings using <code>_parseMediaQueryString</code> and contain query entry objects <code>QueryEntryObject</code> and strings for the operators 'and' and 'or'.</p>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="WindowResizeHandler.mjs.html">WindowResizeHandler.mjs</a>, <a href="WindowResizeHandler.mjs.html#line87">line 87</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>query</code></td>
-            
-
-            <td class="type">
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">
-                <p>A query array</p>
-                
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="section-returns">
-<h5>Returns:</h5>
-
-        
-
-
-<div class="param-desc">
-    <p>boolean</p>
-</div>
-
-    
-</div>
-
-
-
-<div class="section-examples">
-<h5>Example</h5>
-
-    <pre class="prettyprint"><code>const query = [{
- value: 768,
- feature: 'width',
- direction: 'min'
-},
-'or',
-{
- value: 1024,
- feature: 'width',
- direction: 'max'
-}]
-
-const result = validateMediaQuery(query)
-console.log(result) // true if window width is greater than or equal to 768px or less than or equal to 1024px</code></pre>
-
-</div>
-
-</div>
-        
-            
-<div class="section-method">
-
-    
-
-    <h4 class="name" id="~validateMediaQueryEntry"><span class="type-signature">(private, inner) </span>validateMediaQueryEntry<span class="signature">(queryEntry)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Perform a single query entry condition check. You can use this to check if the window width or height is within a certain range by providing a query entry object <code>QueryEntryObject</code>
-Meaning, you can check if the window width is greater than or equal to 768px, or if the window height is less than or equal to 1024px.</p>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
     
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="WindowResizeHandler.mjs.html">WindowResizeHandler.mjs</a>, <a href="WindowResizeHandler.mjs.html#line58">line 58</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>queryEntry</code></td>
-            
-
-            <td class="type">
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">
-                <p>A single query entry object</p>
-                
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="section-returns">
-<h5>Returns:</h5>
-
-        
-
-
-<div class="param-desc">
-    <p>boolean</p>
-</div>
-
-    
-</div>
-
-
-
-<div class="section-examples">
-<h5>Example</h5>
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/** @module cookies */
 
-    <pre class="prettyprint"><code>const queryEntry = {
- value: 768,
- feature: 'width',
- direction: 'min'
+/**
+ * Returns a string with the expiration date for a cookie.
+ * 
+ * @param {int} days
+ * @returns string - The expiration date for a cookie in UTC format or an empty string if days is not provided
+ * @example
+ * cookieExpirationDate(7) // Returns a string in the format '; expires=Thu, 01 Jan 1970 00:00:00 UTC' for 7 days from now
+ */
+export function cookieExpirationDate(days) {
+  if (!days) return ""
+  const date = new Date()
+  date.setTime(date.getTime() + days * 24 * 60 * 60 * 1e3)
+  return `; expires=${date.toUTCString()}`
 }
 
-const result = validateMediaQueryEntry(queryEntry)
-console.log(result) // true if window width is greater than or equal to 768px</code></pre>
+/**
+ * Sets a cookie with the given name and value. If days is provided, it will set the expiration date.
+ * 
+ * @param {string} name 
+ * @param {string} value 
+ * @param {int} days
+ * @returns void
+ * @example
+ * setCookie('foo', 'bar', 7) // Sets a cookie named 'foo' with the value 'bar' that expires in 7 days
+ */
+export function setCookie(name, value, days) {
+  document.cookie = `${name}=${value || ""}${cookieExpirationDate(days)}; path=/`
+}
 
-</div>
+/**
+ * Gets a cookie with the given name.
+ * 
+ * @param {string} name
+ * @returns string|null
+ * @example
+ * setCookie('foo', 'bar', 7)
+ * getCookie('foo') // Returns the value of the cookie named 'foo'
+ * getCookie('bar') // Returns null if the cookie named 'bar' doesn't exist
+ */
+export function getCookie(name) {
+  const matches = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}\\s*=\\s*([^;]+)`))
+  return matches ? matches[1] : null
+}
 
-</div>
-        
-    
+/**
+ * Erases a cookie with the given name.
+ * 
+ * @param {string} name
+ * @returns void
+ * @example
+ * setCookie('foo', 'bar', 7)
+ * deleteCookie('foo') // Erases the cookie named 'foo'
+ * getCookie('foo') // Returns null
+ */
+export function deleteCookie(name) {
+  document.cookie = `${name}=; Max-Age=-99999999;`
+}
 
-    
+/**
+ * Checks if a cookie with the given name exists.
+ * 
+ * @param name
+ * @returns boolean
+ * @example
+ * setCookie('foo', 'bar', 7)
+ * hasCookie('foo') // Returns true
+ * hasCookie('bar') // Returns false
+ */
+function hasCookie(name) {
+  return getCookie(name) !== null
+}
 
-    
-</article>
-
-</section>
+/**
+ * Updates a cookie with the given name and value. If days is provided, it will set the expiration date.
+ * 
+ * @param {string} name
+ * @param {string|number} value
+ * @param {int} days
+ * @returns void
+ * @example
+ * setCookie('foo', 'bar', 7)
+ * updateCookie('foo', 'baz', 7) // Updates the cookie named 'foo' with the value 'baz' that expires in 7 days
+ * getCookie('foo') // Returns 'baz'
+ */
+export function updateCookie(name, value, days) {
+  if (!hasCookie(name)) return
+  setCookie(name, value, days)
+}
+</code></pre>
+        </article>
+    </section>
 
 
 
