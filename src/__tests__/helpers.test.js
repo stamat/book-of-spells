@@ -1,3 +1,4 @@
+const userAgents = require('./user-agents.json')
 require = require('esm')(module)
 const { 
   shallowMerge, 
@@ -13,7 +14,9 @@ const {
   propertyIsFunction, 
   transformDashToCamelCase, 
   stringToPrimitive,
-  stringToType
+  stringToType,
+  mapByProperty,
+  mapPropertyToProperty,
 } = require('../helpers')
 
 const a = { 
@@ -161,4 +164,19 @@ test('stringToType', () => {
   expect(stringToType('{"foo": "bar"}')).toEqual({ foo: 'bar' })
   expect(stringToType('[1, 2, 3]')).toEqual([1, 2, 3])
   expect(stringToType('foo')).toBe('foo')
+})
+
+test('mapByProperty', () => {
+  const userAgentsMap = mapByProperty(userAgents, 'device')
+
+  expect(userAgentsMap['Apple iPhone XR (Safari)']).toEqual({
+    device: 'Apple iPhone XR (Safari)',
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Mobile/15E148 Safari/604.1'
+  })
+})
+
+test('mapPropertyToProperty', () => {
+  const userAgentsMap = mapPropertyToProperty(userAgents, 'device', 'userAgent')
+
+  expect(userAgentsMap['Apple iPhone XR (Safari)']).toBe('Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Mobile/15E148 Safari/604.1')
 })

@@ -337,3 +337,40 @@ export function propertyIsFunction(obj, propertyName) {
 export function transformDashToCamelCase(str) {
   return str.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase() });
 }
+
+/**
+ * Maps an array of objects by a property name
+ * 
+ * @param {array} arr
+ * @param {string} propertyName
+ * @returns object
+ * @example
+ * const arr = [{ foo: 'bar' }, { foo: 'baz' }]
+ * mapByProperty(arr, 'foo') // => { bar: { foo: 'bar' }, baz: { foo: 'baz' } }
+ */
+export function mapByProperty(arr, propertyName) {
+  const res = {}
+  for (let i = 0; i < arr.length; i++) {
+    res[arr[i][propertyName]] = arr[i]
+  }
+  return res
+}
+
+/**
+ * Maps an array of objects by a property name to another property name
+ * 
+ * @param {array} arr
+ * @param {string} keyPropertyName
+ * @param {string} valuePropertyName
+ * @returns object
+ * @example
+ * const arr = [{ foo: 'bar', baz: 'qux' }, { foo: 'quux', baz: 'corge' }]
+ * mapPropertyToProperty(arr, 'foo', 'baz') // => { bar: 'qux', quux: 'corge' }
+ */
+export function mapPropertyToProperty(arr, keyPropertyName, valuePropertyName) {
+  const res = {}
+  for (let i = 0; i < arr.length; i++) {
+    res[arr[i][keyPropertyName]] = arr[i][valuePropertyName]
+  }
+  return res
+}
