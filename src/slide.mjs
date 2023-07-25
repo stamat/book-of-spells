@@ -6,7 +6,7 @@
  * Leans onto CSS transitions, reading the height transition duration and setting a timer based on that to clear the height property on animation end.
  */
 
-import { getTransitionDurations } from './dom'
+import { getTransitionDurations } from './dom.mjs'
 
 /**
  * Clears the height slide timer of an element. Timer ID is stored in the element's dataset.

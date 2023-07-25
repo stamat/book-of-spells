@@ -1,6 +1,6 @@
 /** @module dom */
 
-import { transformDashToCamelCase } from './helpers'
+import { transformDashToCamelCase } from './helpers.mjs'
 import { isArray, isString } from './helpers.mjs'
 
 /**
