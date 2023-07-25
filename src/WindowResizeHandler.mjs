@@ -85,6 +85,8 @@ function validateMediaQueryEntry(queryEntry) {
  * console.log(result) // true if window width is greater than or equal to 768px or less than or equal to 1024px
  */
 function validateMediaQuery(query) {
+  if (query.hasOwnProperty('matches')) return query.matches
+  
   let result = true
   let operator = 'and'
 
@@ -117,7 +119,7 @@ function validateMediaQuery(query) {
  * console.log(result) // true if window width is greater than or equal to 768px and less than or equal to 1024px
  */
 function inRange(mediaQuery) {
-  if (typeof mediaQuery === 'string') mediaQuery = parseMediaQueryString(mediaQuery)
+  if (typeof mediaQuery === 'string') mediaQuery = 'matchMedia' in window ? matchMedia(mediaQuery) : parseMediaQueryString(mediaQuery)
   return validateMediaQuery(mediaQuery)
 }
 
