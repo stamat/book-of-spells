@@ -1,4 +1,5 @@
-const userAgents = require('./user-agents.json')
+const userAgents = require('./data/user-agents.json')
+const slugifyData = require('./data/slugify.json')
 require = require('esm')(module)
 const { 
   shallowMerge, 
@@ -17,6 +18,9 @@ const {
   stringToType,
   mapByProperty,
   mapPropertyToProperty,
+  slugify,
+  removeAccents,
+  stripHTMLTags,
 } = require('../helpers')
 
 const a = { 
@@ -179,4 +183,23 @@ test('mapPropertyToProperty', () => {
   const userAgentsMap = mapPropertyToProperty(userAgents, 'device', 'userAgent')
 
   expect(userAgentsMap['Apple iPhone XR (Safari)']).toBe('Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Mobile/15E148 Safari/604.1')
+})
+
+test('removeAccents', () => {
+  expect(removeAccents('áéíóú')).toBe('aeiou')
+  expect(removeAccents('ÁÉÍÓÚ')).toBe('AEIOU')
+  expect(removeAccents('señor')).toBe('senor')
+  expect(removeAccents('œ')).toBe('oe')
+})
+
+test('stripHTMLTags', () => {
+  expect(stripHTMLTags('<p>foo</p>')).toBe('foo')
+  expect(stripHTMLTags('<p>foo</p><p>bar</p>')).toBe('foobar')
+  expect(stripHTMLTags('<p>foo<p>bar<p>baz</p></p></p>')).toBe('foobarbaz')
+})
+
+test('slugify', () => {
+  slugifyData.forEach(({ input, expected }) => {
+    expect(slugify(input)).toBe(expected)
+  })
 })

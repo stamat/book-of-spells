@@ -38,8 +38,6 @@ If you have a function or a snippet that you think is useful, please open a PR. 
 ## To do / Migrate from the old code and other thoughts
 
 Migrate from the old code
-* [ ] iOS and Safari detection
-* [ ] Slugify function, like the one used in WordPress
 * [ ] my "decorate with zeros" function
 * [ ] hash change event
 

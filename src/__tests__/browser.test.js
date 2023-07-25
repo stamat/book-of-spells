@@ -1,4 +1,4 @@
-const userAgents = require('./user-agents.json')
+const userAgents = require('./data/user-agents.json')
 require = require('esm')(module)
 const { isUserAgentIOS, isUserAgentSafari, isUserAgentMobile } = require('../browser')
 const { mapPropertyToProperty } = require('../helpers.mjs')
@@ -19,7 +19,6 @@ test('isUserAgentSafari', () => {
 })
 
 test('isUserAgentMobile', () => {
-  console.log(userAgentMap)
   expect(isUserAgentMobile(userAgentMap['Apple iPhone XR (Safari)'])).toBe(true)
   expect(isUserAgentMobile(userAgentMap['Apple iPhone XS (Chrome)'])).toBe(true)
   expect(isUserAgentMobile(userAgentMap['Apple iPhone XS Max (Firefox)'])).toBe(true)

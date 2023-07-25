@@ -1,0 +1,82 @@
+[
+  {
+    "input": "AB CD ED G",
+    "expected": "ab-cd-ed-g"
+  },
+  {
+    "input": "AB 12 34 DE",
+    "expected": "ab-12-34-de"
+  },
+  {
+    "input": "The-Beginning--and---the-end",
+    "expected": "the-beginning-and-the-end"
+  },
+  {
+    "input": "The-áZZmtéqr í ou Ó ----Ú--",
+    "expected": "the-azzmteqr-i-ou-o-u"
+  },
+  {
+    "input": "Trailing Space",
+    "expected": "trailing-space"
+  },
+  {
+    "input": "Trailing Dash ---",
+    "expected": "trailing-dash"
+  },
+  {
+    "input": "Trailing Dash Space ---",
+    "expected": "trailing-dash-space"
+  },
+  {
+    "input": "523 abc GHI!*&m5^&3#e@$/",
+    "expected": "523-abc-ghim53e"
+  },
+  {
+    "input": "Captain <strong>Awesome</strong>",
+    "expected": "captain-awesome"
+  },
+  {
+    "input": "Spaces, -Dashes-, and other ch@racter$ are %REMOVED%!",
+    "expected": "spaces-dashes-and-other-chracter-are-removed"
+  },
+  {
+    "input": "M.Brown/Beige",
+    "expected": "m-brown-beige"
+  },
+  {
+    "input": "This contains an en dash–here",
+    "expected": "this-contains-an-en-dash-here"
+  },
+  {
+    "input": "This contains an en dash – here",
+    "expected": "this-contains-an-en-dash-here"
+  },
+  {
+    "input": "This contains an en dash-– here with a keyboard dash",
+    "expected": "this-contains-an-en-dash-here-with-a-keyboard-dash"
+  },
+  {
+    "input": "This contains an em dash—here",
+    "expected": "this-contains-an-em-dash-here"
+  },
+  {
+    "input": "This contains an em dash — here",
+    "expected": "this-contains-an-em-dash-here"
+  },
+  {
+    "input": "This contains an em dash-—-here surrounded by keyboard dashes.",
+    "expected": "this-contains-an-em-dash-here-surrounded-by-keyboard-dashes"
+  },
+  {
+    "input": "Non-breaking space",
+    "expected": "non-breaking-space"
+  },
+  {
+    "input": "HTML Entity Non-Breaking Space",
+    "expected": "html-entity-non-breaking-space"
+  },
+  {
+    "input": "one–two—three×four¡five®",
+    "expected": "one-two-threefourfive"
+  }
+]

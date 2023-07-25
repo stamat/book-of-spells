@@ -1,6 +1,7 @@
 /** @module dom */
 
 import { transformDashToCamelCase } from './helpers'
+import { isArray, isString } from './helpers.mjs'
 
 /**
  * Checks if an element is empty
@@ -223,4 +224,87 @@ export function detachElement(element) {
     element.parentNode.removeChild(element);
   }
   return element
+}
+
+/**
+ * Gets table data from a table element, a simple regular table element, or a table like structure.
+ * Useful for scraping data.
+ * 
+ * @param {string} selector The selector to select the table element
+ * @param {Array<string>|string|null} headers The headers to use for the data. If 'auto' is passed, the row containing th or the first row will be used as headers
+ * @param {string} [rowSelector='tr'] The selector to select the rows
+ * @param {string} [cellSelector='td'] The selector to select the cells
+ * @returns {Array<object>} An array of objects with the properties as keys and the cell values as values
+ * @example
+ * document.body.innerHTML = `
+ * <table id="table">
+ *  <thead>
+ *   <tr>
+ *   <th>Foo</th>
+ *  <th>Bar</th>
+ * </tr>
+ * </thead>
+ * <tbody>
+ * <tr>
+ * <td>Foo 1</td>
+ * <td>Bar 1</td>
+ * </tr>  
+ * <tr>
+ * <td>Foo 2</td>
+ * <td>Bar 2</td>
+ * </tr>
+ * </tbody>
+ * </table>`
+ * 
+ * getTableData('#table', ['foo', 'bar'])
+ * // => [
+ * //  { foo: 'Foo 1', bar: 'Bar 1' },
+ * //  { foo: 'Foo 2', bar: 'Bar 2' }
+ * // ]
+ */
+export function getTableData(selector, headers, rowSelector = 'tr', cellSelector = 'td', headerCellSelector = 'th') {
+  const table = typeof selector === 'string' ? document.querySelector(selector) : selector
+  const res = []
+  const rows = table.querySelectorAll(rowSelector)
+  let start = 0
+
+  function iterateHeaders(arr) {
+    if (!arr || !arr.length) return
+    const res = []
+    for (let i = 0; i < arr.length; i++) {
+      res.push(arr[i].textContent.trim())
+    }
+    return res
+  }
+
+  if (headers && isString(headers) && headers === 'auto') {
+    let headerCells = table.querySelectorAll(headerCellSelector)
+    
+    if (headerCells && headerCells.length) {
+      headers = iterateHeaders(headerCells)
+    } else {
+      headers = iterateHeaders(rows[0].querySelectorAll(cellSelector))
+      start = 1
+    }
+  }
+
+  for (let i = start; i < rows.length; i++) {
+    const row = rows[i]
+    const cells = row.querySelectorAll(cellSelector)
+    if (!cells || !cells.length) continue
+
+    let rowData = []
+    if (headers && isArray(headers) && headers.length) {
+      rowData = {}
+      for (let j = 0; j < headers.length; j++) {
+        rowData[headers[j]] = cells[j] ? cells[j].textContent.trim() : null
+      }
+    } else {
+      for (let j = 0; j < cells.length; j++) {
+        rowData.push(cells[j].textContent.trim())
+      }
+    }
+    res.push(rowData)
+  }
+  return res
 }

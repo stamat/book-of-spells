@@ -374,3 +374,47 @@ export function mapPropertyToProperty(arr, keyPropertyName, valuePropertyName) {
   }
   return res
 }
+
+/**
+ * Remove accents from a string
+ * 
+ * @param {string} inputString
+ * @returns string
+ * @example
+ * removeAccents('áéíóú') // => 'aeiou'
+ * removeAccents('ÁÉÍÓÚ') // => 'AEIOU'
+ * removeAccents('señor') // => 'senor'
+ * removeAccents('Œ') // => 'OE'
+ */
+export function removeAccents(inputString) {
+  return inputString.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\œ/g, "oe").replace(/\æ/g, "ae").normalize('NFC')
+}
+
+/**
+ * Strip HTML tags from a string
+ * 
+ * @param {string} inputString
+ * @returns string
+ * @example
+ * stripHTMLTags('<span>foo</span>') // => 'foo'
+ * stripHTMLTags('<span>foo</span> <span>bar</span>') // => 'foo bar'
+ */
+export function stripHTMLTags(inputString) {
+  return inputString.replace(/<[^>]*>/g, '')
+}
+
+/**
+ * Slugify a string, e.g. 'Foo Bar' => 'foo-bar'. Similar to WordPress' sanitize_title(). Will remove accents and HTML tags.
+ * 
+ * @param {string} str 
+ * @returns
+ * @example
+ * slugify('Foo Bar') // => 'foo-bar'
+ * slugify('Foo Bar <span>baz</span>') // => 'foo-bar-baz'
+ */
+export function slugify(str) {
+  str = str.trim().toLowerCase()
+  str = removeAccents(str)
+  str = stripHTMLTags(str)
+  return str.replace(/\s+|\.+|\/+|\\+|—+|–+/g, '-').replace(/[^\w0-9\-]+/g, '').replace(/-{2,}/g, '-').replace(/^-|-$/g, '')
+}
