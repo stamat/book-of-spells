@@ -1,8 +1,8 @@
 {
   "name": "book-of-spells",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "📖 Stamat's Book of JavaScript Spells",
-  "main": "index.js",
+  "main": "index.mjs",
   "author": "Nikola Stamatovic <@stamat>",
   "license": "MIT",
   "scripts": {
