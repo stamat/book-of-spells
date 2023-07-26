@@ -418,3 +418,22 @@ export function slugify(str) {
   str = stripHTMLTags(str)
   return str.replace(/\s+|\.+|\/+|\\+|—+|–+/g, '-').replace(/[^\w0-9\-]+/g, '').replace(/-{2,}/g, '-').replace(/^-|-$/g, '')
 }
+
+/**
+ * Check if object has multiple properties
+ * 
+ * @param {object} obj
+ * @param {string|array} properties
+ * @returns boolean
+ * @example
+ * const obj = { foo: 'bar', baz: 'qux' }
+ * hasOwnProperties(obj, ['foo', 'baz']) // => true
+ * hasOwnProperties(obj, ['foo', 'baz', 'qux']) // => false
+ */
+export function hasOwnProperties(obj, properties) {
+  if(!isArray(properties)) properties = [properties]
+  for (let i = 0; i < properties.length; i++) {
+    if (!obj.hasOwnProperty(properties[i])) return false
+  }
+  return true
+}
