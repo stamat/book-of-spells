@@ -26,6 +26,7 @@ export function isEmptyElement(element) {
  * Removes all elements matching a selector from the DOM
  * 
  * @param {string|HTMLElement|Element} selector The selector to select elements to remove
+ * @param {HTMLElement|Element} [from=document] The element to remove elements from
  * @example
  * document.body.innerHTML = `
  * <div id="foo"></div>
@@ -34,8 +35,8 @@ export function isEmptyElement(element) {
  * `
  * remove('#foo, #bar') // => removes #foo and #bar
  */
-export function remove(selector) {
-  const elements = query(selector)
+export function remove(selector, from = document) {
+  const elements = query(selector, from)
   for (const element of elements) {
     element.remove()
   }
@@ -45,6 +46,7 @@ export function remove(selector) {
  * Queries the DOM for a single element and returns it. Substitutes for `document.querySelector(selector)` and JQuery's `$(selector).first()`
  * 
  * @param {string|HTMLElement|Element|Array<HTMLElement|Element>|NodeList} selector The selector to select an element
+ * @param {HTMLElement|Element} [from=document] The element to query from
  * @returns {HTMLElement|Element}
  * @example
  * document.body.innerHTML = `
@@ -56,15 +58,16 @@ export function remove(selector) {
  * querySingle(document.getElementById('foo')) // => <div id="foo"></div>
  * querySingle(document.querySelector('#foo')) // => <div id="foo"></div>
  */
-export function querySingle(selector) {
+export function querySingle(selector, from = document) {
   if (selector instanceof Element) return selector
-  return document.querySelector(selector)
+  return from.querySelector(selector)
 }
 
 /**
  * Queries the DOM for elements and returns them. Substitutes for `document.querySelectorAll(selector)` and JQuery's `$(selector)`
  * 
  * @param {string|HTMLElement|Element|Array<HTMLElement|Element>|NodeList} selector The selector to select elements
+ * @param {HTMLElement|Element} [from=document] The element to query from
  * @returns {Array<Element>|NodeList}
  * @example
  * document.body.innerHTML = `
@@ -76,10 +79,17 @@ export function querySingle(selector) {
  * query(document.getElementById('foo')) // => [<div id="foo"></div>]
  * query('div') // => [<div id="foo"></div>, <div id="bar"></div>, <div id="baz"></div>]
  */
-export function query(selector) {
-  if (selector instanceof Array) return selector
+export function query(selector, from = document) {
+  if (selector instanceof Array || selector instanceof NodeList) return selector
   if (selector instanceof Element) return [selector]
-  return document.querySelectorAll(selector)
+  if (from instanceof Element || from instanceof Document) return from.querySelectorAll(selector)
+  if (isString(from)) from = query(from)
+  if (!from instanceof Array  && !from instanceof NodeList) return []
+  const res = []
+  for (const element of from) {
+    res.push(...element.querySelectorAll(selector))
+  }
+  return res
 }
 
 /**
@@ -207,6 +217,56 @@ export function getTransitionDurations(element) {
   }
   
   return map
+}
+
+/**
+ * Check a list of elements if any of them matches a selector
+ * 
+ * @param {Array<HTMLElement>|NodeList|HTMLElement} elements The elements to check
+ * @param {string} selector The selector to check
+ * @returns {boolean} True if any of the elements matches the selector, false otherwise
+ * @example
+ * document.body.innerHTML = `
+ * <div id="foo"></div>
+ * <div id="bar"></div>
+ * <div id="baz"></div>`
+ * 
+ * matchesAny(document.querySelectorAll('div'), '#foo') // => true
+ * matchesAny(document.querySelectorAll('div'), '#qux') // => false
+ */
+export function matchesAny(elements, selector) {
+  if (!elements || !selector || !elements.length) return false
+  if (elements instanceof Element) elements = [elements]
+  if (isString(elements)) elements = query(elements)
+  for (const element of elements) {
+    if (element.matches(selector)) return true
+  }
+  return false
+}
+
+/**
+ * Check a list of elements if all of them matches a selector
+ * 
+ * @param {Array<HTMLElement>|NodeList|HTMLElement} elements The elements to check
+ * @param {string} selector The selector to check
+ * @returns {boolean} True if all of the elements matches the selector, false otherwise
+ * @example
+ * document.body.innerHTML = `
+ * <div id="foo"></div>
+ * <div id="bar"></div>
+ * <div id="baz"></div>`
+ * 
+ * matchesAll(document.querySelectorAll('div'), 'div') // => true
+ * matchesAll(document.querySelectorAll('div'), '#foo') // => false
+ */
+export function matchesAll(elements, selector) {
+  if (!elements || !selector || !elements.length) return false
+  if (elements instanceof Element) elements = [elements]
+  if (isString(elements)) elements = query(elements)
+  for (const element of elements) {
+    if (!element.matches(selector)) return false
+  }
+  return true
 }
 
 
