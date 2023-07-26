@@ -422,7 +422,7 @@ export function stripHTMLTags(inputString) {
  * Slugify a string, e.g. 'Foo Bar' => 'foo-bar'. Similar to WordPress' sanitize_title(). Will remove accents and HTML tags.
  * 
  * @param {string} str 
- * @returns
+ * @returns string
  * @example
  * slugify('Foo Bar') // => 'foo-bar'
  * slugify('Foo Bar <span>baz</span>') // => 'foo-bar-baz'
