@@ -324,6 +324,21 @@ export function propertyIsFunction(obj, propertyName) {
 }
 
 /**
+ * If object property is a string
+ * 
+ * @param {object} obj
+ * @param {string} propertyName
+ * @returns boolean
+ * @example
+ * const obj = { foo: 'bar', baz: function() {} }
+ * propertyIsString(obj, 'foo') // => true
+ * propertyIsString(obj, 'baz') // => false
+ */
+export function propertyIsString(obj, propertyName) {
+  return obj.hasOwnProperty(propertyName) && isString(obj[propertyName])
+}
+
+/**
  * Transforms a dash-case string to camelCase
  *
  * @param {string} str
