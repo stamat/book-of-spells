@@ -368,3 +368,17 @@ export function getTableData(selector, headers, rowSelector = 'tr', cellSelector
   }
   return res
 }
+
+/**
+ * Parses HTML string to a DOM Node
+ * 
+ * @param {string} html The HTML string to parse
+ * @returns {Node} The parsed DOM Node
+ * @example
+ * parseDOM('<div>foo</div>')
+ */
+export function parseDOM(html) {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  return doc.body.firstChild
+}
