@@ -1,6 +1,6 @@
 {
   "name": "book-of-spells",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "📖 Stamat's Book of JavaScript Spells",
   "main": "index.js",
   "author": "Nikola Stamatovic <@stamat>",
