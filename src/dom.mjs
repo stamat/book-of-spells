@@ -1,7 +1,6 @@
 /** @module dom */
 
-import { transformDashToCamelCase } from './helpers.mjs'
-import { isArray, isString } from './helpers.mjs'
+import { transformDashToCamelCase, isArray, isString } from './helpers.mjs'
 
 /**
  * Checks if an element is empty
