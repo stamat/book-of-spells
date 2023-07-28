@@ -1,5 +1,7 @@
 /** @module browser */
 
+import { isFunction } from './helpers.mjs'
+
 export function isUserAgentIOS(str) {
   return /iPad|iPhone|iPod/i.test(str)
 }
@@ -54,4 +56,40 @@ export function isSafari() {
  */
 export function isIOSSafari() {
   return isIOS() && isSafari()
+}
+
+/**
+ * A wrapper for the matchMedia function, cause with `matchMedia` you can only either add a listener or check the media query
+ * this function does both.
+ * 
+ * @param {string} query The media query to check
+ * @param {function} [callback] The callback function to call when the media query changes
+ * @returns {boolean} The result of the media query
+ * 
+ * @example
+ * mediaMatcher('(min-width: 768px)', (matches) => {
+ *  if (matches) {
+ *    // Do something
+ *  } else {
+ *    // Do something else
+ *  }
+ * })
+ * 
+ * // Or
+ * 
+ * const isDesktop = mediaMatcher('(min-width: 768px)')
+ */
+export function mediaMatcher(query, callback) {
+  if (isFunction(query)) {
+    matchMedia(query, (e) => {
+      callback(e.matches)
+    })
+
+    const mql = matchMedia(query)
+    callback(mql.matches)
+
+    return mql.matches
+  }
+
+  return matchMedia(query).matches
 }
