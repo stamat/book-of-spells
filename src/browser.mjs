@@ -80,7 +80,7 @@ export function isIOSSafari() {
  * const isDesktop = mediaMatcher('(min-width: 768px)')
  */
 export function mediaMatcher(query, callback) {
-  if (isFunction(query)) {
+  if (isFunction(callback)) {
     matchMedia(query, (e) => {
       callback(e.matches)
     })
