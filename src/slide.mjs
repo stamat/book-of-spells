@@ -60,7 +60,7 @@ export function slideUp(element) {
 
   const timer = setTimeout(() => {
     element.style.display = 'none'
-    element.style.height = 'auto'
+    element.style.height = ''
     element.style.removeProperty('overflow')
     clearSlideTimer(element)
   }, parseInt(element.dataset.slideDuration))
@@ -91,7 +91,7 @@ export function slideDown(element) {
   element.style.pointerEvents = 'none'
   if (!oldHeight) element.style.visibility = 'hidden'
   element.style.display = 'block'
-  element.style.height = 'auto'
+  element.style.height = ''
   element.style.overflow = 'hidden'
   
   const height = element.offsetHeight
@@ -104,7 +104,7 @@ export function slideDown(element) {
   }, 10)
 
   const timer = setTimeout(() => {
-    element.style.height = 'auto'
+    element.style.height = ''
     element.style.removeProperty('overflow')
     clearSlideTimer(element)
   }, parseInt(element.dataset.slideDuration))
