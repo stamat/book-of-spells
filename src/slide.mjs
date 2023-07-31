@@ -40,10 +40,11 @@ function setSlideDuration(element) {
  * Substitutes for jQuery's slideUp() function.
  * 
  * @param {HTMLElement} element 
+ * @param {Function} [callback]
  * @example
  * slideUp(element)
  */
-export function slideUp(element) {
+export function slideUp(element, callback) {
   if (!element) return
   clearSlideTimer(element)
   const styles = getComputedStyle(element)
@@ -63,6 +64,7 @@ export function slideUp(element) {
     element.style.height = ''
     element.style.removeProperty('overflow')
     clearSlideTimer(element)
+    if (isFunction(callback)) callback(element)
   }, parseInt(element.dataset.slideDuration))
   element.dataset.heightTimer = timer.toString()
 }
@@ -73,10 +75,11 @@ export function slideUp(element) {
  * Substitutes for jQuery's slideDown() function.
  * 
  * @param {HTMLElement} element
+ * @param {Function} [callback]
  * @example
  * slideDown(element)
  */
-export function slideDown(element) {
+export function slideDown(element, callback) {
   if (!element) return
   clearSlideTimer(element)
   const styles = getComputedStyle(element)
@@ -107,6 +110,7 @@ export function slideDown(element) {
     element.style.height = ''
     element.style.removeProperty('overflow')
     clearSlideTimer(element)
+    if (isFunction(callback)) callback(element)
   }, parseInt(element.dataset.slideDuration))
   element.dataset.heightTimer = timer.toString()
 }
@@ -117,10 +121,11 @@ export function slideDown(element) {
  * Substitutes for jQuery's slideToggle() function.
  * 
  * @param {HTMLElement} element
+ * @param {Function} [callback]
  * @example
  * slideToggle(element)
  */
-export function slideToggle(element) {
+export function slideToggle(element, callback) {
   if (!element) return
   const styles = getComputedStyle(element)
 
@@ -128,8 +133,8 @@ export function slideToggle(element) {
   if (!element.dataset.slideDuration) return
 
   if (styles.display === 'none' || parseInt(styles.height) === 0) {
-    slideDown(element)
+    slideDown(element, callback)
   } else {
-    slideUp(element)
+    slideUp(element, callback)
   }
 }
