@@ -1,6 +1,7 @@
 /** @module browser */
 
 import { isFunction } from './helpers.mjs'
+import { css } from './dom.mjs'
 
 export function isUserAgentIOS(str) {
   return /iPad|iPhone|iPod/i.test(str)
@@ -92,4 +93,56 @@ export function mediaMatcher(query, callback) {
   }
 
   return matchMedia(query).matches
+}
+
+/**
+ * Get the scrollbar width
+ * 
+ * When preventing scroll with html overflow hidden the scroll bar will disappear and the whole page will shift (if the scroll bar is visible that is).
+ * To substitute for the scrollbar width we can add a padding to the body element.
+ * 
+ * @returns {number} The scrollbar width
+ * 
+ * @example
+ * const scrollbarWidth = getScrollbarWidth() // 15 (on MacOS X Safari)
+ */
+export function getScrollbarWidth() {
+  const scrollDiv = document.createElement('div')
+  
+  css(scrollDiv, {
+    width: '100px',
+    height: '100px',
+    position: 'absolute',
+    left: '-9999px',
+    zIndex: '0',
+    overflowX: 'hidden',
+    overflowY: 'scroll'
+  })
+
+  document.body.appendChild(scrollDiv)
+  const scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth
+  document.body.removeChild(scrollDiv)
+  return scrollbarWidth
+}
+
+/**
+ * Disable the scroll on the page.
+ * 
+ * @param {number} [shift=0] The amount of pixels to substitute for the scrollbar width, getScrollbarWidth() is used to provide this value
+ */
+export function disableScroll(shift = 0) {
+  const body = document.body
+  body.style.overflow = 'hidden'
+  body.style.paddingRight = `${shift}px`
+}
+
+/**
+ * Enable the scroll on the page.
+ * 
+ * @param {number} [shift=0] The amount of pixels to substitute for the scrollbar width, getScrollbarWidth() is used to provide this value
+ */
+export function enableScroll(shift = 0) {
+  const body = document.body
+  body.style.overflow = ''
+  if (shift) body.style.paddingRight = ''
 }
