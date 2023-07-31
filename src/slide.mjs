@@ -7,6 +7,7 @@
  */
 
 import { getTransitionDurations } from './dom.mjs'
+import { isFunction } from './helpers.mjs'
 
 /**
  * Clears the height slide timer of an element. Timer ID is stored in the element's dataset.
