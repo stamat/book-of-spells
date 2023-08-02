@@ -381,3 +381,20 @@ export function parseDOM(html) {
   const doc = parser.parseFromString(html, 'text/html')
   return doc.body.firstChild
 }
+
+/**
+ * Loads an image form a provided source url and calls a callback when it's loaded
+ * 
+ * @param {string} src The source url of the image
+ * @param {Function} [callback] The callback to call when the image is loaded
+ * @example
+ * loadImage('https://example.com/image.png', () => {
+ *  console.log('Image loaded')
+ * })
+ */
+export function loadImage(src, callback) {
+  const img = new Image()
+  if (callback)
+    img.addEventListener('load', callback, false);
+  img.src = src
+}
