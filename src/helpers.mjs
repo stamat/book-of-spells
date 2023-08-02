@@ -452,3 +452,21 @@ export function hasOwnProperties(obj, properties) {
   }
   return true
 }
+
+/**
+ * Finds the closest number to the set goal in an array to a given number
+ * 
+ * @param {number} goal Number to search for
+ * @param {array} arr Array of numbers to search in
+ * @returns number
+ * @example
+ * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9]) // => 9
+ * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11]) // => 9
+ * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 9.5]) // => 9.5
+ * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11) // => 10
+ */
+export function closestNumber(goal, arr) {
+  return arr.reduce(function(prev, curr) {
+    return Math.abs(curr - goal) < Math.abs(prev - goal) ? curr : prev
+  })
+}
