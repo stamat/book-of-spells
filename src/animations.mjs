@@ -29,12 +29,14 @@ function clearTransitionTimer(element, property = 'all') {
  * 
  * @param {HTMLElement} element
  */
-function setSlideDuration(element) {
+function setTransitionDuration(element, property = 'all') {
   if (!element) return
-  if (element.dataset.slideDuration) return
+  const dataPropName = `${property}TransitionDuration`
+  if (element.dataset[dataPropName]) return parseInt(element.dataset[dataPropName])
   const transitionDurations = getTransitionDurations(element)
-  if (!transitionDurations.hasOwnProperty('height')) return
-  element.dataset.slideDuration = transitionDurations['height'].toString()
+  if (!transitionDurations.hasOwnProperty(property)) return
+  element.dataset[dataPropName] = transitionDurations[property].toString()
+  return transitionDurations[property]
 }
 
 /**
@@ -52,8 +54,7 @@ export function slideUp(element, callback) {
   clearTransitionTimer(element, 'height')
   const styles = getComputedStyle(element)
 
-  setSlideDuration(element)
-  if (!element.dataset.slideDuration) return
+  const duration = setTransitionDuration(element, 'height')
   
   element.style.overflow = 'hidden'
   if (styles.height !== 'auto') element.style.height = `${element.offsetHeight}px`
@@ -68,7 +69,7 @@ export function slideUp(element, callback) {
     element.style.removeProperty('overflow')
     clearTransitionTimer(element, 'height')
     if (isFunction(callback)) callback(element)
-  }, parseInt(element.dataset.slideDuration))
+  }, duration)
   element.dataset.heightTransitionTimer = timer.toString()
 }
 
@@ -87,8 +88,7 @@ export function slideDown(element, callback) {
   clearTransitionTimer(element, 'height')
   const styles = getComputedStyle(element)
 
-  setSlideDuration(element)
-  if (!element.dataset.slideDuration) return
+  const duration = setTransitionDuration(element, 'height')
 
   let oldHeight = parseInt(styles.height)
   if (isNaN(oldHeight)) oldHeight = 0
@@ -114,7 +114,7 @@ export function slideDown(element, callback) {
     element.style.removeProperty('overflow')
     clearTransitionTimer(element, 'height')
     if (isFunction(callback)) callback(element)
-  }, parseInt(element.dataset.slideDuration))
+  }, duration)
   element.dataset.heightTransitionTimer = timer.toString()
 }
 
@@ -132,8 +132,8 @@ export function slideToggle(element, callback) {
   if (!element) return
   const styles = getComputedStyle(element)
 
-  setSlideDuration(element)
-  if (!element.dataset.slideDuration) return
+  setTransitionDuration(element, 'height')
+  if (!element.dataset.heightTransitionDuration) return
 
   if (styles.display === 'none' || parseInt(styles.height) === 0) {
     slideDown(element, callback)
