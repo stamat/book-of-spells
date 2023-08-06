@@ -200,7 +200,7 @@ export function getHashProperties(entryHash) {
   const hash = entryHash ? entryHash : window.location.hash.replace('#', '')
   if (isEmpty(hash)) return {}
 
-  return parseUrlParams(hash, false)
+  return parseUrlParams(hash)
 }
 
 function onHashChange(callback) {
