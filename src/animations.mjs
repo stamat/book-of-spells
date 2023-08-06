@@ -1,5 +1,5 @@
 /**  
- * @module slide
+ * @module animations
  * @description
  * A collection of functions for sliding elements up and down.
  * Substitutes for jQuery's slideUp(), slideDown(), and slideToggle() functions.
@@ -139,3 +139,4 @@ export function slideToggle(element, callback) {
     slideUp(element, callback)
   }
 }
+
