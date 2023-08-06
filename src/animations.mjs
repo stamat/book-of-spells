@@ -231,3 +231,27 @@ export function fadeOut(element, callback) {
     if (isFunction(callback)) callback(element)
   })
 }
+
+/**
+ * Toggles the fade state of an element. The element must have a CSS transition set for the opacity property.
+ * The transition duration is used to determine how long the fade animation will take.
+ * Substitutes for jQuery's fadeToggle() function.
+ * 
+ * @param {HTMLElement} element
+ * @param {Function} [callback]
+ * @example
+ * fadeToggle(element)
+ */
+export function fadeToggle(element, callback) {
+  if (!element) return
+  const styles = getComputedStyle(element)
+
+  setTransitionDuration(element, 'opacity')
+  if (!element.dataset.opacityTransitionDuration) return
+
+  if (styles.display === 'none' || parseInt(styles.opacity) === 0) {
+    fadeIn(element, callback)
+  } else {
+    fadeOut(element, callback)
+  }
+}
