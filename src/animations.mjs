@@ -223,11 +223,13 @@ export function fadeOut(element, callback) {
 
   setTimeout(() => {
     element.style.opacity = 0
+    element.style.pointerEvents = 'none'
   }, 10)
 
   setTransitionTimer(element, 'opacity', duration, (element) => {
     element.style.display = 'none'
     element.style.opacity = ''
+    element.style.pointerEvents = ''
     if (isFunction(callback)) callback(element)
   })
 }
