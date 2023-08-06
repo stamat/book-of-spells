@@ -50,7 +50,6 @@ function setTransitionTimer(element, property = 'all', timeout, callback) {
   return timer
 }
 
-
 /**
  * Sets the slide duration of an element. The element must have a CSS transition set for the height property.
  * The CSS transition duration is used to determine how long the slide animation will take.
@@ -166,3 +165,69 @@ export function slideToggle(element, callback) {
   }
 }
 
+/**
+ * Fades in an element. The element must have a CSS transition set for the opacity property, and initial opacity to 0.
+ * The transition duration is used to determine how long the fade in animation will take.
+ * Substitutes for jQuery's fadeIn() function.
+ * 
+ * @param {HTMLElement} element
+ * @param {Function} [callback]
+ * @example
+ * fadeIn(element)
+ */
+export function fadeIn(element, callback) {
+  if (!element) return
+  clearTransitionTimer(element, 'opacity')
+  const styles = getComputedStyle(element)
+
+  const duration = setTransitionDuration(element, 'opacity')
+
+  let oldOpacity = parseInt(styles.opacity)
+  if (isNaN(oldOpacity)) oldOpacity = 0
+
+  if (element.hasAttribute('hidden')) element.removeAttribute('hidden')
+  element.style.pointerEvents = 'none'
+  if (!oldOpacity) element.style.visibility = 'hidden'
+  element.style.display = 'block'
+  element.style.opacity = oldOpacity ? oldOpacity : 0
+
+  setTimeout(() => {
+    element.style.opacity = 1
+    element.style.visibility = 'visible'
+    element.style.removeProperty('pointer-events')
+  }, 10)
+
+  setTransitionTimer(element, 'opacity', duration, (element) => {
+    if (isFunction(callback)) callback(element)
+  })
+}
+
+/**
+ * Fades out an element. The element must have a CSS transition set for the opacity property.
+ * The transition duration is used to determine how long the fade out animation will take.
+ * Substitutes for jQuery's fadeOut() function.
+ * 
+ * @param {HTMLElement} element
+ * @param {Function} [callback]
+ * @example
+ * fadeOut(element)
+ */
+export function fadeOut(element, callback) {
+  if (!element) return
+  clearTransitionTimer(element, 'opacity')
+  const styles = getComputedStyle(element)
+
+  const duration = setTransitionDuration(element, 'opacity')
+
+  element.style.opacity = styles.opacity
+
+  setTimeout(() => {
+    element.style.opacity = 0
+  }, 10)
+
+  setTransitionTimer(element, 'opacity', duration, (element) => {
+    element.style.display = 'none'
+    element.style.opacity = ''
+    if (isFunction(callback)) callback(element)
+  })
+}
