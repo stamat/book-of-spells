@@ -1,7 +1,8 @@
 /** @module browser */
 
-import { isEmpty, isFunction, stringToType } from './helpers.mjs'
+import { isEmpty, isFunction } from './helpers.mjs'
 import { css } from './dom.mjs'
+import { parseUrlParameters } from './parsers.mjs'
 
 export function isUserAgentIOS(str) {
   return /iPad|iPhone|iPod/i.test(str)
@@ -148,30 +149,6 @@ export function enableScroll(shift = 0) {
 }
 
 /**
- * Parses a string of url parameters into an object of key value pairs
- * 
- * @param {string} paramString - The string to parse without ? or # and with & as separator
- * @param {boolean} [decode=true] - Whether to decode the values or not
- * @returns {object} of key value pairs
- * @example
- * parseUrlParams('foo=true&baz=555') // { foo: true, baz: 555 }
- * parseUrlParams('foo=bar&baz=qux', false) // { foo: 'true', baz: '555' }
- */
-export function parseUrlParams(paramString, decode = true) {
-  const res = {}
-
-  const paramParts = paramString.split('&')
-  paramParts.forEach((part) => {
-    const m = part.match(/([^\s=&]+)=?([^&\s]+)?/)
-    const key = m[1]
-    const value = m[2]
-    res[key] = value !== undefined && decode ? stringToType(decodeURIComponent(value)) : value
-  })
-
-  return res
-}
-
-/**
  * Parses a string of url query parameters into an object of key value pairs. Converts the values to the correct type.
  * 
  * @param {string} [entryQuery] - Optional query string to parse, without the starting ?, defaults to window.location.search without the starting ?
@@ -184,7 +161,7 @@ export function getQueryProperties(entryQuery) {
   const query = entryQuery ? entryQuery : window.location.search.replace('?', '')
   if (isEmpty(query)) return {}
 
-  return parseUrlParams(query)
+  return parseUrlParameters(query)
 }
 
 /**
@@ -200,7 +177,7 @@ export function getHashProperties(entryHash) {
   const hash = entryHash ? entryHash : window.location.hash.replace('#', '')
   if (isEmpty(hash)) return {}
 
-  return parseUrlParams(hash)
+  return parseUrlParameters(hash)
 }
 
 function onHashChange(callback) {
