@@ -1,9 +1,13 @@
 /**  
  * @module animations
  * @description
- * A collection of functions for sliding elements up and down.
- * Substitutes for jQuery's slideUp(), slideDown(), and slideToggle() functions.
+ * A collection of functions animating element transitions.
+ * Substitutes for jQuery's "animation" functions slideUp(), slideDown(), slideToggle(), fadeIn(), fadeOut() functions.
  * Leans onto CSS transitions, reading the height transition duration and setting a timer based on that to clear the height property on animation end.
+ * There is a unique reason for this, for instance animating height is ony possible through max-height, and if the max-height, which can produce inconsistent
+ * animation duration depending on the element's actual height. Or, animating display none to display block, this can be done via opacity and pointer-events:none
+ * this means the element will have to overlay the screen but be inaccessible. This module provides "javascript wrappers" that substitute the shortcomings of
+ * the CSS transitions regarding these two cases.
  */
 
 import { getTransitionDurations } from './dom.mjs'
@@ -22,6 +26,30 @@ function clearTransitionTimer(element, property = 'all') {
   clearTimeout(parseInt(element.dataset[dataPropName]))
   delete element.dataset[dataPropName]
 }
+
+
+/**
+ * Assigning a timer for a selected property and binding the timerID in the element's property 
+ * for later retrieval for clearing
+ * 
+ * @param {HTMLElement} element 
+ * @param {string} [property='all'] 
+ * @param {number} timeout in milliseconds 
+ * @param {function} callback 
+ * @returns {number | null} timer ID if timer is successfully created
+ */
+function setTransitionTimer(element, property = 'all', timeout, callback) {
+  if (!element) return
+  const dataPropName = `${property}TransitionTimer`
+  const timer = setTimeout(() => {
+    clearTransitionTimer(element, property)
+    if (isFunction(callback)) callback(element)
+  }, timeout)
+  element.dataset[dataPropName] = timer.toString()
+
+  return timer
+}
+
 
 /**
  * Sets the slide duration of an element. The element must have a CSS transition set for the height property.
@@ -63,14 +91,12 @@ export function slideUp(element, callback) {
     element.style.height = `0px`
   }, 10)
 
-  const timer = setTimeout(() => {
+  setTransitionTimer(element, 'height', duration, (element) => {
     element.style.display = 'none'
     element.style.height = ''
     element.style.removeProperty('overflow')
-    clearTransitionTimer(element, 'height')
     if (isFunction(callback)) callback(element)
-  }, duration)
-  element.dataset.heightTransitionTimer = timer.toString()
+  })
 }
 
 /**
@@ -109,13 +135,11 @@ export function slideDown(element, callback) {
     element.style.removeProperty('pointer-events')
   }, 10)
 
-  const timer = setTimeout(() => {
+  setTransitionTimer(element, 'height', duration, (element) => {
     element.style.height = ''
     element.style.removeProperty('overflow')
-    clearTransitionTimer(element, 'height')
     if (isFunction(callback)) callback(element)
-  }, duration)
-  element.dataset.heightTransitionTimer = timer.toString()
+  })
 }
 
 /**
