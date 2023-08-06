@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>helpers.mjs - Documentation</title>
+    <title>animations.mjs - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,7 +29,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">helpers.mjs</h1>
+    <h1 class="page-title">animations.mjs</h1>
     
 
     
@@ -39,477 +39,262 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/**
- * Shallow merges two objects together. Used to pass simple options to functions.
- * 
- * @param {object} target The target object to merge into
- * @param {object} source The source object to merge from
- * @returns object The merged object
- * @example
- * const target = { foo: 'bar' }
- * const source = { bar: 'baz' }
- * shallowMerge(target, source) // { foo: 'bar', bar: 'baz' }
+            <pre class="prettyprint source linenums"><code>/**  
+ * @module animations
+ * @description
+ * A collection of functions animating element transitions.
+ * Substitutes for jQuery's "animation" functions slideUp(), slideDown(), slideToggle(), fadeIn(), fadeOut() functions.
+ * Leans onto CSS transitions, reading the height transition duration and setting a timer based on that to clear the height property on animation end.
+ * There is a unique reason for this, for instance animating height is ony possible through max-height, and if the max-height, which can produce inconsistent
+ * animation duration depending on the element's actual height. Or, animating display none to display block, this can be done via opacity and pointer-events:none
+ * this means the element will have to overlay the screen but be inaccessible. This module provides "javascript wrappers" that substitute the shortcomings of
+ * the CSS transitions regarding these two cases.
  */
-export function shallowMerge(target, source) {
-  for (const key in source) {
-    target[key] = source[key]
-  }
+
+import { getTransitionDurations } from './dom.mjs'
+import { isFunction } from './helpers.mjs'
+
+/**
+ * Clears the property transition timer of an element. Timer ID is stored in the element's dataset, under the propertyTransitionTimer key.
+ * 
+ * @param {HTMLElement} element
+ * @param {string} [property='all'] The property to clear the timer for. Defaults to 'all', thus the key in the dataset will be allTransitionTimer.
+ */
+function clearTransitionTimer(element, property = 'all') {
+  if (!element) return
+  const dataPropName = `${property}TransitionTimer`
+  if (!element.dataset[dataPropName]) return
+  clearTimeout(parseInt(element.dataset[dataPropName]))
+  delete element.dataset[dataPropName]
+}
+
+
+/**
+ * Assigning a timer for a selected property and binding the timerID in the element's property 
+ * for later retrieval for clearing
+ * 
+ * @param {HTMLElement} element 
+ * @param {string} [property='all'] 
+ * @param {number} timeout in milliseconds 
+ * @param {function} callback 
+ * @returns {number | null} timer ID if timer is successfully created
+ */
+function setTransitionTimer(element, property = 'all', timeout, callback) {
+  if (!element) return
+  const dataPropName = `${property}TransitionTimer`
+  const timer = setTimeout(() => {
+    clearTransitionTimer(element, property)
+    if (isFunction(callback)) callback(element)
+  }, timeout)
+  element.dataset[dataPropName] = timer.toString()
+
+  return timer
 }
 
 /**
- * Deep merge function that's mindful of arrays and objects
+ * Sets the slide duration of an element. The element must have a CSS transition set for the height property.
+ * The CSS transition duration is used to determine how long the slide animation will take.
  * 
- * @param {object} target The target object to merge into
- * @param {object} source The source object to merge from
- * @returns object The merged object
- * @example
- * const target = { foo: 'bar' }
- * const source = { bar: 'baz' }
- * deepMerge(target, source) // { foo: 'bar', bar: 'baz' }
+ * @param {HTMLElement} element
  */
-export function deepMerge(target, source) {
-  if (isObject(source) &amp;&amp; isObject(target)) {
-    for (const key in source) {
-      target[key] = deepMerge(target[key], source[key])
-    }
-  } else if (isArray(source) &amp;&amp; isArray(target)) {
-    for (let i = 0; i &lt; source.length; i++) {
-      target[i] = deepMerge(target[i], source[i])
-    }
-  } else {
-    target = source
-  }
-  return target
+function setTransitionDuration(element, property = 'all') {
+  if (!element) return
+  const dataPropName = `${property}TransitionDuration`
+  if (element.dataset[dataPropName]) return parseInt(element.dataset[dataPropName])
+  const transitionDurations = getTransitionDurations(element)
+  if (!transitionDurations.hasOwnProperty(property)) return
+  element.dataset[dataPropName] = transitionDurations[property].toString()
+  return transitionDurations[property]
 }
 
 /**
- * Deep clone function that's mindful of arrays and objects
+ * Slides up an element. The element must have a CSS transition set for the height property. 
+ * The transition duration is used to determine how long the slide up animation will take.
+ * Substitutes for jQuery's slideUp() function.
  * 
- * @param {object} o The object to clone
- * @returns object The cloned object
+ * @param {HTMLElement} element 
+ * @param {Function} [callback]
  * @example
- * const obj = { foo: 'bar' }
- * const clone = clone(obj)
- * clone.foo = 'baz'
- * console.log(obj.foo) // 'bar'
- * console.log(clone.foo) // 'baz'
- * console.log(obj === clone) // false
- * console.log(JSON.stringify(obj) === JSON.stringify(clone)) // true
- * @todo Check if faster than assign. This function is pretty old...
- */ 
-export function clone(o) {
-  let res = null
-  if (isArray(o)) {
-    res = []
-    for (const i in o) {
-      res[i] = clone(o[i])
-    }
-  } else if (isObject(o)) {
-    res = {}
-    for (const i in o) {
-      res[i] = clone(o[i])
-    }
-  } else {
-    res = o
-  }
-  return res
-}
-
-/**
- * Check if an object is empty
- * 
- * @param {object} o The object to check
- * @returns boolean True if the object is empty, false otherwise
- * @example
- * isEmptyObject({}) // => true
- * isEmptyObject({ foo: 'bar' }) // => false
+ * slideUp(element)
  */
-export function isEmptyObject(o) {
-  for (const i in o) {
-    return false
-  }
-  return true
-}
+export function slideUp(element, callback) {
+  if (!element) return
+  clearTransitionTimer(element, 'height')
+  const styles = getComputedStyle(element)
 
-/**
- * Check if an array is empty, substitute for Array.length === 0
- * 
- * @param {array} o The array to check
- * @returns boolean True if the array is empty, false otherwise
- * @example
- * isEmptyArray([]) // => true
- * isEmptyArray([1, 2, 3]) // => false
- */
-export function isEmptyArray(o) {
-  return o.length === 0
-}
+  const duration = setTransitionDuration(element, 'height')
+  
+  element.style.overflow = 'hidden'
+  if (styles.height !== 'auto') element.style.height = `${element.offsetHeight}px`
 
-/**
- * Check if a variable is empty
- * 
- * @param {any} o The variable to check
- * @returns boolean True if the variable is empty, false otherwise
- * @example
- * isEmpty({}) // => true
- * isEmpty([]) // => true
- * isEmpty('') // => true
- * isEmpty(null) // => false
- * isEmpty(undefined) // => false
- * isEmpty(0) // => false
- */
-export function isEmpty(o) {
-  if (isObject(o)) {
-    return isEmptyObject(o)
-  } else if (isArray(o)) {
-    return isEmptyArray(o)
-  } else if (isString(o)) {
-    return o === ''
-  }
-  return false
-}
+  setTimeout(() => {
+    element.style.height = `0px`
+  }, 10)
 
-/**
- * Try to convert a string to a boolean
- * 
- * @param {string} str The string to convert
- * @returns boolean The converted boolean or undefined if conversion failed
- * @example
- * stringToBoolean('true') // => true
- * stringToBoolean('false') // => false
- * stringToBoolean('foo') // => null
- */
-export function stringToBoolean(str) {
-  if (/^\s*(true|false)\s*$/i.test(str)) return str === 'true'
-}
-
-/**
- * Try to convert a string to a number
- * 
- * @param {string} str The string to convert
- * @returns number The converted number or undefined if conversion failed
- * @example
- * stringToNumber('1') // => 1
- * stringToNumber('1.5') // => 1.5
- * stringToNumber('foo') // => null
- * stringToNumber('1foo') // => null
- */
-export function stringToNumber(str) {
-  if (/^\s*\d+\s*$/.test(str)) return parseInt(str)
-  if (/^\s*[\d.]+\s*$/.test(str)) return parseFloat(str)
-}
-
-/**
- * Try to convert a string to an array
- * 
- * @param {string} str The string to convert
- * @returns array The converted array or undefined if conversion failed
- * @example
- * stringToArray('[1, 2, 3]') // => [1, 2, 3]
- * stringToArray('foo') // => null
- * stringToArray('1') // => null
- * stringToArray('{"foo": "bar"}') // => null
- */
-export function stringToArray(str) {
-  if (!/^\s*\[.*\]\s*$/.test(str)) return
-  try {
-    return JSON.parse(str)
-  } catch (e) {}
-}
-
-/**
- * Try to convert a string to an object
- * 
- * @param {string} str The string to convert
- * @returns object The converted object or undefined if conversion failed
- * @example
- * stringToObject('{ "foo": "bar" }') // => { foo: 'bar' }
- * stringToObject('foo') // => null
- * stringToObject('1') // => null
- * stringToObject('[1, 2, 3]') // => null
- */
-export function stringToObject(str) {
-  if (!/^\s*\{.*\}\s*$/.test(str)) return
-  try {
-    return JSON.parse(str)
-  } catch (e) {}
-}
-
-/**
- * Try to convert a string to a regex
- * 
- * @param {string} str The string to convert
- * @returns regex The converted regex or undefined if conversion failed
- * @example
- * stringToRegex('/foo/i') // => /foo/i
- * stringToRegex('foo') // => null
- * stringToRegex('1') // => null
- */
-export function stringToRegex(str) {
-  if (!/^\s*\/.*\/g?i?\s*$/.test(str)) return
-  try {
-    return new RegExp(str)
-  } catch (e) {}
-}
-
-/**
- * Try to convert a string to a primitive
- * 
- * @param {string} str The string to convert
- * @returns {null|boolean|int|float|string} The converted primitive or input string if conversion failed
- * @example
- * stringToPrimitive('null') // => null
- * stringToPrimitive('true') // => true
- * stringToPrimitive('false') // => false
- * stringToPrimitive('1') // => 1
- * stringToPrimitive('1.5') // => 1.5
- * stringToPrimitive('foo') // => 'foo'
- * stringToPrimitive('1foo') // => '1foo'
- */
-export function stringToPrimitive(str) {
-  if (/^\s*null\s*$/.test(str)) return null
-  const bool = stringToBoolean(str)
-  if (bool !== undefined) return bool
-  return stringToNumber(str) || str
-}
-
-/**
- * Try to convert a string to a data type
- * 
- * @param {string} str The string to convert
- * @returns any The converted data type or input string if conversion failed
- * @example
- * stringToData('null') // => null
- * stringToData('true') // => true
- * stringToData('false') // => false
- * stringToData('1') // => 1
- * stringToData('1.5') // => 1.5
- * stringToData('foo') // => 'foo'
- * stringToData('1foo') // => '1foo'
- * stringToData('[1, 2, 3]') // => [1, 2, 3]
- * stringToData('{ "foo": "bar" }') // => { foo: 'bar' }
- * stringToData('/foo/i') // => /foo/i
- */
-export function stringToType(str) {
-  if (/^\s*null\s*$/.test(str)) return null
-  const bool = stringToBoolean(str)
-  if (bool !== undefined) return bool
-  return stringToNumber(str) || stringToArray(str) || stringToObject(str) || stringToRegex(str) || str
-}
-
-/**
- * If provided variable is an object
- * 
- * @param {any} o 
- * @returns boolean
- * @example
- * isObject({}) // => true
- * isObject([]) // => false
- * isObject(null) // => false
- */
-export function isObject(o) {
-  return typeof o === 'object' &amp;&amp; !Array.isArray(o) &amp;&amp; o !== null
-}
-
-/**
- * If provided variable is an array. Just a wrapper for Array.isArray
- * 
- * @param {any} o
- * @returns boolean
- * @example
- * isArray([]) // => true
- * isArray({}) // => false
- */
-export function isArray(o) {
-  return Array.isArray(o)
-}
-
-/**
- * If provided variable is a string. Just a wrapper for typeof === 'string'
- * 
- * @param {any} o
- * @returns boolean
- * @example
- * isString('foo') // => true
- * isString({}) // => false
- */
-export function isString(o) {
-  return typeof o === 'string'
-}
-
-/**
- * If provided variable is a function, substitute for typeof === 'function'
- * 
- * @param {any} o
- * @returns boolean
- * @example
- * isFunction(function() {}) // => true
- * isFunction({}) // => false
- */
-export function isFunction(o) {
-  return typeof o === 'function'
-}
-
-/**
- * If object property is a function
- * 
- * @param {object} obj
- * @param {string} propertyName
- * @returns boolean
- * @example
- * const obj = { foo: 'bar', baz: function() {} }
- * propertyIsFunction(obj, 'foo') // => false
- * propertyIsFunction(obj, 'baz') // => true
- */
-export function propertyIsFunction(obj, propertyName) {
-  return obj.hasOwnProperty(propertyName) &amp;&amp; isFunction(obj[propertyName])
-}
-
-/**
- * If object property is a string
- * 
- * @param {object} obj
- * @param {string} propertyName
- * @returns boolean
- * @example
- * const obj = { foo: 'bar', baz: function() {} }
- * propertyIsString(obj, 'foo') // => true
- * propertyIsString(obj, 'baz') // => false
- */
-export function propertyIsString(obj, propertyName) {
-  return obj.hasOwnProperty(propertyName) &amp;&amp; isString(obj[propertyName])
-}
-
-/**
- * Transforms a dash-case string to camelCase
- *
- * @param {string} str
- * @returns boolean
- * @example
- * transformDashToCamelCase('foo-bar') // => 'fooBar'
- * transformDashToCamelCase('foo-bar-baz') // => 'fooBarBaz'
- * transformDashToCamelCase('foo') // => 'foo'
- * transformDashToCamelCase('fooBarBaz-qux') // => 'fooBarBazQux'
- */
-export function transformDashToCamelCase(str) {
-  return str.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase() });
-}
-
-/**
- * Maps an array of objects by a property name
- * 
- * @param {array} arr
- * @param {string} propertyName
- * @returns object
- * @example
- * const arr = [{ foo: 'bar' }, { foo: 'baz' }]
- * mapByProperty(arr, 'foo') // => { bar: { foo: 'bar' }, baz: { foo: 'baz' } }
- */
-export function mapByProperty(arr, propertyName) {
-  const res = {}
-  for (let i = 0; i &lt; arr.length; i++) {
-    res[arr[i][propertyName]] = arr[i]
-  }
-  return res
-}
-
-/**
- * Maps an array of objects by a property name to another property name
- * 
- * @param {array} arr
- * @param {string} keyPropertyName
- * @param {string} valuePropertyName
- * @returns object
- * @example
- * const arr = [{ foo: 'bar', baz: 'qux' }, { foo: 'quux', baz: 'corge' }]
- * mapPropertyToProperty(arr, 'foo', 'baz') // => { bar: 'qux', quux: 'corge' }
- */
-export function mapPropertyToProperty(arr, keyPropertyName, valuePropertyName) {
-  const res = {}
-  for (let i = 0; i &lt; arr.length; i++) {
-    res[arr[i][keyPropertyName]] = arr[i][valuePropertyName]
-  }
-  return res
-}
-
-/**
- * Remove accents from a string
- * 
- * @param {string} inputString
- * @returns string
- * @example
- * removeAccents('áéíóú') // => 'aeiou'
- * removeAccents('ÁÉÍÓÚ') // => 'AEIOU'
- * removeAccents('señor') // => 'senor'
- * removeAccents('Œ') // => 'OE'
- */
-export function removeAccents(inputString) {
-  return inputString.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\œ/g, "oe").replace(/\æ/g, "ae").normalize('NFC')
-}
-
-/**
- * Strip HTML tags from a string
- * 
- * @param {string} inputString
- * @returns string
- * @example
- * stripHTMLTags('&lt;span>foo&lt;/span>') // => 'foo'
- * stripHTMLTags('&lt;span>foo&lt;/span> &lt;span>bar&lt;/span>') // => 'foo bar'
- */
-export function stripHTMLTags(inputString) {
-  return inputString.replace(/&lt;[^>]*>/g, '')
-}
-
-/**
- * Slugify a string, e.g. 'Foo Bar' => 'foo-bar'. Similar to WordPress' sanitize_title(). Will remove accents and HTML tags.
- * 
- * @param {string} str 
- * @returns string
- * @example
- * slugify('Foo Bar') // => 'foo-bar'
- * slugify('Foo Bar &lt;span>baz&lt;/span>') // => 'foo-bar-baz'
- */
-export function slugify(str) {
-  str = str.trim().toLowerCase()
-  str = removeAccents(str)
-  str = stripHTMLTags(str)
-  return str.replace(/\s+|\.+|\/+|\\+|—+|–+/g, '-').replace(/[^\w0-9\-]+/g, '').replace(/-{2,}/g, '-').replace(/^-|-$/g, '')
-}
-
-/**
- * Check if object has multiple properties
- * 
- * @param {object} obj
- * @param {string|array} properties
- * @returns boolean
- * @example
- * const obj = { foo: 'bar', baz: 'qux' }
- * hasOwnProperties(obj, ['foo', 'baz']) // => true
- * hasOwnProperties(obj, ['foo', 'baz', 'qux']) // => false
- */
-export function hasOwnProperties(obj, properties) {
-  if(!isArray(properties)) properties = [properties]
-  for (let i = 0; i &lt; properties.length; i++) {
-    if (!obj.hasOwnProperty(properties[i])) return false
-  }
-  return true
-}
-
-/**
- * Finds the closest number to the set goal in an array to a given number
- * 
- * @param {number} goal Number to search for
- * @param {array} arr Array of numbers to search in
- * @returns number
- * @example
- * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9]) // => 9
- * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11]) // => 9
- * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 9.5]) // => 9.5
- * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11) // => 10
- */
-export function closestNumber(goal, arr) {
-  return arr.reduce(function(prev, curr) {
-    return Math.abs(curr - goal) &lt; Math.abs(prev - goal) ? curr : prev
+  setTransitionTimer(element, 'height', duration, (element) => {
+    element.style.display = 'none'
+    element.style.height = ''
+    element.style.removeProperty('overflow')
+    if (isFunction(callback)) callback(element)
   })
+}
+
+/**
+ * Slides down an element. The element must have a CSS transition set for the height property.
+ * The transition duration is used to determine how long the slide down animation will take.
+ * Substitutes for jQuery's slideDown() function.
+ * 
+ * @param {HTMLElement} element
+ * @param {Function} [callback]
+ * @example
+ * slideDown(element)
+ */
+export function slideDown(element, callback) {
+  if (!element) return
+  clearTransitionTimer(element, 'height')
+  const styles = getComputedStyle(element)
+
+  const duration = setTransitionDuration(element, 'height')
+
+  let oldHeight = parseInt(styles.height)
+  if (isNaN(oldHeight)) oldHeight = 0
+
+  if (element.hasAttribute('hidden')) element.removeAttribute('hidden')
+  element.style.pointerEvents = 'none'
+  if (!oldHeight) element.style.visibility = 'hidden'
+  element.style.display = 'block'
+  element.style.height = ''
+  element.style.overflow = 'hidden'
+  
+  const height = element.offsetHeight
+  element.style.height = oldHeight ? `${oldHeight}px` : '0px'
+
+  setTimeout(() => {
+    element.style.height = `${height}px`
+    element.style.visibility = 'visible'
+    element.style.removeProperty('pointer-events')
+  }, 10)
+
+  setTransitionTimer(element, 'height', duration, (element) => {
+    element.style.height = ''
+    element.style.removeProperty('overflow')
+    if (isFunction(callback)) callback(element)
+  })
+}
+
+/**
+ * Toggles the slide state of an element. The element must have a CSS transition set for the height property.
+ * The transition duration is used to determine how long the slide animation will take.
+ * Substitutes for jQuery's slideToggle() function.
+ * 
+ * @param {HTMLElement} element
+ * @param {Function} [callback]
+ * @example
+ * slideToggle(element)
+ */
+export function slideToggle(element, callback) {
+  if (!element) return
+  const styles = getComputedStyle(element)
+
+  setTransitionDuration(element, 'height')
+  if (!element.dataset.heightTransitionDuration) return
+
+  if (styles.display === 'none' || parseInt(styles.height) === 0) {
+    slideDown(element, callback)
+  } else {
+    slideUp(element, callback)
+  }
+}
+
+/**
+ * Fades in an element. The element must have a CSS transition set for the opacity property, and initial opacity to 0.
+ * The transition duration is used to determine how long the fade in animation will take.
+ * Substitutes for jQuery's fadeIn() function.
+ * 
+ * @param {HTMLElement} element
+ * @param {Function} [callback]
+ * @example
+ * fadeIn(element)
+ */
+export function fadeIn(element, callback) {
+  if (!element) return
+  clearTransitionTimer(element, 'opacity')
+  const styles = getComputedStyle(element)
+
+  const duration = setTransitionDuration(element, 'opacity')
+
+  let oldOpacity = parseInt(styles.opacity)
+  if (isNaN(oldOpacity)) oldOpacity = 0
+
+  if (element.hasAttribute('hidden')) element.removeAttribute('hidden')
+  element.style.pointerEvents = 'none'
+  if (!oldOpacity) element.style.visibility = 'hidden'
+  element.style.display = 'block'
+  element.style.opacity = oldOpacity ? oldOpacity : 0
+
+  setTimeout(() => {
+    element.style.opacity = 1
+    element.style.visibility = 'visible'
+    element.style.removeProperty('pointer-events')
+  }, 10)
+
+  setTransitionTimer(element, 'opacity', duration, (element) => {
+    if (isFunction(callback)) callback(element)
+  })
+}
+
+/**
+ * Fades out an element. The element must have a CSS transition set for the opacity property.
+ * The transition duration is used to determine how long the fade out animation will take.
+ * Substitutes for jQuery's fadeOut() function.
+ * 
+ * @param {HTMLElement} element
+ * @param {Function} [callback]
+ * @example
+ * fadeOut(element)
+ */
+export function fadeOut(element, callback) {
+  if (!element) return
+  clearTransitionTimer(element, 'opacity')
+  const styles = getComputedStyle(element)
+
+  const duration = setTransitionDuration(element, 'opacity')
+
+  element.style.opacity = styles.opacity
+
+  setTimeout(() => {
+    element.style.opacity = 0
+  }, 10)
+
+  setTransitionTimer(element, 'opacity', duration, (element) => {
+    element.style.display = 'none'
+    element.style.opacity = ''
+    if (isFunction(callback)) callback(element)
+  })
+}
+
+/**
+ * Toggles the fade state of an element. The element must have a CSS transition set for the opacity property.
+ * The transition duration is used to determine how long the fade animation will take.
+ * Substitutes for jQuery's fadeToggle() function.
+ * 
+ * @param {HTMLElement} element
+ * @param {Function} [callback]
+ * @example
+ * fadeToggle(element)
+ */
+export function fadeToggle(element, callback) {
+  if (!element) return
+  const styles = getComputedStyle(element)
+
+  setTransitionDuration(element, 'opacity')
+  if (!element.dataset.opacityTransitionDuration) return
+
+  if (styles.display === 'none' || parseInt(styles.opacity) === 0) {
+    fadeIn(element, callback)
+  } else {
+    fadeOut(element, callback)
+  }
 }
 </code></pre>
         </article>
