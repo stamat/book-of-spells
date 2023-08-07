@@ -127,22 +127,44 @@ export function getScrollbarWidth() {
 }
 
 /**
+ * Check if the vertical scrollbar is visible
+ * 
+ * @param {number} [scrollbarWidth] The width of the scrollbar, defaults to getScrollbarWidth()
+ * @returns {boolean} True if the vertical scrollbar is visible, false otherwise
+ */
+export function hasVerticalScrollbarVisible(scrollbarWidth) {
+  if (scrollbarWidth === undefined) scrollbarWidth = getScrollbarWidth()
+  return window.innerHeight < document.body.scrollHeight && scrollbarWidth > 0
+}
+
+/**
+ * Check if the horizontal scrollbar is visible
+ * 
+ * @param {number} [scrollbarWidth] The width of the scrollbar, defaults to getScrollbarWidth()
+ * @returns {boolean} True if the horizontal scrollbar is visible, false otherwise
+ */
+export function hasHorizontalScrollbarVisible(scrollbarWidth) {
+  if (scrollbarWidth === undefined) scrollbarWidth = getScrollbarWidth()
+  return window.innerWidth < document.body.scrollWidth && scrollbarWidth > 0
+}
+
+/**
  * Disable the scroll on the page.
  * 
- * @param {number} [shift=0] The amount of pixels to substitute for the scrollbar width, getScrollbarWidth() is used to provide this value
+ * @param {number} [shift=0] If greater than 0 the body will be shifted to the left by the width of the scrollbar, getScrollbarWidth() is used to provide this value  
  */
-export function disableScroll(shift = 0) {
+export function disableScroll(shift) {
   const body = document.body
+  if (shift && hasVerticalScrollbarVisible(shift)) body.style.paddingRight = `${shift}px`
   body.style.overflow = 'hidden'
-  body.style.paddingRight = `${shift}px`
 }
 
 /**
  * Enable the scroll on the page.
  * 
- * @param {number} [shift=0] The amount of pixels to substitute for the scrollbar width, getScrollbarWidth() is used to provide this value
+ * @param {boolean} [shift=0] If greater than 0 the body will be shifted back to the left by the width of the scrollbar, getScrollbarWidth() is used to provide this value
  */
-export function enableScroll(shift = 0) {
+export function enableScroll(shift) {
   const body = document.body
   body.style.overflow = ''
   if (shift) body.style.paddingRight = ''
