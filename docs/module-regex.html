@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>parsers.mjs - Documentation</title>
+    <title>regex - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,85 +29,673 @@
 
 <div id="main">
     
-    <h1 class="page-title">parsers.mjs</h1>
+    <h1 class="page-title">regex</h1>
     
 
     
 
 
 
+
+<section>
+
+<header>
     
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>/** @module parsers */
+</header>
 
-import { stringToType } from './helpers.mjs'
-import { RE_ATTRIBUTES, RE_ATTRIBUTE_WITHOUT_VALUE, RE_ATTRIBUTE_WITH_VALUE, RE_URL_PARAMETER, RE_FIRST_OR_LAST_QUOTE } from './regex.mjs'
+<article>
+    <div class="container-overview">
+    
+        
 
-/**
- * Parse a string of attributes and return an object
- * 
- * @param {string} str
- * @returns object
- * @example
- * parseAttributes('button text="Click me" data='{"key": \"value"}' class="btn btn-primary"')
- * // => { button: null, text: 'Click me', data: '{"key": "value"}', class: 'btn btn-primary' }
- */
-export function parseAttributes(str) {
-	const re = RE_ATTRIBUTES
-	const reWithoutValue = RE_ATTRIBUTE_WITHOUT_VALUE
-	const reHasValue = RE_ATTRIBUTE_WITH_VALUE
-	const reReplaceFirstAndLastQuote = RE_FIRST_OR_LAST_QUOTE
-	
-	const res = {}
-	const match = str.match(re)
+        
 
-	for (let i = 0; i &lt; match.length; i++) {
-		const m = match[i]
-		if (m === '') continue
 
-		if (reWithoutValue.test(m)) {
-			const [, key] = m.match(reWithoutValue)
-			res[key] = null
-			reWithoutValue.lastIndex = 0
-		} else if (reHasValue.test(m)) {
-			const [, key, value] = m.match(reHasValue)
-			res[key] = value.replace(reReplaceFirstAndLastQuote, '')
-			reReplaceFirstAndLastQuote.lastIndex = 0
-			reHasValue.lastIndex = 0
-		}
-	}
+<dl class="details">
 
-	return res
-}
+    
 
-/**
- * Parses a string of url parameters into an object of key value pairs
- * 
- * @param {string} paramString - The string to parse without ? or # and with &amp; as separator
- * @param {boolean} [decode=true] - Whether to decode the values or not
- * @returns {object} of key value pairs
- * @example
- * parseUrlParams('foo=true&amp;baz=555') // { foo: true, baz: 555 }
- * parseUrlParams('foo=bar&amp;baz=qux', false) // { foo: 'true', baz: '555' }
- */
-export function parseUrlParameters(paramString, decode = true) {
-  const res = {}
+    
 
-  const paramParts = paramString.split('&amp;')
-  paramParts.forEach((part) => {
-    const m = part.match(RE_URL_PARAMETER)
-    const key = m[1]
-    const value = m[2]
-    res[key] = value !== undefined &amp;&amp; decode ? stringToType(decodeURIComponent(value)) : value
-		RE_URL_PARAMETER.lastIndex = 0
-  })
+    
 
-  return res
-}
-</code></pre>
-        </article>
-    </section>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="regex.mjs.html">regex.mjs</a>, <a href="regex.mjs.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id=".RE_ATTRIBUTES"><span class="type-signature">(static, constant) </span>RE_ATTRIBUTES<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Regular expression for matching a HTML attribute and tag names, also for matching shortcode attributes and names</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="regex.mjs.html">regex.mjs</a>, <a href="regex.mjs.html#line33">line 33</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+</div>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id=".RE_ATTRIBUTE_WITHOUT_VALUE"><span class="type-signature">(static, constant) </span>RE_ATTRIBUTE_WITHOUT_VALUE<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Regular expression for matching a single attribute without value</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="regex.mjs.html">regex.mjs</a>, <a href="regex.mjs.html#line38">line 38</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+</div>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id=".RE_ATTRIBUTE_WITH_VALUE"><span class="type-signature">(static, constant) </span>RE_ATTRIBUTE_WITH_VALUE<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Regular expression for matching a single attribute with value</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="regex.mjs.html">regex.mjs</a>, <a href="regex.mjs.html#line43">line 43</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+</div>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id=".RE_FIRST_OR_LAST_QUOTE"><span class="type-signature">(static, constant) </span>RE_FIRST_OR_LAST_QUOTE<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Regular expression for matching the first or last quote of a string used for removing them</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="regex.mjs.html">regex.mjs</a>, <a href="regex.mjs.html#line48">line 48</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+</div>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id=".RE_IMAGE"><span class="type-signature">(static, constant) </span>RE_IMAGE<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Regular expression for matching a image URLs</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="regex.mjs.html">regex.mjs</a>, <a href="regex.mjs.html#line23">line 23</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+</div>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id=".RE_URL_PARAMETER"><span class="type-signature">(static, constant) </span>RE_URL_PARAMETER<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Regular expression for matching a URL parameters</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="regex.mjs.html">regex.mjs</a>, <a href="regex.mjs.html#line28">line 28</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+</div>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id=".RE_VIDEO"><span class="type-signature">(static, constant) </span>RE_VIDEO<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Regular expression for matching a video URLs</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="regex.mjs.html">regex.mjs</a>, <a href="regex.mjs.html#line18">line 18</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+</div>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id=".RE_VIMEO"><span class="type-signature">(static, constant) </span>RE_VIMEO<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Regular expression for matching a Vimeo video links and extracting their ID, works with both embed and watch URLs, channels and groups</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="regex.mjs.html">regex.mjs</a>, <a href="regex.mjs.html#line13">line 13</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+</div>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id=".RE_YOUTUBE"><span class="type-signature">(static, constant) </span>RE_YOUTUBE<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Regular expression for matching a YouTube video links and extracting their ID, works with both embed and watch URLs</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="regex.mjs.html">regex.mjs</a>, <a href="regex.mjs.html#line8">line 8</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+</div>
+
+        
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
 
 
 
