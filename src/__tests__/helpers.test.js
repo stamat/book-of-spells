@@ -14,6 +14,7 @@ const {
   isFunction,
   propertyIsFunction, 
   transformDashToCamelCase, 
+  transformCamelCaseToDash,
   stringToPrimitive,
   stringToType,
   mapByProperty,
@@ -150,6 +151,12 @@ test('transformDashToCamelCase', () => {
   expect(transformDashToCamelCase('foo-bar-baz')).toBe('fooBarBaz')
   expect(transformDashToCamelCase('foo-bar-baz-qux')).toBe('fooBarBazQux')
   expect(transformDashToCamelCase('fooBarBaz-qux')).toBe('fooBarBazQux')
+})
+
+test('transformCamelCaseToDash', () => {
+  expect(transformCamelCaseToDash('fooBarBaz')).toBe('foo-bar-baz')
+  expect(transformCamelCaseToDash('fooBarBazQux')).toBe('foo-bar-baz-qux')
+  expect(transformCamelCaseToDash('foo-bar-bazQux')).toBe('foo-bar-baz-qux')
 })
 
 test('stringToPrimitive', () => {

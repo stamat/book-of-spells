@@ -339,7 +339,7 @@ export function propertyIsString(obj, propertyName) {
 }
 
 /**
- * Transforms a dash-case string to camelCase
+ * Transforms a dash separated string to camelCase
  *
  * @param {string} str
  * @returns boolean
@@ -351,6 +351,21 @@ export function propertyIsString(obj, propertyName) {
  */
 export function transformDashToCamelCase(str) {
   return str.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase() });
+}
+
+/**
+ * Transforms a camelCase string to dash separated string
+ * 
+ * @param {string} str
+ * @returns boolean
+ * @example
+ * transformCamelCaseToDash('fooBar') // => 'foo-bar'
+ * transformCamelCaseToDash('fooBarBaz') // => 'foo-bar-baz'
+ * transformCamelCaseToDash('foo') // => 'foo'
+ * transformDashToCamelCase('fooBarBaz-qux') // => 'foo-bar-baz-qux'
+ */
+export function transformCamelCaseToDash(str) {
+  return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
 }
 
 /**
