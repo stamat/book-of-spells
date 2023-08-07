@@ -1,6 +1,7 @@
 /** @module parsers */
 
 import { stringToType } from './helpers.mjs'
+import { RE_ATTRIBUTES, RE_ATTRIBUTE_WITHOUT_VALUE, RE_ATTRIBUTE_WITH_VALUE, RE_URL_PARAMETER, RE_FIRST_OR_LAST_QUOTE } from './regex.mjs'
 
 /**
  * Parse a string of attributes and return an object
@@ -12,10 +13,10 @@ import { stringToType } from './helpers.mjs'
  * // => { button: null, text: 'Click me', data: '{"key": "value"}', class: 'btn btn-primary' }
  */
 export function parseAttributes(str) {
-	const re = /\s*(?:([a-z_]{1}[a-z0-9\-_]*)=?(?:"([^"]+)"|'([^']+)')*)\s*/gi
-	const reWithoutValue = /^\s*([a-z_]{1}[a-z0-9\-_]*)\s*$/i
-	const reHasValue = /^\s*([a-z_]{1}[a-z0-9\-_]*)=("[^"]+"|'[^']+')\s*$/i
-	const reReplaceFirstAndLastQuote = /^["']|["']$/g
+	const re = RE_ATTRIBUTES
+	const reWithoutValue = RE_ATTRIBUTE_WITHOUT_VALUE
+	const reHasValue = RE_ATTRIBUTE_WITH_VALUE
+	const reReplaceFirstAndLastQuote = RE_FIRST_OR_LAST_QUOTE
 	
 	const res = {}
 	const match = str.match(re)
@@ -54,10 +55,11 @@ export function parseUrlParameters(paramString, decode = true) {
 
   const paramParts = paramString.split('&')
   paramParts.forEach((part) => {
-    const m = part.match(/([^\s=&]+)=?([^&\s]+)?/)
+    const m = part.match(RE_URL_PARAMETER)
     const key = m[1]
     const value = m[2]
     res[key] = value !== undefined && decode ? stringToType(decodeURIComponent(value)) : value
+		RE_URL_PARAMETER.lastIndex = 0
   })
 
   return res
