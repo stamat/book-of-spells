@@ -211,13 +211,17 @@ function onHashChange(callback) {
  * Add a callback function to the hash change event
  * 
  * @param {function} callback - The callback function to call when the hash changes
+ * @param {string} [single] - Optional string to make sure the listener is initialized only once, defaults to window[single] which is set to true after the first call
  * @example
  * hashChange((hash) => {
  * // Do something with the hash
  * })
  */
-export function hashChange(callback) {
+export function hashChange(callback, single) {
   onHashChange(callback)
+  
+  if (single && window[single]) return
+  if (single) window[single] = true
   
   window.addEventListener('hashchange', () => {
     onHashChange(callback)
