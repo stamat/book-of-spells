@@ -372,14 +372,15 @@ export function getTableData(selector, headers, rowSelector = 'tr', cellSelector
  * Parses HTML string to a DOM Node
  * 
  * @param {string} html The HTML string to parse
+ * @param {boolean} [allChildren=false] If true, all children of the body will be returned, otherwise only the first child
  * @returns {Node} The parsed DOM Node
  * @example
  * parseDOM('<div>foo</div>')
  */
-export function parseDOM(html) {
+export function parseDOM(html, allChildren) {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
-  return doc.body.firstChild
+  return !allChildren ? doc.body.firstChild : doc.body.childNodes
 }
 
 /**
@@ -397,4 +398,88 @@ export function loadImage(src, callback) {
   if (callback)
     img.addEventListener('load', callback, false);
   img.src = src
+}
+
+/**
+ * Delegate DOM events using MutationObserver with a fallback to document.addEventListener
+ * 
+ * @param {string} selector The selector to select the elements to delegate the event to
+ * @param {string} eventType The event type to delegate, like `click`
+ * @param {Function} handler The handler to call when the event is triggered.
+ * @returns {MutationObserver | null} The MutationObserver instance
+ * @example
+ * delegateEvent('.foo', 'click', (e, target) => {
+ * console.log('Clicked on', target)
+ * })
+ */
+export function delegateEvent(selector, eventType, handler) {
+  if (typeof MutationObserver === 'undefined') {
+    document.addEventListener(eventType, (e) => {
+      const target = e.target.closest(selector)
+      if (target) handler(e, target)
+    })
+
+    return null
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (!(node instanceof HTMLElement)) continue
+        if (!node.matches(selector)) continue
+        node.addEventListener(eventType, (e) => {
+          handler(e, e.currentTarget)
+        })
+      }
+    }
+  })
+
+  for (const node of document.querySelectorAll(selector)) {
+    node.addEventListener(eventType, (e) => {
+      handler(e, e.currentTarget)
+    })
+  }
+
+  observer.observe(document.body, { childList: true })
+  return observer
+}
+
+/**
+ * Run a handler on selected elements and on elements added to the DOM with the same selector, 
+ * or can be delegateEvent alias.
+ * 
+ * @param {string} selector The selector to select the elements to run the handler on
+ * @param {string | Function} eventTypeOrHandler The event type to delegate, like `click`, or the handler to call on every element
+ * @param {Function} [handler] The handler to call when the event is triggered.
+ * @returns {MutationObserver | null} The MutationObserver instance
+ * @see delegateEvent
+ * @example
+ * on('.foo', (el) => {
+ * console.log('Element', el, 'added to the DOM')
+ * })
+ * 
+ * on('.foo', 'click', (e, target) => {
+ * console.log('Clicked on', target)
+ * })
+ */
+export function on(selector, eventTypeOrHandler, handler) {
+  if (isString(eventTypeOrHandler)) {
+    return delegateEvent(selector, eventTypeOrHandler, handler)
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (!(node instanceof HTMLElement)) continue
+        if (!node.matches(selector)) continue
+        eventTypeOrHandler(node)
+      }
+    }
+  })
+
+  for (const node of document.querySelectorAll(selector)) {
+    eventTypeOrHandler(node)
+  }
+
+  return observer
 }
