@@ -1,6 +1,5 @@
 {
   "name": "book-of-spells",
-  "version": "1.0.9",
   "description": "📖 Stamat's Book of JavaScript Spells",
   "main": "index.mjs",
   "author": "Nikola Stamatovic <@stamat>",
@@ -16,5 +15,6 @@
     "jsdoc": "^4.0.2",
     "minami": "^1.2.3",
     "taffydb": "^2.7.3"
-  }
+  },
+  "version": "1.0.9"
 }
