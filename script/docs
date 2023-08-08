@@ -1,19 +1,11 @@
 #!/usr/bin/env node
 
-const { exec } = require('child_process')
-
-function execCallback(err, stdout, stderr) {
-  if (err) {
-    console.error(err)
-    return
-  }
-  console.log(stdout)
-  console.log(stderr)
-}
+const { execSync } = require('child_process')
 
 function run(cmd) {
   console.log(cmd)
-  exec(cmd, execCallback)
+  const out = execSync(cmd)
+  console.log(out.toString())
 }
 
 run('npx jsdoc --configure jsdoc.json --verbose')
