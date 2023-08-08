@@ -1,11 +1,3 @@
-#!/usr/bin/env node
+#!/bin/bash
 
-const { execSync } = require('child_process')
-
-function run(cmd) {
-  console.log(cmd)
-  const out = execSync(cmd)
-  console.log(out.toString())
-}
-
-run('npx jsdoc --configure jsdoc.json --verbose')
+npx jsdoc --configure jsdoc.json --verbose
