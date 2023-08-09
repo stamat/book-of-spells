@@ -73,10 +73,11 @@ function setTransitionDuration(element, property = 'all') {
  * 
  * @param {HTMLElement} element 
  * @param {Function} [callback]
+ * @param {Function} [transitionStartCallback] callback function to be called when the transition starts
  * @example
  * slideUp(element)
  */
-export function slideUp(element, callback) {
+export function slideUp(element, callback, transitionStartCallback) {
   if (!element) return
   clearTransitionTimer(element, 'height')
   const styles = getComputedStyle(element)
@@ -88,6 +89,7 @@ export function slideUp(element, callback) {
 
   setTimeout(() => {
     element.style.height = `0px`
+    if (isFunction(transitionStartCallback)) transitionStartCallback(element)
   }, 10)
 
   setTransitionTimer(element, 'height', duration, (element) => {
@@ -104,11 +106,12 @@ export function slideUp(element, callback) {
  * Substitutes for jQuery's slideDown() function.
  * 
  * @param {HTMLElement} element
- * @param {Function} [callback]
+ * @param {Function} [callback] callback function to be called when the transition ends
+ * @param {Function} [transitionStartCallback] callback function to be called when the transition starts
  * @example
  * slideDown(element)
  */
-export function slideDown(element, callback) {
+export function slideDown(element, callback, transitionStartCallback) {
   if (!element) return
   clearTransitionTimer(element, 'height')
   const styles = getComputedStyle(element)
@@ -132,6 +135,7 @@ export function slideDown(element, callback) {
     element.style.height = `${height}px`
     element.style.visibility = 'visible'
     element.style.removeProperty('pointer-events')
+    if (isFunction(transitionStartCallback)) transitionStartCallback(element)
   }, 10)
 
   setTransitionTimer(element, 'height', duration, (element) => {
@@ -147,11 +151,12 @@ export function slideDown(element, callback) {
  * Substitutes for jQuery's slideToggle() function.
  * 
  * @param {HTMLElement} element
- * @param {Function} [callback]
+ * @param {Function} [callback] callback function to be called when the transition ends
+ * @param {Function} [transitionStartCallback] callback function to be called when the transition starts
  * @example
  * slideToggle(element)
  */
-export function slideToggle(element, callback) {
+export function slideToggle(element, callback, transitionStartCallback) {
   if (!element) return
   const styles = getComputedStyle(element)
 
@@ -159,9 +164,9 @@ export function slideToggle(element, callback) {
   if (!element.dataset.heightTransitionDuration) return
 
   if (styles.display === 'none' || parseInt(styles.height) === 0) {
-    slideDown(element, callback)
+    slideDown(element, callback, transitionStartCallback)
   } else {
-    slideUp(element, callback)
+    slideUp(element, callback, transitionStartCallback)
   }
 }
 
@@ -171,11 +176,12 @@ export function slideToggle(element, callback) {
  * Substitutes for jQuery's fadeIn() function.
  * 
  * @param {HTMLElement} element
- * @param {Function} [callback]
+ * @param {Function} [callback] callback function to be called when the transition ends
+ * @param {Function} [transitionStartCallback] callback function to be called when the transition starts
  * @example
  * fadeIn(element)
  */
-export function fadeIn(element, callback) {
+export function fadeIn(element, callback, transitionStartCallback) {
   if (!element) return
   clearTransitionTimer(element, 'opacity')
   const styles = getComputedStyle(element)
@@ -195,6 +201,7 @@ export function fadeIn(element, callback) {
     element.style.opacity = 1
     element.style.visibility = 'visible'
     element.style.removeProperty('pointer-events')
+    if (isFunction(transitionStartCallback)) transitionStartCallback(element)
   }, 10)
 
   setTransitionTimer(element, 'opacity', duration, (element) => {
@@ -208,11 +215,12 @@ export function fadeIn(element, callback) {
  * Substitutes for jQuery's fadeOut() function.
  * 
  * @param {HTMLElement} element
- * @param {Function} [callback]
+ * @param {Function} [callback] callback function to be called when the transition ends
+ * @param {Function} [transitionStartCallback] callback function to be called when the transition starts
  * @example
  * fadeOut(element)
  */
-export function fadeOut(element, callback) {
+export function fadeOut(element, callback, transitionStartCallback) {
   if (!element) return
   clearTransitionTimer(element, 'opacity')
   const styles = getComputedStyle(element)
@@ -224,6 +232,7 @@ export function fadeOut(element, callback) {
   setTimeout(() => {
     element.style.opacity = 0
     element.style.pointerEvents = 'none'
+    if (isFunction(transitionStartCallback)) transitionStartCallback(element)
   }, 10)
 
   setTransitionTimer(element, 'opacity', duration, (element) => {
@@ -240,11 +249,12 @@ export function fadeOut(element, callback) {
  * Substitutes for jQuery's fadeToggle() function.
  * 
  * @param {HTMLElement} element
- * @param {Function} [callback]
+ * @param {Function} [callback] callback function to be called when the transition ends
+ * @param {Function} [transitionStartCallback] callback function to be called when the transition starts
  * @example
  * fadeToggle(element)
  */
-export function fadeToggle(element, callback) {
+export function fadeToggle(element, callback, transitionStartCallback) {
   if (!element) return
   const styles = getComputedStyle(element)
 
@@ -252,8 +262,8 @@ export function fadeToggle(element, callback) {
   if (!element.dataset.opacityTransitionDuration) return
 
   if (styles.display === 'none' || parseInt(styles.opacity) === 0) {
-    fadeIn(element, callback)
+    fadeIn(element, callback, transitionStartCallback)
   } else {
-    fadeOut(element, callback)
+    fadeOut(element, callback, transitionStartCallback)
   }
 }
