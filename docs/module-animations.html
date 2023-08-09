@@ -125,7 +125,7 @@ the CSS transitions regarding these two cases.</p></div>
 
     
 
-    <h4 class="name" id=".fadeIn"><span class="type-signature">(static) </span>fadeIn<span class="signature">(element, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".fadeIn"><span class="type-signature">(static) </span>fadeIn<span class="signature">(element, callback<span class="signature-attributes">opt</span>, transitionStartCallback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -170,7 +170,7 @@ Substitutes for jQuery's fadeIn() function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line178">line 178</a>
+        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line184">line 184</a>
     </li></ul></dd>
     
 
@@ -277,7 +277,43 @@ Substitutes for jQuery's fadeIn() function.</p>
             
 
             <td class="description last">
+                <p>callback function to be called when the transition ends</p>
                 
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>transitionStartCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>function</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <p>callback function to be called when the transition starts</p>
                 
             </td>
         </tr>
@@ -315,7 +351,7 @@ Substitutes for jQuery's fadeIn() function.</p>
 
     
 
-    <h4 class="name" id=".fadeOut"><span class="type-signature">(static) </span>fadeOut<span class="signature">(element, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".fadeOut"><span class="type-signature">(static) </span>fadeOut<span class="signature">(element, callback<span class="signature-attributes">opt</span>, transitionStartCallback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -360,7 +396,7 @@ Substitutes for jQuery's fadeOut() function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line215">line 215</a>
+        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line223">line 223</a>
     </li></ul></dd>
     
 
@@ -467,7 +503,43 @@ Substitutes for jQuery's fadeOut() function.</p>
             
 
             <td class="description last">
+                <p>callback function to be called when the transition ends</p>
                 
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>transitionStartCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>function</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <p>callback function to be called when the transition starts</p>
                 
             </td>
         </tr>
@@ -505,7 +577,7 @@ Substitutes for jQuery's fadeOut() function.</p>
 
     
 
-    <h4 class="name" id=".fadeToggle"><span class="type-signature">(static) </span>fadeToggle<span class="signature">(element, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".fadeToggle"><span class="type-signature">(static) </span>fadeToggle<span class="signature">(element, callback<span class="signature-attributes">opt</span>, transitionStartCallback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -550,7 +622,7 @@ Substitutes for jQuery's fadeToggle() function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line247">line 247</a>
+        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line257">line 257</a>
     </li></ul></dd>
     
 
@@ -657,7 +729,43 @@ Substitutes for jQuery's fadeToggle() function.</p>
             
 
             <td class="description last">
+                <p>callback function to be called when the transition ends</p>
                 
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>transitionStartCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>function</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <p>callback function to be called when the transition starts</p>
                 
             </td>
         </tr>
@@ -695,7 +803,7 @@ Substitutes for jQuery's fadeToggle() function.</p>
 
     
 
-    <h4 class="name" id=".slideDown"><span class="type-signature">(static) </span>slideDown<span class="signature">(element, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".slideDown"><span class="type-signature">(static) </span>slideDown<span class="signature">(element, callback<span class="signature-attributes">opt</span>, transitionStartCallback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -740,7 +848,7 @@ Substitutes for jQuery's slideDown() function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line111">line 111</a>
+        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line114">line 114</a>
     </li></ul></dd>
     
 
@@ -847,7 +955,43 @@ Substitutes for jQuery's slideDown() function.</p>
             
 
             <td class="description last">
+                <p>callback function to be called when the transition ends</p>
                 
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>transitionStartCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>function</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <p>callback function to be called when the transition starts</p>
                 
             </td>
         </tr>
@@ -885,7 +1029,7 @@ Substitutes for jQuery's slideDown() function.</p>
 
     
 
-    <h4 class="name" id=".slideToggle"><span class="type-signature">(static) </span>slideToggle<span class="signature">(element, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".slideToggle"><span class="type-signature">(static) </span>slideToggle<span class="signature">(element, callback<span class="signature-attributes">opt</span>, transitionStartCallback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -930,7 +1074,7 @@ Substitutes for jQuery's slideToggle() function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line154">line 154</a>
+        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line159">line 159</a>
     </li></ul></dd>
     
 
@@ -1037,7 +1181,43 @@ Substitutes for jQuery's slideToggle() function.</p>
             
 
             <td class="description last">
+                <p>callback function to be called when the transition ends</p>
                 
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>transitionStartCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>function</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <p>callback function to be called when the transition starts</p>
                 
             </td>
         </tr>
@@ -1075,7 +1255,7 @@ Substitutes for jQuery's slideToggle() function.</p>
 
     
 
-    <h4 class="name" id=".slideUp"><span class="type-signature">(static) </span>slideUp<span class="signature">(element, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".slideUp"><span class="type-signature">(static) </span>slideUp<span class="signature">(element, callback<span class="signature-attributes">opt</span>, transitionStartCallback<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -1120,7 +1300,7 @@ Substitutes for jQuery's slideUp() function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line79">line 79</a>
+        <a href="animations.mjs.html">animations.mjs</a>, <a href="animations.mjs.html#line80">line 80</a>
     </li></ul></dd>
     
 
@@ -1228,6 +1408,42 @@ Substitutes for jQuery's slideUp() function.</p>
 
             <td class="description last">
                 
+                
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>transitionStartCallback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>function</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <p>callback function to be called when the transition starts</p>
                 
             </td>
         </tr>
@@ -1904,7 +2120,7 @@ for later retrieval for clearing</p>
 <br class="clear">
 
 <footer>
-    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Tue Aug 08 2023 20:49:34 GMT+0200 (Central European Summer Time) using the Minami theme.
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a> on Wed Aug 09 2023 13:57:45 GMT+0200 (Central European Summer Time) using the Minami theme.
 </footer>
 
 <script>prettyPrint();</script>
