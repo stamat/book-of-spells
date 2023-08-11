@@ -23,6 +23,7 @@ const {
   removeAccents,
   stripHTMLTags,
   closestNumber,
+  truncateString,
 } = require('../helpers')
 
 const a = { 
@@ -217,4 +218,12 @@ test('closestNumber', () => {
   expect(closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11])).toBe(9)
   expect(closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 9.5])).toBe(9.5)
   expect(closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])).toBe(10)
+})
+
+test('truncateString', () => {
+  expect(truncateString('foo bar baz', 1)).toBe('foo…')
+  expect(truncateString('foo bar baz', 2)).toBe('foo bar…')
+  expect(truncateString('foo bar baz', 3)).toBe('foo bar baz')
+  expect(truncateString('foo bar baz', 4)).toBe('foo bar baz')
+  expect(truncateString('foo bar? baz', 2, '...')).toBe('foo bar? ...')
 })

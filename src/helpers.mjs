@@ -485,3 +485,23 @@ export function closestNumber(goal, arr) {
     return Math.abs(curr - goal) < Math.abs(prev - goal) ? curr : prev
   })
 }
+
+/**
+ * Truncate a string to a given number of words
+ * 
+ * @param {string} str String to truncate
+ * @param {number} numWords Number of words to truncate to
+ * @param {string} ellipsis Ellipsis to append to the end of the string
+ * @returns string
+ * @example
+ * truncateString('foo bar baz', 2) // => 'foo bar…'
+ * truncateString('foo bar baz', 2, '...') // => 'foo bar...'
+ * truncateString('foo bar. baz', 2, '...') // => 'foo bar. ...'
+ */
+export function truncateString(str, numWords, ellipsis = '…') {
+  const words = str.trim().split(' ')
+  if (words.length <= numWords) return str
+  if (numWords <= 0) return ''
+  if (/[.?!]$/.test(words[numWords - 1]) && ellipsis.trim() !== '') ellipsis = ` ${ellipsis}`
+  return words.slice(0, numWords).join(' ') + ellipsis
+}
