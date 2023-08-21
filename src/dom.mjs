@@ -440,7 +440,7 @@ export function delegateEvent(selector, eventType, handler) {
     })
   }
 
-  observer.observe(document.body, { childList: true })
+  observer.observe(document.body, { childList: true})
   return observer
 }
 
@@ -469,6 +469,8 @@ export function on(selector, eventTypeOrHandler, handler) {
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
+      console.log(mutation)
+
       for (const node of mutation.addedNodes) {
         if (!(node instanceof HTMLElement)) continue
         if (!node.matches(selector)) continue
@@ -480,6 +482,8 @@ export function on(selector, eventTypeOrHandler, handler) {
   for (const node of document.querySelectorAll(selector)) {
     eventTypeOrHandler(node)
   }
+
+  observer.observe(document.body, { childList: true })
 
   return observer
 }
