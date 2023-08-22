@@ -426,7 +426,16 @@ export function delegateEvent(selector, eventType, handler) {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (!(node instanceof HTMLElement)) continue
-        if (!node.matches(selector)) continue
+        if (!node.matches(selector)) {
+          const subNodes = node.querySelectorAll(selector)
+          if (!subNodes.length) continue
+          subNodes.forEach((subNode) => {
+            subNode.addEventListener(eventType, (e) => {
+              handler(e, e.currentTarget)
+            })
+          })
+          continue
+        }
         node.addEventListener(eventType, (e) => {
           handler(e, e.currentTarget)
         })
@@ -440,7 +449,7 @@ export function delegateEvent(selector, eventType, handler) {
     })
   }
 
-  observer.observe(document.body, { childList: true})
+  observer.observe(document.body, { childList: true, subtree: true })
   return observer
 }
 
@@ -469,11 +478,14 @@ export function on(selector, eventTypeOrHandler, handler) {
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      console.log(mutation)
-
       for (const node of mutation.addedNodes) {
         if (!(node instanceof HTMLElement)) continue
-        if (!node.matches(selector)) continue
+        if (!node.matches(selector)) {
+          const subNodes = node.querySelectorAll(selector)
+          if (!subNodes.length) continue
+          subNodes.forEach(eventTypeOrHandler)
+          continue
+        }
         eventTypeOrHandler(node)
       }
     }
@@ -483,7 +495,7 @@ export function on(selector, eventTypeOrHandler, handler) {
     eventTypeOrHandler(node)
   }
 
-  observer.observe(document.body, { childList: true })
+  observer.observe(document.body, { childList: true, subtree: true })
 
   return observer
 }
