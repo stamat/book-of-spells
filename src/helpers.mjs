@@ -505,3 +505,22 @@ export function truncateString(str, numWords, ellipsis = '…') {
   if (/[.?!]$/.test(words[numWords - 1]) && ellipsis.trim() !== '') ellipsis = ` ${ellipsis}`
   return words.slice(0, numWords).join(' ') + ellipsis
 }
+
+/**
+ * Generates a random integer between two values, inclusive of both
+ * 
+ * @param {number} min Minimum value
+ * @param {number} max Maximum value
+ * @returns number
+ * @example
+ * randomIntInclusive(1, 10) // => 1
+ * randomIntInclusive(1, 10) // => 10
+ * randomIntInclusive(1, 10) // => 5
+ */
+export function randomIntInclusive(min, max) {
+  if (min > max) [min, max] = [max, min]
+  if (min === max) return min
+  min = Math.ceil(min)
+  max = Math.floor(max)
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}

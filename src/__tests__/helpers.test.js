@@ -24,6 +24,7 @@ const {
   stripHTMLTags,
   closestNumber,
   truncateString,
+  randomIntInclusive
 } = require('../helpers')
 
 const a = { 
@@ -226,4 +227,24 @@ test('truncateString', () => {
   expect(truncateString('foo bar baz', 3)).toBe('foo bar baz')
   expect(truncateString('foo bar baz', 4)).toBe('foo bar baz')
   expect(truncateString('foo bar? baz', 2, '...')).toBe('foo bar? ...')
+})
+
+test('randomIntInclusive', () => {
+  expect(randomIntInclusive(1, 1)).toBe(1)
+
+  let randomInt = randomIntInclusive(1, 2)
+  expect(randomInt).toBeGreaterThanOrEqual(1)
+  expect(randomInt).toBeLessThanOrEqual(2)
+
+  randomInt = randomIntInclusive(1, 3)
+  expect(randomInt).toBeGreaterThanOrEqual(1)
+  expect(randomInt).toBeLessThanOrEqual(3)
+
+  randomInt = randomIntInclusive(3, 1)
+  expect(randomInt).toBeGreaterThanOrEqual(1)
+  expect(randomInt).toBeLessThanOrEqual(3)
+  
+  randomInt = randomIntInclusive(-5, 5)
+  expect(randomInt).toBeGreaterThanOrEqual(-5)
+  expect(randomInt).toBeLessThanOrEqual(5)
 })
