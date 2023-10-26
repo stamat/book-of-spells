@@ -426,16 +426,7 @@ export function delegateEvent(selector, eventType, handler) {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (!(node instanceof HTMLElement)) continue
-        if (!node.matches(selector)) {
-          const subNodes = node.querySelectorAll(selector)
-          if (!subNodes.length) continue
-          subNodes.forEach((subNode) => {
-            subNode.addEventListener(eventType, (e) => {
-              handler(e, e.currentTarget)
-            })
-          })
-          continue
-        }
+        if (!node.matches(selector)) continue
         node.addEventListener(eventType, (e) => {
           handler(e, e.currentTarget)
         })
@@ -480,12 +471,7 @@ export function on(selector, eventTypeOrHandler, handler) {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (!(node instanceof HTMLElement)) continue
-        if (!node.matches(selector)) {
-          const subNodes = node.querySelectorAll(selector)
-          if (!subNodes.length) continue
-          subNodes.forEach(eventTypeOrHandler)
-          continue
-        }
+        if (!node.matches(selector)) continue
         eventTypeOrHandler(node)
       }
     }
