@@ -485,3 +485,25 @@ export function on(selector, eventTypeOrHandler, handler) {
 
   return observer
 }
+
+/**
+ * Adds multiple event listeners to elements
+ * 
+ * @param {string|HTMLElement|NodeList} selector The selector to select the elements to add the event listeners to
+ * @param {string|Array<string>} events The event types to add the event listeners for, like `click mouseenter`
+ * @param {Function} handler The handler to call when the event is triggered.
+ * @example
+ * addListenerForEvents('.foo', 'click mouseenter', (e) => { console.log(e.type) })
+ */
+export function addListenerForEvents(selector, events, handler) {
+  if (typeof selector === 'string') selector = query(selector)
+  if (selector instanceof NodeList) selector = Array.from(selector)
+  if (selector instanceof Element) selector = [selector]
+
+  const eventTypes = isArray(events) ? events : events.split(' ')
+  for (const element of elements) {
+    for (const eventType of eventTypes) {
+      element.addEventListener(eventType, handler)
+    }
+  }
+}
