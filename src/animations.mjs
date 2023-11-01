@@ -119,7 +119,7 @@ export function slideDown(element, callback, transitionStartCallback) {
   const duration = setTransitionDuration(element, 'height')
 
   let oldHeight = parseInt(styles.height)
-  if (isNaN(oldHeight)) oldHeight = 0
+  if (Number.isNaN(oldHeight)) oldHeight = 0
 
   if (element.hasAttribute('hidden')) element.removeAttribute('hidden')
   element.style.pointerEvents = 'none'
@@ -189,7 +189,7 @@ export function fadeIn(element, callback, transitionStartCallback) {
   const duration = setTransitionDuration(element, 'opacity')
 
   let oldOpacity = parseInt(styles.opacity)
-  if (isNaN(oldOpacity)) oldOpacity = 0
+  if (Number.isNaN(oldOpacity)) oldOpacity = 0
 
   if (element.hasAttribute('hidden')) element.removeAttribute('hidden')
   element.style.pointerEvents = 'none'
