@@ -501,7 +501,7 @@ export function addListenerForEvents(selector, events, handler) {
   if (selector instanceof Element) selector = [selector]
 
   const eventTypes = isArray(events) ? events : events.split(' ')
-  for (const element of elements) {
+  for (const element of selector) {
     for (const eventType of eventTypes) {
       element.addEventListener(eventType, handler)
     }
