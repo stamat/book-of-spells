@@ -524,3 +524,39 @@ export function randomIntInclusive(min, max) {
   max = Math.floor(max)
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
+
+/**
+ * Gets fixed number of digits after the decimal point
+ * 
+ * @param {number} number Number to fix
+ * @param {number} digits Number of digits to fix to
+ * @returns number
+ * @example
+ * fixed(1.234, 2) // => 1.23
+ * fixed(1.235, 2) // => 1.24
+ * fixed(1.234) // => 1
+ * fixed(1.234, 0) // => 1
+ * fixed(1.234, 5) // => 1.234
+ */
+export function fixed(number, digits) {
+  if (!digits) return parseInt(number)
+  return parseFloat(number.toFixed(digits))
+}
+
+/**
+ * Calculates the percentage of a number in relation to another number
+ * 
+ * @param {number} num Number to calculate percentage of
+ * @param {number} total Total number
+ * @returns number
+ * @example
+ * getPercentage(1, 10) // => 10
+ * getPercentage(5, 10) // => 50
+ * getPercentage(10, 10) // => 100
+ * getPercentage(0, 10) // => 0
+ * getPercentage(10, 2) // => 500
+ */
+export function getPercentage(num, total) {
+  if (!num || !total || Number.isNaN(num) || Number.isNaN(total)) return 0
+  return num / total * 100
+}

@@ -24,7 +24,9 @@ const {
   stripHTMLTags,
   closestNumber,
   truncateString,
-  randomIntInclusive
+  randomIntInclusive,
+  fixed,
+  getPercentage,
 } = require('../helpers')
 
 const a = { 
@@ -247,4 +249,23 @@ test('randomIntInclusive', () => {
   randomInt = randomIntInclusive(-5, 5)
   expect(randomInt).toBeGreaterThanOrEqual(-5)
   expect(randomInt).toBeLessThanOrEqual(5)
+})
+
+test('fixed', () => {
+  expect(fixed(1.234, 2)).toBe(1.23)
+  expect(fixed(1.235, 2)).toBe(1.24)
+  expect(fixed(1.235)).toBe(1)
+  expect(fixed(1.235, 0)).toBe(1)
+  expect(fixed(1.235, 5)).toBe(1.235)
+})
+
+test('getPercentage', () => {
+  expect(getPercentage(1, 2)).toBe(50)
+  expect(fixed(getPercentage(1, 3))).toBe(33)
+  expect(getPercentage(1, 4)).toBe(25)
+  expect(getPercentage(1, 5)).toBe(20)
+  expect(getPercentage(10, 2)).toBe(500)
+  expect(getPercentage(10, 10)).toBe(100)
+  expect(getPercentage(10, 0)).toBe(0)
+  expect(getPercentage(0, 0)).toBe(0)
 })
