@@ -489,19 +489,19 @@ export function on(selector, eventTypeOrHandler, handler) {
 /**
  * Adds one listener to multiple events
  * 
- * @param {string|HTMLElement|NodeList} selector The selector to select the elements to add the event listeners to
+ * @param {string|HTMLElement|NodeList} elements The elements or a selector for elements to select the elements to add the event listeners to
  * @param {string|Array<string>} events The event types to add the event listeners for, like `click mouseenter`
  * @param {Function} handler The handler to call when the event is triggered.
  * @param {object} [options] The options to pass to the event listeners
  * @example
  * addListenerForEvents('.foo', 'click mouseenter', (e) => { console.log(e.type) })
  */
-export function addListenerForEvents(selector, events, handler, options) {
-  if (selector instanceof Element) selector = [selector]
-  if (typeof selector === 'string') selector = query(selector)
+export function addListenerForEvents(elements, events, handler, options) {
+  if (elements instanceof Element) elements = [elements]
+  if (typeof elements === 'string') elements = query(elements)
 
   const eventTypes = isArray(events) ? events : events.split(' ')
-  for (const element of selector) {
+  for (const element of elements) {
     for (const eventType of eventTypes) {
       element.addEventListener(eventType, handler, options)
     }
@@ -511,19 +511,19 @@ export function addListenerForEvents(selector, events, handler, options) {
 /**
  * Removes one listener from multiple registered events
  * 
- * @param {string|HTMLElement|NodeList} selector The selector to select the elements to remove the event listeners from
+ * @param {string|HTMLElement|NodeList} elements The elements or a selector for elements to remove the event listeners from
  * @param {string|Array<string>} events The event types to remove the event listeners for, like `click mouseenter`
  * @param {Function} handler The handler to remove
  * @param {object} [options] The options to pass to the event listeners
  * @example
  * removeListenerForEvents('.foo', 'click mouseenter', (e) => { console.log(e.type) })
  */
-export function removeListenerForEvents(selector, events, handler, options) {
-  if (selector instanceof Element) selector = [selector]
-  if (typeof selector === 'string') selector = query(selector)
+export function removeListenerForEvents(elements, events, handler, options) {
+  if (elements instanceof Element) elements = [elements]
+  if (typeof elements === 'string') elements = query(elements)
 
   const eventTypes = isArray(events) ? events : events.split(' ')
-  for (const element of selector) {
+  for (const element of elements) {
     for (const eventType of eventTypes) {
       element.removeEventListener(eventType, handler, options)
     }
@@ -533,14 +533,13 @@ export function removeListenerForEvents(selector, events, handler, options) {
 /**
  * Resizes an element to cover its parent element while maintaining the aspect ratio
  * 
- * @param {string|HTMLElement|NodeList} elements The elements to resize
+ * @param {string|HTMLElement|NodeList} elements The elements or a selector for elements to resize
  * @param {number} [ratio=1] The ratio to maintain
  * @param {number} [offset=0] An offset to add to the parent element's width and height
  * @example
  * proportionalParentCoverResize('.foo', 16/9, 10)
  */
 export function proportionalParentCoverResize(elements, ratio = 1, offset = 0) {
-  if (!elements || !elements.length) return
   if (elements instanceof Element) elements = [elements]
   if (typeof elements === 'string') elements = query(elements)
 
