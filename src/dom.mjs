@@ -497,9 +497,8 @@ export function on(selector, eventTypeOrHandler, handler) {
  * addListenerForEvents('.foo', 'click mouseenter', (e) => { console.log(e.type) })
  */
 export function addListenerForEvents(selector, events, handler, options) {
-  if (typeof selector === 'string') selector = query(selector)
-  if (selector instanceof NodeList) selector = Array.from(selector)
   if (selector instanceof Element) selector = [selector]
+  if (typeof selector === 'string') selector = query(selector)
 
   const eventTypes = isArray(events) ? events : events.split(' ')
   for (const element of selector) {
