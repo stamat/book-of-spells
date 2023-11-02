@@ -489,7 +489,7 @@ export function on(selector, eventTypeOrHandler, handler) {
 /**
  * Adds one listener to multiple events
  * 
- * @param {string|HTMLElement|NodeList} elements The elements or a selector for elements to select the elements to add the event listeners to
+ * @param {string|HTMLElement|NodeList} elements The elements or a selector for elements to add the event listeners to
  * @param {string|Array<string>} events The event types to add the event listeners for, like `click mouseenter`
  * @param {Function} handler The handler to call when the event is triggered.
  * @param {object} [options] The options to pass to the event listeners
