@@ -529,3 +529,31 @@ export function removeListenerForEvents(selector, events, handler, options) {
     }
   }
 }
+
+/**
+ * Resizes an element to cover its parent element while maintaining the aspect ratio
+ * 
+ * @param {string|HTMLElement|NodeList} elements The elements to resize
+ * @param {number} [ratio=1] The ratio to maintain
+ * @param {number} [offset=0] An offset to add to the parent element's width and height
+ * @example
+ * proportionalParentCoverResize('.foo', 16/9, 10)
+ */
+export function proportionalParentCoverResize(elements, ratio = 1, offset = 0) {
+  if (!elements || !elements.length) return
+  if (elements instanceof Element) elements = [elements]
+  if (typeof elements === 'string') elements = query(elements)
+
+  for (const element of elements) {
+    const h = element.parentNode.offsetHeight + offset
+    const w = element.parentNode.offsetWidth + offset
+
+    if (ratio > w/h) {
+      element.style.width = h*ratio + 'px'
+      element.style.height = h + 'px'
+    } else {
+      element.style.width = w + 'px'
+      element.style.height = w/ratio + 'px'
+    }
+  }
+}
