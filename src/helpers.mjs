@@ -565,7 +565,7 @@ export function getPercentage(num, total) {
 /**
  * Parses a resolution string into a number. Resolution string is in the format of 'width:height', e.g. '16:9' 
  * 
- * @param {string} res Resolution string. Format is 'width:height', e.g. '16:9', or 'widthxheight', e.g. '16x9', or 'width-height', e.g. '16-9'
+ * @param {string} res Resolution string. Format is 'width:height', e.g. '16:9', or 'widthxheight', e.g. '16x9', or 'width-height', e.g. '16-9', or 'width/height', e.g. '16/9'
  * @returns number
  * @example
  * parseResolutionString('16:9') // => 1.7777777778
@@ -575,8 +575,8 @@ export function getPercentage(num, total) {
  */
 export function parseResolutionString(res) {
   const DEFAULT_RESOLUTION = 1.7777777778 // 16:9
-  if (!res || !res.length || /16[\:x\-]{1}9/i.test(res)) return DEFAULT_RESOLUTION
-  const pts = res.split(/\s?[\:x\-]{1}\s?/i)
+  if (!res || !res.length || /16[\:x\-\/]{1}9/i.test(res)) return DEFAULT_RESOLUTION
+  const pts = res.split(/\s?[\:x\-\/]{1}\s?/i)
   if (pts.length < 2) return DEFAULT_RESOLUTION
 
   const w = parseInt(pts[0])
