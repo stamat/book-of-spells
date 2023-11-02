@@ -551,13 +551,13 @@ export function fixed(number, digits) {
  * @param {number} total Total number
  * @returns number
  * @example
- * getPercentage(1, 10) // => 10
- * getPercentage(5, 10) // => 50
- * getPercentage(10, 10) // => 100
- * getPercentage(0, 10) // => 0
- * getPercentage(10, 2) // => 500
+ * percentage(1, 10) // => 10
+ * percentage(5, 10) // => 50
+ * percentage(10, 10) // => 100
+ * percentage(0, 10) // => 0
+ * percentage(10, 2) // => 500
  */
-export function getPercentage(num, total) {
+export function percentage(num, total) {
   if (!num || !total || Number.isNaN(num) || Number.isNaN(total)) return 0
   return num / total * 100
 }

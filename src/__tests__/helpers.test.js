@@ -26,7 +26,7 @@ const {
   truncateString,
   randomIntInclusive,
   fixed,
-  getPercentage,
+  percentage,
   parseResolutionString
 } = require('../helpers')
 
@@ -260,15 +260,15 @@ test('fixed', () => {
   expect(fixed(1.235, 5)).toBe(1.235)
 })
 
-test('getPercentage', () => {
-  expect(getPercentage(1, 2)).toBe(50)
-  expect(fixed(getPercentage(1, 3))).toBe(33)
-  expect(getPercentage(1, 4)).toBe(25)
-  expect(getPercentage(1, 5)).toBe(20)
-  expect(getPercentage(10, 2)).toBe(500)
-  expect(getPercentage(10, 10)).toBe(100)
-  expect(getPercentage(10, 0)).toBe(0)
-  expect(getPercentage(0, 0)).toBe(0)
+test('percentage', () => {
+  expect(percentage(1, 2)).toBe(50)
+  expect(fixed(percentage(1, 3))).toBe(33)
+  expect(percentage(1, 4)).toBe(25)
+  expect(percentage(1, 5)).toBe(20)
+  expect(percentage(10, 2)).toBe(500)
+  expect(percentage(10, 10)).toBe(100)
+  expect(percentage(10, 0)).toBe(0)
+  expect(percentage(0, 0)).toBe(0)
 })
 
 test('parseResolutionString', () => {
