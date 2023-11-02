@@ -27,6 +27,7 @@ const {
   randomIntInclusive,
   fixed,
   getPercentage,
+  parseResolutionString
 } = require('../helpers')
 
 const a = { 
@@ -268,4 +269,18 @@ test('getPercentage', () => {
   expect(getPercentage(10, 10)).toBe(100)
   expect(getPercentage(10, 0)).toBe(0)
   expect(getPercentage(0, 0)).toBe(0)
+})
+
+test('parseResolutionString', () => {
+  expect(parseResolutionString('16:9')).toBe(1.7777777778)
+  expect(fixed(parseResolutionString('4:3'), 10)).toBe(1.3333333333)
+  expect(parseResolutionString('1:1')).toBe(1)
+  expect(fixed(parseResolutionString('4x3'), 10)).toBe(1.3333333333)
+  expect(fixed(parseResolutionString('4-3'), 10)).toBe(1.3333333333)
+  expect(parseResolutionString('16:0')).toBe(1.7777777778)
+  expect(parseResolutionString('0:0')).toBe(1.7777777778)
+  expect(parseResolutionString('0:0')).toBe(1.7777777778)
+  expect(parseResolutionString()).toBe(1.7777777778)
+  expect(parseResolutionString('')).toBe(1.7777777778)
+  expect(parseResolutionString('foo')).toBe(1.7777777778)
 })
