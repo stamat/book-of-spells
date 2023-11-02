@@ -507,3 +507,25 @@ export function addListenerForEvents(selector, events, handler, options) {
     }
   }
 }
+
+/**
+ * Removes one listener from multiple registered events
+ * 
+ * @param {string|HTMLElement|NodeList} selector The selector to select the elements to remove the event listeners from
+ * @param {string|Array<string>} events The event types to remove the event listeners for, like `click mouseenter`
+ * @param {Function} handler The handler to remove
+ * @param {object} [options] The options to pass to the event listeners
+ * @example
+ * removeListenerForEvents('.foo', 'click mouseenter', (e) => { console.log(e.type) })
+ */
+export function removeListenerForEvents(selector, events, handler, options) {
+  if (selector instanceof Element) selector = [selector]
+  if (typeof selector === 'string') selector = query(selector)
+
+  const eventTypes = isArray(events) ? events : events.split(' ')
+  for (const element of selector) {
+    for (const eventType of eventTypes) {
+      element.removeEventListener(eventType, handler, options)
+    }
+  }
+}
