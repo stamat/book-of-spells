@@ -15,12 +15,12 @@ export const RE_VIMEO = /(?:www\.|player\.)?vimeo.com\/(?:channels\/(?:\w+\/)?|g
 /**
  * Regular expression for matching a video URLs
  */
-export const RE_VIDEO = /(.*\/[^\/]+\.mp4|ogg|ogv|ogm|webm|avi)\s?$/i
+export const RE_VIDEO = /\/([^\/]+\.(?:mp4|ogg|ogv|ogm|webm|avi))\s*$/i
 
 /**
  * Regular expression for matching a image URLs
  */
-export const RE_IMAGE = /(.*\/[^\/]+\.jpg|jpeg|png|gif|svg|webp)\s?$/i
+export const RE_IMAGE = /\/([^\/]+\.(?:jpg|jpeg|png|gif|svg|webp))\s*$/i
 
 /**
  * Regular expression for matching a URL parameters
