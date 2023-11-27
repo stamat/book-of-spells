@@ -556,3 +556,20 @@ export function proportionalParentCoverResize(elements, ratio = 1, offset = 0) {
     }
   }
 }
+
+/**
+ * If provided element is visible. Checks if the element is not visibility hidden or display none, has no opacity, and has a width and height.
+ * 
+ * @param {HTMLElement} element The element to check
+ * @returns {boolean} True if the element is visible, false otherwise
+ * 
+ * @example
+ * isVisible(document.getElementById('foo'))
+ */
+export function isVisible(element) {
+  if (!element) return false;
+  const computedStyle = getComputedStyle(element);
+  if (computedStyle.getPropertyValue('display') === 'none') return false;
+  if (element.getAttribute('hidden') !== null || computedStyle.getPropertyValue('visibility') === 'hidden' || computedStyle.getPropertyValue('opacity') == "0") return false;
+  return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length)
+}
