@@ -6,6 +6,7 @@ const {
   decodeHtmlEntities,
   parseUrlParameters,
   serializeUrlParameters,
+  parseResolutionString
  } = require('../parsers')
 
 test('parseAttributes', () => {
@@ -42,4 +43,19 @@ test('serializeUrlParameters', () => {
   expect(serializeUrlParameters({ test: undefined, bar: undefined })).toBe('test&bar')
   expect(serializeUrlParameters({ test: undefined, foo: 'bar', baz: 'qux' })).toBe('test&foo=bar&baz=qux')
   expect(serializeUrlParameters({ test: undefined, foo: 'bar', bar: undefined, baz: 'qux' }, true)).toBe('test&foo=bar&bar&baz=qux')
+})
+
+test('parseResolutionString', () => {
+  expect(parseResolutionString('16:9')).toBe(1.7777777778)
+  expect(fixed(parseResolutionString('4:3'), 10)).toBe(1.3333333333)
+  expect(parseResolutionString('1:1')).toBe(1)
+  expect(fixed(parseResolutionString('4x3'), 10)).toBe(1.3333333333)
+  expect(fixed(parseResolutionString('4-3'), 10)).toBe(1.3333333333)
+  expect(fixed(parseResolutionString('4/3'), 10)).toBe(1.3333333333)
+  expect(parseResolutionString('16:0')).toBe(1.7777777778)
+  expect(parseResolutionString('0:0')).toBe(1.7777777778)
+  expect(parseResolutionString('0:0')).toBe(1.7777777778)
+  expect(parseResolutionString()).toBe(1.7777777778)
+  expect(parseResolutionString('')).toBe(1.7777777778)
+  expect(parseResolutionString('foo')).toBe(1.7777777778)
 })

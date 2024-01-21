@@ -171,3 +171,29 @@ export function serializeUrlParameters(obj, encode = true) {
 
 	return res.join('&')
 }
+
+/**
+ * Parses a resolution string into a number. Resolution string is in the format of 'width:height', e.g. '16:9' 
+ * 
+ * @param {string} res Resolution string. Format is 'width:height', e.g. '16:9', or 'widthxheight', e.g. '16x9', or 'width-height', e.g. '16-9', or 'width/height', e.g. '16/9'
+ * @returns number
+ * @example
+ * parseResolutionString('16:9') // => 1.7777777778
+ * parseResolutionString('4:3') // => 1.3333333333
+ * parseResolutionString('4x3') // => 1.3333333333
+ * parseResolutionString('4-3') // => 1.3333333333
+ */
+export function parseResolutionString(res) {
+  const DEFAULT_RESOLUTION = 1.7777777778 // 16:9
+  if (!res || !res.length || /16[\:x\-\/]{1}9/i.test(res)) return DEFAULT_RESOLUTION
+  const pts = res.split(/\s?[\:x\-\/]{1}\s?/i)
+  if (pts.length < 2) return DEFAULT_RESOLUTION
+
+  const w = parseInt(pts[0])
+  const h = parseInt(pts[1])
+
+  if (w === 0 || h === 0) return DEFAULT_RESOLUTION
+  if (isNaN(w) || isNaN(h)) return DEFAULT_RESOLUTION
+
+  return w/h;
+}
