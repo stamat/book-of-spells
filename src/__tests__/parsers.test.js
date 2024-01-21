@@ -9,6 +9,10 @@ const {
   parseResolutionString
  } = require('../parsers')
 
+ const { 
+  fixed,
+ } = require('../helpers')
+
 test('parseAttributes', () => {
   expect(parseAttributes('shortcode foo="bar"')).toEqual({"foo": "bar", "shortcode": null})
   expect(parseAttributes('foo="bar" baz="qux"')).toEqual({ foo: 'bar', baz: 'qux' })
