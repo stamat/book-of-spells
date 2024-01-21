@@ -27,7 +27,8 @@ const {
   randomIntInclusive,
   fixed,
   percentage,
-  pickProperties
+  pick,
+  reject
 } = require('../helpers')
 
 const a = { 
@@ -271,9 +272,28 @@ test('percentage', () => {
   expect(percentage(0, 0)).toBe(0)
 })
 
-test('pickProperties', () => {
-  expect(pickProperties({ foo: 'bar', bar: 'baz', baz: 'qux' }, [])).toEqual({})
-  expect(pickProperties({ foo: 'bar', bar: 'baz', baz: 'qux' }, [])).toEqual({})
-  expect(pickProperties({ foo: 'bar', bar: 'baz', baz: 'qux' }, ['foo', 'baz'])).toEqual({ foo: 'bar', baz: 'qux' })
-  expect(pickProperties({ foo: 'bar', bar: 'baz', baz: 'qux' }, ['foo', 'baz', 'qux'])).toEqual({ foo: 'bar', baz: 'qux' })
+test('pick', () => {
+  expect(pick({ foo: 'bar', bar: 'baz', baz: 'qux' }, [])).toEqual({})
+  expect(pick({}, [])).toEqual({})
+  expect(pick(null, 'foo')).toEqual(undefined)
+  expect(pick({ foo: 'bar', bar: 'baz', baz: 'qux' }, undefined)).toEqual({})
+  expect(pick({ foo: 'bar', bar: 'baz', baz: 'qux' }, 'foo')).toEqual({ foo: 'bar'})
+  expect(pick({ foo: 'bar', bar: 'baz', baz: 'qux' }, ['foo', 'baz'])).toEqual({ foo: 'bar', baz: 'qux' })
+  expect(pick({ foo: 'bar', bar: 'baz', baz: 'qux' }, ['foo', 'baz', 'qux'])).toEqual({ foo: 'bar', baz: 'qux' })
+  expect(pick(['foo', 'bar', 'baz', 'qux'], [0, 2])).toEqual(['foo', 'baz'])
+  expect(pick(['foo', 'bar', 'baz', 'qux'], [0, 2, 3])).toEqual(['foo', 'baz', 'qux'])
+  expect(pick(['foo', 'bar', 'baz', 'qux'], [0, 1, 2, 3])).toEqual(['foo', 'bar', 'baz', 'qux'])
+  expect(pick(['foo', 'bar', 'baz', 'qux'], [0, 4])).toEqual(['foo'])
+})
+
+test('reject', () => {
+  expect(reject({ foo: 'bar', bar: 'baz', baz: 'qux' }, [])).toEqual({ foo: 'bar', bar: 'baz', baz: 'qux' })
+  expect(reject({ foo: 'bar', bar: 'baz', baz: 'qux' }, undefined)).toEqual({ foo: 'bar', bar: 'baz', baz: 'qux' })
+  expect(reject({ foo: 'bar', bar: 'baz', baz: 'qux' }, 'foo')).toEqual({ bar: 'baz', baz: 'qux' })
+  expect(reject({ foo: 'bar', bar: 'baz', baz: 'qux' }, ['foo', 'baz'])).toEqual({ bar: 'baz' })
+  expect(reject({ foo: 'bar', bar: 'baz', baz: 'qux' }, ['foo', 'baz', 'qux'])).toEqual({ bar: 'baz' })
+  expect(reject(['foo', 'bar', 'baz', 'qux'], [0, 2])).toEqual(['bar', 'qux'])
+  expect(reject(['foo', 'bar', 'baz', 'qux'], [0, 2, 3])).toEqual(['bar'])
+  expect(reject(['foo', 'bar', 'baz', 'qux'], [0, 1, 2, 3])).toEqual([])
+  expect(reject(['foo', 'bar', 'baz', 'qux'], [0, 4])).toEqual(['bar', 'baz', 'qux'])
 })

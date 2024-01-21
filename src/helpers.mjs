@@ -564,21 +564,95 @@ export function percentage(num, total) {
   return num / total * 100
 }
 
-/**
- * Pick properties from an object
- * 
- * @param {object} obj Object to pick properties from
- * @param {array} props Array of property names to pick
- * @returns object
- * @example
- * const obj = { foo: 'bar', baz: 'qux' }
- * pickProperties(obj, ['foo']) // => { foo: 'bar' }
- * pickProperties(obj, ['foo', 'baz', 'qux']) // => { foo: 'bar', baz: 'qux' }
- */
-export function pickProperties(obj, props) {
+function pickProperties(obj, props) {
   const res = {}
+  if (!props) return res
+  if (!isArray(props)) props = [props]
   for (let i = 0; i < props.length; i++) {
     if (obj.hasOwnProperty(props[i])) res[props[i]] = obj[props[i]]
   }
   return res
+}
+
+function removeProperties(obj, props) {
+  if (!props) return obj
+  if (!isArray(props)) props = [props]
+  for (let i = 0; i < props.length; i++) {
+    if (obj.hasOwnProperty(props[i])) delete obj[props[i]]
+  }
+  return obj
+}
+
+function pickArrayElements(arr, indexes) {
+  if (!isArray(arr)) return
+  if (!isArray(indexes)) indexes = [indexes]
+  const res = []
+  for (let i = 0; i < indexes.length; i++) {
+    if (arr.hasOwnProperty(indexes[i])) res.push(arr[indexes[i]])
+  }
+  return res
+}
+
+
+function removeArrayElements(arr, indexes) {
+  if (!isArray(arr)) return
+  if (!isArray(indexes)) indexes = [indexes]
+  for (let i = indexes.length - 1; i >= 0; i--) {
+    if (arr.hasOwnProperty(indexes[i])) arr.splice(indexes[i], 1)
+  }
+  return arr
+}
+
+/**
+ * Pick properties from an object or elements from an array
+ * 
+ * @param {array} obj Object or array to pick properties or elements from
+ * @param {array | string | number} props properties to remove, can be an array of strings or a single string or number
+ * @returns object | array | undefined
+ * @example
+ * 
+ * pick({ foo: 'bar', bar: 'baz', baz: 'qux' }) // => {}
+ * pick({}, []) // => {}
+ * pick(null, 'foo') // => undefined
+ * pick({ foo: 'bar', bar: 'baz', baz: 'qux' }, undefined) // => {}
+ * pick({ foo: 'bar', bar: 'baz', baz: 'qux' }, 'foo') // => { foo: 'bar'}
+ * pick({ foo: 'bar', bar: 'baz', baz: 'qux' }, ['foo', 'baz']) // => { foo: 'bar', baz: 'qux' }
+ * 
+ * pick(['foo', 'bar', 'baz'], []) // => []
+ * pick([], []) // => []
+ * pick(null, 0) // => undefined
+ * pick(['foo', 'bar', 'baz'], undefined) // => []
+ * pick(['foo', 'bar', 'baz'], 0) // => ['foo']
+ * pick(['foo', 'bar', 'baz'], [0, 2]) // => ['foo', 'baz']
+ * pick(['foo', 'bar', 'baz'], [0, 2, 3]) // => ['foo', 'baz']
+ */
+export function pick(obj, props) {
+  return isObject(obj) ? pickProperties(obj, props) : pickArrayElements(obj, props)
+}
+
+/**
+ * Remove properties from an object or elements from an array
+ * 
+ * @param {array} obj Object or array to remove properties or elements from
+ * @param {array | string | number} props properties to remove, can be an array of strings or a single string or number
+ * @returns object | array | undefined
+ * @example
+ * 
+ * reject({ foo: 'bar', bar: 'baz', baz: 'qux' }) // => {}
+ * reject({}, []) // => {}
+ * reject(null, 'foo') // => undefined
+ * reject({ foo: 'bar', bar: 'baz', baz: 'qux' }, undefined) // => {}
+ * reject({ foo: 'bar', bar: 'baz', baz: 'qux' }, 'foo') // => { bar: 'baz', baz: 'qux' }
+ * reject({ foo: 'bar', bar: 'baz', baz: 'qux' }, ['foo', 'baz']) // => { bar: 'baz' }
+ * 
+ * reject(['foo', 'bar', 'baz'], []) // => []
+ * reject([], []) // => []
+ * reject(null, 0) // => undefined
+ * reject(['foo', 'bar', 'baz'], undefined) // => []
+ * reject(['foo', 'bar', 'baz'], 0) // => ['bar', 'baz']
+ * reject(['foo', 'bar', 'baz'], [0, 2]) // => ['bar']
+ * reject(['foo', 'bar', 'baz'], [0, 2, 3]) // => ['bar']
+ */
+export function reject(obj, props) {
+  return isObject(obj) ? removeProperties(obj, props) : removeArrayElements(obj, props)
 }
