@@ -375,9 +375,13 @@ export function getTableData(selector, headers, rowSelector = 'tr', cellSelector
  * @param {boolean} [allChildren=false] If true, all children of the body will be returned, otherwise only the first child
  * @returns {Node} The parsed DOM Node
  * @example
- * parseDOM('<div>foo</div>')
+ * parseDOM('<div>foo</div>') // => <div>foo</div>
+ * parseDOM('<div>foo</div><div>bar</div>', true) // => NodeList(2) [div, div]
+ * parseDOM(document.getElementById('foo')) // => <div id="foo"></div>
+ * parseDOM(document.querySelectorAll('div')) // => NodeList(2) [div, div]
  */
 export function parseDOM(html, allChildren) {
+  if (html instanceof Element || html instanceof NodeList) return html
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
   return !allChildren ? doc.body.firstChild : doc.body.childNodes
