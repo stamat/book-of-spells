@@ -563,3 +563,22 @@ export function percentage(num, total) {
   if (!num || !total || Number.isNaN(num) || Number.isNaN(total)) return 0
   return num / total * 100
 }
+
+/**
+ * Pick properties from an object
+ * 
+ * @param {object} obj Object to pick properties from
+ * @param {array} props Array of property names to pick
+ * @returns object
+ * @example
+ * const obj = { foo: 'bar', baz: 'qux' }
+ * pickProperties(obj, ['foo']) // => { foo: 'bar' }
+ * pickProperties(obj, ['foo', 'baz', 'qux']) // => { foo: 'bar', baz: 'qux' }
+ */
+export function pickProperties(obj, props) {
+  const res = {}
+  for (let i = 0; i < props.length; i++) {
+    if (obj.hasOwnProperty(props[i])) res[props[i]] = obj[props[i]]
+  }
+  return res
+}

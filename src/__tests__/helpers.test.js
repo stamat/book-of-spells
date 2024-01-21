@@ -26,7 +26,8 @@ const {
   truncateString,
   randomIntInclusive,
   fixed,
-  percentage
+  percentage,
+  pickProperties
 } = require('../helpers')
 
 const a = { 
@@ -268,4 +269,11 @@ test('percentage', () => {
   expect(percentage(10, 10)).toBe(100)
   expect(percentage(10, 0)).toBe(0)
   expect(percentage(0, 0)).toBe(0)
+})
+
+test('pickProperties', () => {
+  expect(pickProperties({ foo: 'bar', bar: 'baz', baz: 'qux' }, [])).toEqual({})
+  expect(pickProperties({ foo: 'bar', bar: 'baz', baz: 'qux' }, [])).toEqual({})
+  expect(pickProperties({ foo: 'bar', bar: 'baz', baz: 'qux' }, ['foo', 'baz'])).toEqual({ foo: 'bar', baz: 'qux' })
+  expect(pickProperties({ foo: 'bar', bar: 'baz', baz: 'qux' }, ['foo', 'baz', 'qux'])).toEqual({ foo: 'bar', baz: 'qux' })
 })
