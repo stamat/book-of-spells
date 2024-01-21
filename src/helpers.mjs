@@ -564,7 +564,7 @@ export function percentage(num, total) {
   return num / total * 100
 }
 
-function pickProperties(obj, props) {
+export function pickProperties(obj, props) {
   const res = {}
   if (!props) return res
   if (!isArray(props)) props = [props]
