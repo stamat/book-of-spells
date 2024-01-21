@@ -1,6 +1,7 @@
 /** @module dom */
 
 import { transformDashToCamelCase, isArray, isString } from './helpers.mjs'
+import { encodeHtmlEntities, decodeHtmlEntities } from './parsers.mjs'
 
 /**
  * Checks if an element is empty
@@ -110,7 +111,9 @@ export function css(element, styles, transform = false) {
 }
 
 /**
- * Decodes HTML entities in a string
+ * Decodes HTML entities in a string using the browser's DOMParser. If the DOMParser is not available, it uses a regular expression to decode the basic entities.
+ * 
+ * @see {@link module:parsers.decodeHtmlEntities}
  * 
  * @param {string} html The HTML string to decode
  * @returns {string} The decoded HTML string
@@ -119,9 +122,30 @@ export function css(element, styles, transform = false) {
  * decodeHTML('&lt;div&gt;foo&lt;/div&gt;&lt;div&gt;bar&lt;/div&gt;') // => '<div>foo</div><div>bar</div>'
  */
 export function decodeHTML(html) {
+  if (typeof document === 'undefined') return decodeHtmlEntities(html)
   const txt = document.createElement('textarea')
   txt.innerHTML = html
   const res = txt.value
+  txt.remove()
+  return res
+}
+
+/**
+ * Encodes HTML entities in a string using the browser's DOMParser. If the DOMParser is not available, it uses a regular expression to encode the basic entities.
+ * 
+ * @see {@link module:parsers.encodeHtmlEntities}
+ * 
+ * @param {string} html The HTML string to encode
+ * @returns {string} The encoded HTML string
+ * @example
+ * encodeHTML('<div>foo</div>') // => '&lt;div&gt;foo&lt;/div&gt;'
+ * encodeHTML('<div>foo</div><div>bar</div>') // => '&lt;div&gt;foo&lt;/div&gt;&lt;div&gt;bar&lt;/div&gt;'
+ */
+export function encodeHTML(html) {
+  if (typeof document === 'undefined') return encodeHtmlEntities(html)
+  const txt = document.createElement('textarea')
+  txt.textContent = html
+  const res = txt.innerHTML
   txt.remove()
   return res
 }
