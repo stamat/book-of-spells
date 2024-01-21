@@ -1,5 +1,5 @@
 # 📖 Stamat's Book of JavaScript Spells
-[![npm version](https://img.shields.io/npm/v/book-of-spells)](https://www.npmjs.com/package/book-of-spells)
+[![npm version](https://img.shields.io/npm/v/book-of-spells)](https://www.npmjs.com/package/book-of-spells) [![license mit](https://img.shields.io/badge/license-MIT-green)](hhttps://github.com/stamat/book-of-spells/blob/main/LICENSE)
 
 A collection of JavaScript functions and snippets that I use in my projects in **ESM format**. This is mainly for my own reference, but I hope it can be useful to others as well.
 
@@ -33,12 +33,6 @@ It's not only laziness, if you think about it. It is this omnipresent fear of ch
 ## Contributing
 
 If you have a function or a snippet that you think is useful, please open a PR. I'd love to see what you've got.
-
-
-## To do / Migrate from the old code and other thoughts
-
-Migrate from the old code and refactor
-* [ ] my "decorate with zeros" function
 
 ----
 
