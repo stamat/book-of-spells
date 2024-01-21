@@ -3,7 +3,7 @@
  * 
  * @param {object} target The target object to merge into
  * @param {object} source The source object to merge from
- * @returns object The merged object
+ * @returns object The merged object, in this case the target object with the source object's properties merged into it
  * @example
  * const target = { foo: 'bar' }
  * const source = { bar: 'baz' }
@@ -13,6 +13,8 @@ export function shallowMerge(target, source) {
   for (const key in source) {
     target[key] = source[key]
   }
+
+  return target
 }
 
 /**
@@ -20,7 +22,7 @@ export function shallowMerge(target, source) {
  * 
  * @param {object} target The target object to merge into
  * @param {object} source The source object to merge from
- * @returns object The merged object
+ * @returns object The merged object, in this case the target object with the source object's properties merged into it
  * @example
  * const target = { foo: 'bar' }
  * const source = { bar: 'baz' }
@@ -42,7 +44,7 @@ export function deepMerge(target, source) {
 }
 
 /**
- * Deep clone function that's mindful of arrays and objects
+ * Deep clone function that's mindful of nested arrays and objects
  * 
  * @param {object} o The object to clone
  * @returns object The cloned object
