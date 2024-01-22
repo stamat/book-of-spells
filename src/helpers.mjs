@@ -608,7 +608,7 @@ export function rejectArrayElements(arr, indexes, clone = true) {
  * Pick properties from an object or elements from an array
  * 
  * @param {array} obj Object or array to pick properties or elements from
- * @param {array | string | number} props properties to remove, can be an array of strings or a single string or number
+ * @param {array | string | number} props Properties to remove, can be an array of strings or a single string or number
  * @returns object | array | undefined
  * @example
  * 
@@ -635,7 +635,8 @@ export function pick(obj, props) {
  * Remove properties from an object or elements from an array
  * 
  * @param {array} obj Object or array to remove properties or elements from
- * @param {array | string | number} props properties to remove, can be an array of strings or a single string or number
+ * @param {array | string | number} props Properties to remove, can be an array of strings or a single string or number
+ * @param {boolean} clone Defaults to true, will clone the object or array before removing properties or elements.
  * @returns object | array | undefined
  * @example
  * 
@@ -653,7 +654,6 @@ export function pick(obj, props) {
  * reject(['foo', 'bar', 'baz'], 0) // => ['bar', 'baz']
  * reject(['foo', 'bar', 'baz'], [0, 2]) // => ['bar']
  * reject(['foo', 'bar', 'baz'], [0, 2, 3]) // => ['bar']
- *
  */
 export function reject(obj, props, clone = true) {
   return isObject(obj) ? rejectProperties(obj, props, clone) : rejectArrayElements(obj, props, clone)
