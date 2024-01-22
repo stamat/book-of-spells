@@ -574,7 +574,7 @@ export function pickProperties(obj, props) {
   return res
 }
 
-function removeProperties(obj, props) {
+export function rejectProperties(obj, props) {
   if (!props) return obj
   if (!isArray(props)) props = [props]
   for (let i = 0; i < props.length; i++) {
@@ -583,7 +583,7 @@ function removeProperties(obj, props) {
   return obj
 }
 
-function pickArrayElements(arr, indexes) {
+export function pickArrayElements(arr, indexes) {
   if (!isArray(arr)) return
   if (!isArray(indexes)) indexes = [indexes]
   const res = []
@@ -594,7 +594,7 @@ function pickArrayElements(arr, indexes) {
 }
 
 
-function removeArrayElements(arr, indexes) {
+export function rejectArrayElements(arr, indexes) {
   if (!isArray(arr)) return
   if (!isArray(indexes)) indexes = [indexes]
   for (let i = indexes.length - 1; i >= 0; i--) {
@@ -654,5 +654,5 @@ export function pick(obj, props) {
  * reject(['foo', 'bar', 'baz'], [0, 2, 3]) // => ['bar']
  */
 export function reject(obj, props) {
-  return isObject(obj) ? removeProperties(obj, props) : removeArrayElements(obj, props)
+  return isObject(obj) ? rejectProperties(obj, props) : rejectArrayElements(obj, props)
 }
