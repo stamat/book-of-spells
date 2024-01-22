@@ -574,7 +574,8 @@ export function pickProperties(obj, props) {
   return res
 }
 
-export function rejectProperties(obj, props) {
+export function rejectProperties(obj, props, clone = true) {
+  if (clone) obj = { ...obj }
   if (!props) return obj
   if (!isArray(props)) props = [props]
   for (let i = 0; i < props.length; i++) {
@@ -593,8 +594,8 @@ export function pickArrayElements(arr, indexes) {
   return res
 }
 
-
-export function rejectArrayElements(arr, indexes) {
+export function rejectArrayElements(arr, indexes, clone = true) {
+  if (clone) arr = [...arr]
   if (!isArray(arr)) return
   if (!isArray(indexes)) indexes = [indexes]
   for (let i = indexes.length - 1; i >= 0; i--) {
@@ -652,7 +653,8 @@ export function pick(obj, props) {
  * reject(['foo', 'bar', 'baz'], 0) // => ['bar', 'baz']
  * reject(['foo', 'bar', 'baz'], [0, 2]) // => ['bar']
  * reject(['foo', 'bar', 'baz'], [0, 2, 3]) // => ['bar']
+ *
  */
-export function reject(obj, props) {
-  return isObject(obj) ? rejectProperties(obj, props) : rejectArrayElements(obj, props)
+export function reject(obj, props, clone = true) {
+  return isObject(obj) ? rejectProperties(obj, props, clone) : rejectArrayElements(obj, props, clone)
 }
