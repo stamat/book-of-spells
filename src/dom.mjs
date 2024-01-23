@@ -644,10 +644,14 @@ export function onSwipe(element, callback, threshold = 150 ) {
   const handleSwipeGesture = function() {
     const deltaX = Math.abs(endX - startX)
     const deltaY = Math.abs(endY - startY)
+    const horizontal = deltaX > threshold
+    const vertical = deltaY > threshold
+    const left = endX < startX
+    const up = endY < startY
     const direction = []
     
-    if (deltaX > threshold) direction.push(endX < startX ? 'left' : 'right')
-		if (deltaY > threshold) direction.push(endY < startY ? 'up' : 'down')
+    if (horizontal) direction.push(left ? 'left' : 'right')
+		if (vertical) direction.push(up ? 'up' : 'down')
 
     if (direction.length && callback) {
       callback({
@@ -659,10 +663,10 @@ export function onSwipe(element, callback, threshold = 150 ) {
         endX: endX,
         endY: endY,
         threshold: threshold,
-        horizontal: deltaX > threshold,
-        vertical: deltaY > threshold,
-				horizontalDirection: endX < startX ? 'left' : 'right',
-        verticalDirection: endY < startY ? 'up' : 'down',
+        horizontal: horizontal,
+        vertical: vertical,
+				horizontalDirection: left ? 'left' : 'right',
+        verticalDirection: up ? 'up' : 'down',
         direction: direction.length === 1 ? direction[0] : direction
       })
     }
