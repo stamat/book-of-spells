@@ -601,3 +601,84 @@ export function isVisible(element) {
   if (element.getAttribute('hidden') !== null || computedStyle.getPropertyValue('visibility') === 'hidden' || computedStyle.getPropertyValue('opacity') == "0") return false;
   return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length)
 }
+
+/**
+ * Swipe event handler
+ * 
+ * @param {HTMLElement} element The element to listen for swipe gestures on
+ * @param {Function} callback The callback to call when a swipe gesture is detected
+ * @param {number} threshold Default 150. The threshold in pixels to trigger the callback.
+ * @example
+ * onSwipe(document.getElementById('foo'), (e) => {
+ *  console.log(e.direction)
+ *  console.log(e.deltaX)
+ *  console.log(e.deltaY)
+ *  console.log(e.startX)
+ *  console.log(e.startY)
+ *  console.log(e.endX)
+ *  console.log(e.endY)
+ *  console.log(e.threshold)
+ *  console.log(e.type)
+ *  console.log(e.target)
+ * })
+ */
+export function onSwipe(element, callback, threshold = 150 ) {
+	let startX = 0
+  let startY = 0
+  let endX = 0
+  let endY = 0
+
+	const handleStart = function(e) {
+  	const carrier = e.type === 'touchstart' ? e.touches[0] : e
+  	startX = carrier.clientX
+    startY = carrier.clientY
+  }
+  
+  const handleEnd = function(e) {
+  	const carrier = e.type === 'touchmove' ? e.touches[0] : e
+  	endX = carrier.clientX
+    endY = carrier.clientY
+    handleSwipeGesture()
+  }
+
+  const handleSwipeGesture = function() {
+    const deltaX = Math.abs(endX - startX)
+    const deltaY = Math.abs(endY - startY)
+    const direction = []
+    
+    if (deltaX > threshold) direction.push(endX < startX ? 'left' : 'right')
+		if (deltaY > threshold) direction.push(endY < startY ? 'up' : 'down')
+
+    if (direction.length && callback) {
+      callback({
+        target: element,
+        deltaX: deltaX,
+        deltaY: deltaY,
+        startX: startX,
+        startY: startY,
+        endX: endX,
+        endY: endY,
+        threshold: threshold,
+        horizontal: deltaX > threshold,
+        vertical: deltaY > threshold,
+				horizontalDirection: endX < startX ? 'left' : 'right',
+        verticalDirection: endY < startY ? 'up' : 'down',
+        direction: direction.length === 1 ? direction[0] : direction
+      })
+    }
+  }
+
+  element.addEventListener('touchstart', handleStart, false)
+  element.addEventListener('touchmove', handleEnd, false)
+  element.addEventListener('mousedown', handleStart, false)
+  element.addEventListener('mouseup', handleEnd, false)
+
+  return {
+    destroy: function() {
+      element.removeEventListener('touchstart', handleStart)
+      element.removeEventListener('touchmove', handleEnd)
+      element.removeEventListener('mousedown', handleStart)
+      element.removeEventListener('mouseup', handleEnd)
+    }
+  }
+}
