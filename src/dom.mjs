@@ -672,10 +672,10 @@ export function onSwipe(element, callback, threshold = 150 ) {
     }
   }
 
-  element.addEventListener('touchstart', handleStart, false)
-  element.addEventListener('touchmove', handleEnd, false)
-  element.addEventListener('mousedown', handleStart, false)
-  element.addEventListener('mouseup', handleEnd, false)
+  element.addEventListener('touchstart', handleStart)
+  element.addEventListener('touchmove', handleEnd)
+  element.addEventListener('mousedown', handleStart)
+  element.addEventListener('mouseup', handleEnd)
 
   return {
     destroy: function() {
