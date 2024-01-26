@@ -607,7 +607,8 @@ export function isVisible(element) {
  * 
  * @param {HTMLElement} element The element to listen for swipe gestures on
  * @param {Function} callback The callback to call when a swipe gesture is detected
- * @param {number} threshold Default 150. The threshold in pixels to trigger the callback.
+ * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
+ * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
  * @example
  * onSwipe(document.getElementById('foo'), (e) => {
  *  console.log(e.direction)
@@ -620,24 +621,34 @@ export function isVisible(element) {
  *  console.log(e.threshold)
  *  console.log(e.type)
  *  console.log(e.target)
+ *  console.log(e.horizontal)
+ *  console.log(e.vertical)
+ *  console.log(e.horizontalDirection)
+ *  console.log(e.verticalDirection)
+ *  console.log(e.timeElapsed)
+ *  console.log(e.timeThreshold)
  * })
  */
-export function onSwipe(element, callback, threshold = 150 ) {
+export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) {
 	let startX = 0
   let startY = 0
   let endX = 0
   let endY = 0
+  let startTime = 0
+  let endTime = 0
 
 	const handleStart = function(e) {
   	const carrier = e.type === 'touchstart' ? e.touches[0] : e
   	startX = carrier.clientX
     startY = carrier.clientY
+    startTime = Date.now();
   }
   
   const handleEnd = function(e) {
   	const carrier = e.type === 'touchmove' ? e.touches[0] : e
   	endX = carrier.clientX
     endY = carrier.clientY
+    endTime = Date.now();
     handleSwipeGesture()
   }
 
@@ -649,11 +660,12 @@ export function onSwipe(element, callback, threshold = 150 ) {
     const left = endX < startX
     const up = endY < startY
     const direction = []
+    const timeElapsed = endTime - startTime;
     
     if (horizontal) direction.push(left ? 'left' : 'right')
 		if (vertical) direction.push(up ? 'up' : 'down')
 
-    if (direction.length && callback) {
+    if (direction.length && callback && timeElapsed <= timeThreshold) {
       callback({
         target: element,
         deltaX: deltaX,
@@ -667,7 +679,9 @@ export function onSwipe(element, callback, threshold = 150 ) {
         vertical: vertical,
 				horizontalDirection: left ? 'left' : 'right',
         verticalDirection: up ? 'up' : 'down',
-        direction: direction.length === 1 ? direction[0] : direction
+        direction: direction.length === 1 ? direction[0] : direction,
+        timeElapsed: timeElapsed,
+        timeThreshold: timeThreshold
       })
     }
   }
