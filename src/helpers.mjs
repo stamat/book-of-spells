@@ -513,18 +513,23 @@ export function truncateString(str, numWords, ellipsis = '…') {
  * 
  * @param {number} min Minimum value
  * @param {number} max Maximum value
+ * @param {boolean} safe Defaults to false, if true will use a cryptographically secure random number generator
  * @returns number
  * @example
  * randomIntInclusive(1, 10) // => 1
  * randomIntInclusive(1, 10) // => 10
  * randomIntInclusive(1, 10) // => 5
  */
-export function randomIntInclusive(min, max) {
+export function randomIntInclusive(min, max, safe = false) {
+  min = Number(min)
+  max = Number(max)
+  if (isNaN(min) || isNaN(max)) throw new TypeError('Both min and max must be numbers')
   if (min > max) [min, max] = [max, min]
   if (min === max) return min
-  min = Math.ceil(min)
-  max = Math.floor(max)
-  return Math.floor(Math.random() * (max - min + 1)) + min
+  min = Math.round(min)
+  max = Math.round(max)
+  const rand = safe ? random() : Math.random()
+  return Math.floor(rand * (max - min + 1)) + min
 }
 
 /**
@@ -657,4 +662,68 @@ export function pick(obj, props) {
  */
 export function reject(obj, props, clone = true) {
   return isObject(obj) ? rejectProperties(obj, props, clone) : rejectArrayElements(obj, props, clone)
+}
+
+/**
+ * Basic timestamp first UID generator that's good enough for most use cases but not for security purposes.
+ * There's an extremely small chance of collision, so create a map object to check for collisions if you're worried about that.
+ * 
+ * - `Date.now().toString(16)` is used for the timestamp, which is a base16 representation of the current timestamp in milliseconds.
+ * - `random().toString(16).substring(2)` is used for the random number, which is a base16 representation of a random number between 0 and 1, with the first two characters removed.
+ * 
+ * @param {boolean} safe Defaults to false, if true will use a cryptographically secure random number generator for the random number improving security but reducing performance. If crypto is not available, will use Math.random() instead.
+ * @returns string
+ * @example
+ * basicUID() // => '18d4613e4d2-750bf066ac6158'
+ */
+export function basicUID(safe = false) {
+  const rand = safe ? random() : Math.random()
+  return Date.now().toString(16)+'-'+rand.toString(16).substring(2)
+}
+
+function cryptoUUIDFallback() {
+  return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
+   (c ^ Math.random() * 16 >> c / 4).toString(16)
+  )
+}
+
+// Taken from https://stackoverflow.com/a/2117523/5437943
+function cryptoRandomUUIDFallback() {
+  return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  )
+}
+
+/**
+ * Generates a UUID v4
+ * - Uses crypto.randomUUID if available
+ * - Uses crypto.getRandomValues if available
+ * - Uses a fallback if neither is available, which is not safe because it uses Math.random() instead of a cryptographically secure random number generator
+ * 
+ * I'm bad at crypto and bitwise operations, not my cup of tea, so I had to rely on StackOverflow for the fallback: https://stackoverflow.com/a/2117523/5437943
+ * 
+ * @param {boolean} safe Defaults to true, if false will use a fallback that's not cryptographically secure but significantly faster
+ * @returns string
+ * @example
+ * generateUUID() // UUID v4, example 09ed0fe4-8eb6-4c2a-a8d3-a862b7513294
+ */
+export function generateUUID(safe = true) {
+  if (!crypto || !safe) return cryptoUUIDFallback()
+  if (crypto.randomUUID) return crypto.randomUUID()
+  if (crypto.getRandomValues) return cryptoRandomUUIDFallback();
+}
+
+/**
+ * Generates a random number between 0 and 1, inclusive of 0 but not inclusive of 1.
+ * 
+ * - Uses crypto.getRandomValues if available
+ * - Uses Math.random() if crypto.getRandomValues is not available
+ * 
+ * @returns number
+ * @example
+ * random() // => 0.123456789
+ */
+export function random() {
+  if (!crypto) return Math.random()
+  if (crypto.getRandomValues) return crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295 // 2^32 - 1 = 4294967295
 }
