@@ -665,7 +665,9 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) 
     if (horizontal) direction.push(left ? 'left' : 'right')
 		if (vertical) direction.push(up ? 'up' : 'down')
 
-    if (direction.length && callback && timeElapsed <= timeThreshold) {
+    let condition = direction.length && callback
+    if (timeThreshold) condition = condition && timeElapsed <= timeThreshold
+    if (condition) {
       callback({
         target: element,
         deltaX: deltaX,
