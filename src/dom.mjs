@@ -632,8 +632,8 @@ export function isVisible(element) {
  *  console.log(e.timeThreshold)
  * })
  */
-export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) {
-	let startX = 0
+export function onSwipe(element, callback, threshold = 150, timeThreshold = 0) {
+  let startX = 0
   let startY = 0
   let endX = 0
   let endY = 0
@@ -644,17 +644,17 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) 
   if (element.getAttribute('swipe-enabled') === 'true') return
   element.setAttribute('swipe-enabled', 'true')
 
-	const handleStart = function(e) {
-  	const carrier = e.type === 'touchstart' ? e.touches[0] : e
-  	startX = carrier.clientX
+  const handleStart = function(e) {
+    const carrier = e.type === 'touchstart' ? e.touches[0] : e
+    startX = carrier.clientX
     startY = carrier.clientY
     startTime = Date.now();
     element.dispatchEvent(new CustomEvent('swipestart', { detail: { startX, startY, startTime } }))
   }
   
   const handleEnd = function(e) {
-  	const carrier = e.type === 'touchmove' ? e.touches[0] : e
-  	endX = carrier.clientX
+    const carrier = e.type === 'touchend' ? e.touches[0] : e
+    endX = carrier.clientX
     endY = carrier.clientY
     endTime = Date.now();
     handleSwipeGesture()
@@ -672,10 +672,11 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) 
     const timeElapsed = endTime - startTime;
     
     if (horizontal) direction.push(left ? 'left' : 'right')
-		if (vertical) direction.push(up ? 'up' : 'down')
+    if (vertical) direction.push(up ? 'up' : 'down')
 
     let condition = direction.length && callback
     if (timeThreshold) condition = condition && timeElapsed <= timeThreshold
+    
     if (condition) {
       const res = {
         target: element,
@@ -688,7 +689,7 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) 
         threshold: threshold,
         horizontal: horizontal,
         vertical: vertical,
-				horizontalDirection: left ? 'left' : 'right',
+        horizontalDirection: left ? 'left' : 'right',
         verticalDirection: up ? 'up' : 'down',
         direction: direction.length === 1 ? direction[0] : direction,
         timeElapsed: timeElapsed,
@@ -705,15 +706,13 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) 
   element.addEventListener('touchend', handleEnd)
   element.addEventListener('mousedown', handleStart)
   element.addEventListener('mouseup', handleEnd)
-  element.addEventListener('mouseleave', handleEnd)
 
   return {
     destroy: function() {
       element.removeEventListener('touchstart', handleStart)
-      element.removeEventListener('touchmove', handleEnd)
+      element.removeEventListener('touchend', handleEnd)
       element.removeEventListener('mousedown', handleStart)
       element.removeEventListener('mouseup', handleEnd)
-      element.removeEventListener('mouseleave', handleEnd)
     }
   }
 }
