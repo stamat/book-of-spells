@@ -609,6 +609,9 @@ export function isVisible(element) {
  * @param {Function} callback The callback to call when a swipe gesture is detected
  * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
  * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
+ * @event swipestart Fires when a swipe gesture starts
+ * @event swipeend Fires when a swipe gesture ends
+ * @event swipe Fires when a swipe gesture is detected based on the thresholds
  * @example
  * onSwipe(document.getElementById('foo'), (e) => {
  *  console.log(e.direction)
@@ -637,11 +640,16 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) 
   let startTime = 0
   let endTime = 0
 
+  if (!element) return
+  if (element.getAttribute('swipe-enabled') === 'true') return
+  element.setAttribute('swipe-enabled', 'true')
+
 	const handleStart = function(e) {
   	const carrier = e.type === 'touchstart' ? e.touches[0] : e
   	startX = carrier.clientX
     startY = carrier.clientY
     startTime = Date.now();
+    element.dispatchEvent(new CustomEvent('swipestart', { detail: { startX, startY, startTime } }))
   }
   
   const handleEnd = function(e) {
@@ -650,6 +658,7 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) 
     endY = carrier.clientY
     endTime = Date.now();
     handleSwipeGesture()
+    element.dispatchEvent(new CustomEvent('swipeend', { detail: { startX, startY, startTime, endX, endY, endTime } }))
   }
 
   const handleSwipeGesture = function() {
@@ -668,7 +677,7 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) 
     let condition = direction.length && callback
     if (timeThreshold) condition = condition && timeElapsed <= timeThreshold
     if (condition) {
-      callback({
+      const res = {
         target: element,
         deltaX: deltaX,
         deltaY: deltaY,
@@ -684,14 +693,19 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) 
         direction: direction.length === 1 ? direction[0] : direction,
         timeElapsed: timeElapsed,
         timeThreshold: timeThreshold
-      })
+      }
+
+      callback(res)
+      delete res.target
+      element.dispatchEvent(new CustomEvent('swipe', { detail: res })) 
     }
   }
 
   element.addEventListener('touchstart', handleStart)
-  element.addEventListener('touchmove', handleEnd)
+  element.addEventListener('touchend', handleEnd)
   element.addEventListener('mousedown', handleStart)
   element.addEventListener('mouseup', handleEnd)
+  element.addEventListener('mouseleave', handleEnd)
 
   return {
     destroy: function() {
@@ -699,6 +713,7 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0 ) 
       element.removeEventListener('touchmove', handleEnd)
       element.removeEventListener('mousedown', handleStart)
       element.removeEventListener('mouseup', handleEnd)
+      element.removeEventListener('mouseleave', handleEnd)
     }
   }
 }
