@@ -609,9 +609,6 @@ export function isVisible(element) {
  * @param {Function} callback The callback to call when a swipe gesture is detected
  * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
  * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
- * @event swipestart Fires when a swipe gesture starts
- * @event swipeend Fires when a swipe gesture ends
- * @event swipe Fires when a swipe gesture is detected based on the thresholds
  * @example
  * onSwipe(document.getElementById('foo'), (e) => {
  *  console.log(e.direction)
@@ -631,6 +628,10 @@ export function isVisible(element) {
  *  console.log(e.timeElapsed)
  *  console.log(e.timeThreshold)
  * })
+ * 
+ * element.addEventListener('swipe', (e) => { ... })
+ * element.addEventListener('swipestart', (e) => { ... })
+ * element.addEventListener('swipeend', (e) => { ... })
  */
 export function onSwipe(element, callback, threshold = 150, timeThreshold = 0) {
   let startX = 0
@@ -649,7 +650,7 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0) {
     startX = carrier.clientX
     startY = carrier.clientY
     startTime = Date.now();
-    element.dispatchEvent(new CustomEvent('swipestart', { detail: { startX, startY, startTime } }))
+    element.dispatchEvent(new CustomEvent('swipestart', { detail: { target: element, startX, startY, startTime } }))
   }
 
   const handleEnd = function(e) {
@@ -658,7 +659,7 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0) {
     endY = carrier.clientY
     endTime = Date.now();
     handleSwipeGesture()
-    element.dispatchEvent(new CustomEvent('swipeend', { detail: { startX, startY, startTime, endX, endY, endTime } }))
+    element.dispatchEvent(new CustomEvent('swipeend', { detail: { target: element, startX, startY, startTime, endX, endY, endTime } }))
   }
 
   const handleSwipeGesture = function() {
@@ -697,7 +698,6 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0) {
       }
 
       callback(res)
-      delete res.target
       element.dispatchEvent(new CustomEvent('swipe', { detail: res })) 
     }
   }
