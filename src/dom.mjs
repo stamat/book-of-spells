@@ -645,15 +645,15 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0) {
   element.setAttribute('swipe-enabled', 'true')
 
   const handleStart = function(e) {
-    const carrier = e.type === 'touchstart' ? e.touches[0] : e
+    const carrier = e.touches ? e.touches[0] : e
     startX = carrier.clientX
     startY = carrier.clientY
     startTime = Date.now();
     element.dispatchEvent(new CustomEvent('swipestart', { detail: { startX, startY, startTime } }))
   }
-  
+
   const handleEnd = function(e) {
-    const carrier = e.type === 'touchend' ? e.touches[0] : e
+    const carrier = e.changedTouches ? e.changedTouches[0] : e
     endX = carrier.clientX
     endY = carrier.clientY
     endTime = Date.now();
