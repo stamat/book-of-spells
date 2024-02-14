@@ -1,6 +1,6 @@
 /** @module dom */
 
-import { transformDashToCamelCase, isArray, isString } from './helpers.mjs'
+import { transformDashToCamelCase, isArray, isString, isObject, isFunction } from './helpers.mjs'
 import { encodeHtmlEntities, decodeHtmlEntities } from './parsers.mjs'
 
 /**
@@ -642,7 +642,7 @@ export function swipe(element, callback, threshold = 150, timeThreshold = 0) {
   let startTime = 0
   let endTime = 0
 
-  if (typeof callback === 'object') {
+  if (isObject(callback)) {
     const options = callback
     callback = options.callback
     threshold = options.threshold || threshold
@@ -783,9 +783,9 @@ export function drag(element, opts) {
     callback: null
   }
 
-  if (typeof opts === 'function') {
+  if (isFunction(opts)) {
     options.callback = opts
-  } else if (typeof opts === 'object') {
+  } else if (isObject(opts)) {
     shallowMerge(options, opts)
   }
   
