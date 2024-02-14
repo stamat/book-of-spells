@@ -830,8 +830,8 @@ export function drag(element, opts) {
     if (e.touches) e.preventDefault()
     prevX = x
     prevY = y
-    x = carrier.clientX
-    y = carrier.clientY
+    x = carrier.pageX
+    y = carrier.pageY
   }
 
   const getDetail = function() {
