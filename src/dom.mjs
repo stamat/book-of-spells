@@ -741,7 +741,8 @@ export const onSwipe = swipe
  * @param {boolean} [opts.inertia=false] Whether to enable inertia
  * @param {boolean} [opts.bounce=false] Whether to enable bounce when inertia is enabled
  * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
- * @param {number} [opts.bounceFactor=0.5] The bounce factor to apply when bounce is enabled
+ * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
+ * @param {boolean} [opts.preventDefaultTouch=true] Whether to prevent the default touch behavior
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
  * @returns {object} The destroy method to remove the event listeners
  * @example
@@ -782,8 +783,9 @@ export function drag(element, opts) {
     inertia: false,
     bounce: false,
     friction: 0.9,
-    bounceFactor: 0.5,
-    callback: null
+    bounceFactor: 0.2,
+    callback: null,
+    preventDefaultTouch: true
   }
 
   if (isFunction(opts)) {
@@ -845,7 +847,7 @@ export function drag(element, opts) {
 
   const setXY = function(e) {
     const carrier = e.touches ? e.touches[0] : e
-    if (e.touches) e.preventDefault()
+    if (e.touches && options.preventDefaultTouch) e.preventDefault()
     prevX = x
     prevY = y
     x = carrier.pageX
