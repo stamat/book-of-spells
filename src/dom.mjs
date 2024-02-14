@@ -1,6 +1,6 @@
 /** @module dom */
 
-import { transformDashToCamelCase, isArray, isString, isObject, isFunction, shallowMerge } from './helpers.mjs'
+import { transformDashToCamelCase, isArray, isString, isObject, isFunction, shallowMerge, percentage } from './helpers.mjs'
 import { encodeHtmlEntities, decodeHtmlEntities } from './parsers.mjs'
 
 /**
