@@ -797,6 +797,7 @@ export function drag(element, opts) {
   const handleStart = function(e) {
     setXY(e)
     dragging = true
+    rect = element.getBoundingClientRect()
     element.setAttribute('dragging', 'true')
     if (inertiaId) {
       cancelAnimationFrame(inertiaId)
