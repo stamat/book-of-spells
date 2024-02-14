@@ -722,28 +722,58 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0) {
  * Drag event handler
  * 
  * @param {HTMLElement} element The element to listen for drag gestures on
- * @param {Function} callback The callback to call when a drag gesture is detected
+ * @param {object | Function} opts The options object or the callback to call when a drag gesture is detected
+ * @param {boolean} [opts.inertia=false] Whether to enable inertia
+ * @param {boolean} [opts.bounce=false] Whether to enable bounce
+ * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
+ * @param {number} [opts.bounceFactor=0.5] The bounce factor to apply when bounce is enabled
+ * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
  * @returns {object} The destroy method to remove the event listeners
  * @example
- * onDrag(document.getElementById('foo'), (e) => {
+ * drag(document.getElementById('foo'), (e) => {
  *  console.log(e.x)
  *  console.log(e.y)
  *  console.log(e.relativeX)
  *  console.log(e.relativeY)
  *  console.log(e.xPercentage)
  *  console.log(e.yPercentage)
+ *  console.log(e.velocityX)
+ *  console.log(e.velocityY)
+ *  console.log(e.prevX)
+ *  console.log(e.prevY)
  * })
  * 
  * element.addEventListener('drag', (e) => { ... })
  * element.addEventListener('dragstart', (e) => { ... })
  * element.addEventListener('dragend', (e) => { ... })
+ * element.addEventListener('draginertia', (e) => { ... })
+ * element.addEventListener('draginertiaend', (e) => { ... })
  */
-export function onDrag(element, callback) {
+export function drag(element, opts) {
   let x = 0
   let y = 0
+  let prevX = 0
+  let prevY = 0
+  let velocityX = 0
+  let velocityY = 0
   let dragging = false
   let rect = element.getBoundingClientRect()
+  let inertiaId = null
 
+  const options = {
+    inertia: false,
+    bounce: false,
+    friction: 0.9,
+    bounceFactor: 0.5,
+    callback: null
+  }
+
+  if (typeof opts === 'function') {
+    options.callback = opts
+  } else if (typeof opts === 'object') {
+    shallowMerge(options, opts)
+  }
+  
   if (!element) return
   if (element.getAttribute('drag-enabled') === 'true') return
   element.setAttribute('drag-enabled', 'true')
@@ -753,6 +783,10 @@ export function onDrag(element, callback) {
     setXY(e)
     dragging = true
     element.setAttribute('dragging', 'true')
+    if (inertiaId) {
+      cancelAnimationFrame(inertiaId)
+      inertiaId = null
+    }
     const event = new CustomEvent('dragstart', { detail: getDetail() })
     element.dispatchEvent(event)
   }
@@ -760,8 +794,10 @@ export function onDrag(element, callback) {
   const handleMove = function(e) {
     if (!dragging) return
     setXY(e)
+    velocityX = x - prevX
+    velocityY = y - prevY
     const detail = getDetail()
-    if (callback) callback(detail)
+    if (options.callback) options.callback(detail)
     const event = new CustomEvent('drag', { detail: detail })
     element.dispatchEvent(event)
   }
@@ -769,6 +805,7 @@ export function onDrag(element, callback) {
   const handleEnd = function() {
     dragging = false
     element.setAttribute('dragging', 'false')
+    if (options.inertia) inertiaId = requestAnimationFrame(inertia)
     const event = new CustomEvent('dragend', { detail: getDetail() })
     element.dispatchEvent(event)
   }
@@ -776,6 +813,8 @@ export function onDrag(element, callback) {
   const setXY = function(e) {
     const carrier = e.touches ? e.touches[0] : e
     if (e.touches) e.preventDefault()
+    prevX = x
+    prevY = y
     x = carrier.clientX
     y = carrier.clientY
   }
@@ -793,7 +832,11 @@ export function onDrag(element, callback) {
       relativeX: relativeX,
       relativeY: relativeY,
       xPercentage: xPercentage,
-      yPercentage: yPercentage
+      yPercentage: yPercentage,
+      velocityX: velocityX,
+      velocityY: velocityY,
+      prevX: prevX,
+      prevY: prevY
     }
 
     if (xPercentage < 0) detail.xPercentage = 0
@@ -802,6 +845,49 @@ export function onDrag(element, callback) {
     if (yPercentage > 100) detail.yPercentage = 100
 
     return detail
+  }
+
+  const inertia = function() {
+    x += velocityX
+    y += velocityY
+    velocityX *= options.friction
+    velocityY *= options.friction
+
+    if (options.bounce) {
+      if (x < rect.left) {
+        x = rect.left
+        velocityX *= -options.bounceFactor
+      }
+      if (x > rect.width + rect.left) {
+        x = rect.width + rect.left
+        velocityX *= -options.bounceFactor
+      }
+      if (y < rect.top) {
+        y = rect.top
+        velocityY *= -options.bounceFactor
+      }
+      if (y > rect.height + rect.top) {
+        y = rect.height + rect.top
+        velocityY *= -options.bounceFactor
+      }
+    }
+
+    if (Math.abs(velocityX) < 0.1) velocityX = 0
+    if (Math.abs(velocityY) < 0.1) velocityY = 0
+
+    const detail = getDetail()
+
+    if (velocityX !== 0 || velocityY !== 0) {
+      if (options.callback) options.callback(detail)
+      const event = new CustomEvent('draginertia', { detail: detail })
+      element.dispatchEvent(event)
+      inertiaId = requestAnimationFrame(inertia)
+    } else {
+      inertiaId = null
+      if (options.callback) options.callback(detail)
+      const event = new CustomEvent('draginertiaend', { detail: detail })
+      element.dispatchEvent(event)
+    }
   }
 
   element.addEventListener('mousedown', handleStart)
@@ -819,6 +905,13 @@ export function onDrag(element, callback) {
       element.removeEventListener('touchstart', handleStart)
       element.removeEventListener('touchmove', handleMove)
       element.removeEventListener('touchend', handleEnd)
+
+      if (inertiaId) {
+        cancelAnimationFrame(inertiaId)
+        inertiaId = null
+      }
     }
   }
 }
+
+export const onDrag = drag
