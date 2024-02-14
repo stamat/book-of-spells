@@ -739,7 +739,7 @@ export const onSwipe = swipe
  * @param {HTMLElement} element The element to listen for drag gestures on
  * @param {object | Function} opts The options object or the callback to call when a drag gesture is detected
  * @param {boolean} [opts.inertia=false] Whether to enable inertia
- * @param {boolean} [opts.bounce=false] Whether to enable bounce
+ * @param {boolean} [opts.bounce=false] Whether to enable bounce when inertia is enabled
  * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
  * @param {number} [opts.bounceFactor=0.5] The bounce factor to apply when bounce is enabled
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
@@ -765,6 +765,9 @@ export const onSwipe = swipe
  * element.addEventListener('draginertiaend', (e) => { ... })
  */
 export function drag(element, opts) {
+  if (!element || !(element instanceof Element)) return
+  if (element.getAttribute('drag-enabled') === 'true') return
+
   let x = 0
   let y = 0
   let prevX = 0
@@ -772,7 +775,7 @@ export function drag(element, opts) {
   let velocityX = 0
   let velocityY = 0
   let dragging = false
-  let rect = element.getBoundingClientRect()
+  let rect = null
   let inertiaId = null
 
   const options = {
@@ -788,16 +791,30 @@ export function drag(element, opts) {
   } else if (isObject(opts)) {
     shallowMerge(options, opts)
   }
-  
-  if (!element) return
-  if (element.getAttribute('drag-enabled') === 'true') return
+
+  options.friction = Math.abs(options.friction)
+  options.bounceFactor = Math.abs(options.bounceFactor)
+
   element.setAttribute('drag-enabled', 'true')
   element.setAttribute('dragging', 'false')
+
+  const calcPageRelativeRect = function() {
+    const origRect = element.getBoundingClientRect()
+    const rect = {
+      top: origRect.top + window.scrollY,
+      left: origRect.left + window.scrollX,
+      width: origRect.width,
+      height: origRect.height
+    }
+
+    return rect
+  }
+  rect = calcPageRelativeRect()
 
   const handleStart = function(e) {
     setXY(e)
     dragging = true
-    rect = element.getBoundingClientRect()
+    rect = calcPageRelativeRect()
     element.setAttribute('dragging', 'true')
     if (inertiaId) {
       cancelAnimationFrame(inertiaId)
