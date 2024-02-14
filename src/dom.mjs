@@ -606,12 +606,12 @@ export function isVisible(element) {
  * Swipe event handler
  * 
  * @param {HTMLElement} element The element to listen for swipe gestures on
- * @param {Function} callback The callback to call when a swipe gesture is detected
+ * @param {object | Function} callback The callback to call when a swipe gesture is detected or the options object with the callback, threshold, and timeThreshold
  * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
  * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
  * @returns {object} The destroy method to remove the event listeners
  * @example
- * onSwipe(document.getElementById('foo'), (e) => {
+ * swipe(document.getElementById('foo'), (e) => {
  *  console.log(e.direction)
  *  console.log(e.deltaX)
  *  console.log(e.deltaY)
@@ -634,13 +634,20 @@ export function isVisible(element) {
  * element.addEventListener('swipestart', (e) => { ... })
  * element.addEventListener('swipeend', (e) => { ... })
  */
-export function onSwipe(element, callback, threshold = 150, timeThreshold = 0) {
+export function swipe(element, callback, threshold = 150, timeThreshold = 0) {
   let startX = 0
   let startY = 0
   let endX = 0
   let endY = 0
   let startTime = 0
   let endTime = 0
+
+  if (typeof callback === 'object') {
+    const options = callback
+    callback = options.callback
+    threshold = options.threshold || threshold
+    timeThreshold = options.timeThreshold || timeThreshold
+  }
 
   if (!element) return
   if (element.getAttribute('swipe-enabled') === 'true') return
@@ -717,6 +724,14 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0) {
     }
   }
 }
+
+/**
+ * Alias for swipe
+ * 
+ * @see swipe
+ * @deprecated Use swipe instead
+ */
+export const onSwipe = swipe
 
 /**
  * Drag event handler
@@ -914,4 +929,10 @@ export function drag(element, opts) {
   }
 }
 
+/**
+ * Alias for drag
+ * 
+ * @see drag
+ * @deprecated Use drag instead
+ */
 export const onDrag = drag
