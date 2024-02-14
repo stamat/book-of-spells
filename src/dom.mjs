@@ -609,6 +609,7 @@ export function isVisible(element) {
  * @param {Function} callback The callback to call when a swipe gesture is detected
  * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
  * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
+ * @returns {object} The destroy method to remove the event listeners
  * @example
  * onSwipe(document.getElementById('foo'), (e) => {
  *  console.log(e.direction)
@@ -713,6 +714,111 @@ export function onSwipe(element, callback, threshold = 150, timeThreshold = 0) {
       element.removeEventListener('touchend', handleEnd)
       element.removeEventListener('mousedown', handleStart)
       element.removeEventListener('mouseup', handleEnd)
+    }
+  }
+}
+
+/**
+ * Drag event handler
+ * 
+ * @param {HTMLElement} element The element to listen for drag gestures on
+ * @param {Function} callback The callback to call when a drag gesture is detected
+ * @returns {object} The destroy method to remove the event listeners
+ * @example
+ * onDrag(document.getElementById('foo'), (e) => {
+ *  console.log(e.x)
+ *  console.log(e.y)
+ *  console.log(e.relativeX)
+ *  console.log(e.relativeY)
+ *  console.log(e.xPercentage)
+ *  console.log(e.yPercentage)
+ * })
+ * 
+ * element.addEventListener('drag', (e) => { ... })
+ * element.addEventListener('dragstart', (e) => { ... })
+ * element.addEventListener('dragend', (e) => { ... })
+ */
+export function onDrag(element, callback) {
+  let x = 0
+  let y = 0
+  let dragging = false
+  let rect = element.getBoundingClientRect()
+
+  if (!element) return
+  if (element.getAttribute('drag-enabled') === 'true') return
+  element.setAttribute('drag-enabled', 'true')
+  element.setAttribute('dragging', 'false')
+
+  const handleStart = function(e) {
+    setXY(e)
+    dragging = true
+    element.setAttribute('dragging', 'true')
+    const event = new CustomEvent('dragstart', { detail: getDetail() })
+    element.dispatchEvent(event)
+  }
+
+  const handleMove = function(e) {
+    if (!dragging) return
+    setXY(e)
+    const detail = getDetail()
+    if (callback) callback(detail)
+    const event = new CustomEvent('drag', { detail: detail })
+    element.dispatchEvent(event)
+  }
+
+  const handleEnd = function() {
+    dragging = false
+    element.setAttribute('dragging', 'false')
+    const event = new CustomEvent('dragend', { detail: getDetail() })
+    element.dispatchEvent(event)
+  }
+
+  const setXY = function(e) {
+    const carrier = e.touches ? e.touches[0] : e
+    if (e.touches) e.preventDefault()
+    x = carrier.clientX
+    y = carrier.clientY
+  }
+
+  const getDetail = function() {
+    const relativeX = x - rect.left
+    const relativeY = y - rect.top
+    const xPercentage = percentage(relativeX, rect.width)
+    const yPercentage = percentage(relativeY, rect.height)
+
+    const detail = {
+      target: element,
+      x: x,
+      y: y,
+      relativeX: relativeX,
+      relativeY: relativeY,
+      xPercentage: xPercentage,
+      yPercentage: yPercentage
+    }
+
+    if (xPercentage < 0) detail.xPercentage = 0
+    if (xPercentage > 100) detail.xPercentage = 100
+    if (yPercentage < 0) detail.yPercentage = 0
+    if (yPercentage > 100) detail.yPercentage = 100
+
+    return detail
+  }
+
+  element.addEventListener('mousedown', handleStart)
+  element.addEventListener('mousemove', handleMove)
+  element.addEventListener('mouseup', handleEnd)
+  element.addEventListener('touchstart', handleStart)
+  element.addEventListener('touchmove', handleMove)
+  element.addEventListener('touchend', handleEnd)
+
+  return {
+    destroy: function() {
+      element.removeEventListener('mousedown', handleStart)
+      element.removeEventListener('mousemove', handleMove)
+      element.removeEventListener('mouseup', handleEnd)
+      element.removeEventListener('touchstart', handleStart)
+      element.removeEventListener('touchmove', handleMove)
+      element.removeEventListener('touchend', handleEnd)
     }
   }
 }
