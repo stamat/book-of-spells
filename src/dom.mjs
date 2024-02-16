@@ -933,6 +933,7 @@ export function drag(element, opts) {
   element.addEventListener('touchend', handleEnd)
 
   return {
+    //TODO: add manual start, move and end methods - for programmatic control
     destroy: function() {
       element.removeEventListener('mousedown', handleStart)
       element.removeEventListener('mousemove', handleMove)
