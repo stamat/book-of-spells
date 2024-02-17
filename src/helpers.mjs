@@ -727,3 +727,19 @@ export function random() {
   if (!crypto) return Math.random()
   if (crypto.getRandomValues) return crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295 // 2^32 - 1 = 4294967295
 }
+
+/**
+ * Access nested object properties using a path
+ * 
+ * @param {object} obj The object to access
+ * @param {array|string} path The path to access
+ * @returns {*} The value of the accessed property
+ * 
+ * @example
+ * const obj = { foo: { bar: 'baz' } }
+ * getObjectValueByPath(obj, 'foo.bar') // => 'baz'
+ */
+export function getObjectValueByPath(obj, path) {
+  if (typeof path === 'string') path = path.split('.');
+  return path.reduce((acc, part) => acc[part], obj);
+}

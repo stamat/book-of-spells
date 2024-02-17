@@ -28,7 +28,8 @@ const {
   fixed,
   percentage,
   pick,
-  reject
+  reject,
+  getObjectValueByPath
 } = require('../helpers')
 
 const a = { 
@@ -296,4 +297,12 @@ test('reject', () => {
   expect(reject(['foo', 'bar', 'baz', 'qux'], [0, 2, 3])).toEqual(['bar'])
   expect(reject(['foo', 'bar', 'baz', 'qux'], [0, 1, 2, 3])).toEqual([])
   expect(reject(['foo', 'bar', 'baz', 'qux'], [0, 4])).toEqual(['bar', 'baz', 'qux'])
+})
+
+test('getObjectValueByPath', () => {
+  expect(getObjectValueByPath({ foo: { bar: { baz: 'qux' } } }, 'foo.bar.baz')).toBe('qux')
+  expect(getObjectValueByPath({ foo: { bar: { baz: 'qux' } } }, 'foo.bar')).toEqual({ baz: 'qux' })
+  expect(getObjectValueByPath({ foo: { bar: { baz: 'qux' } } }, 'foo')).toEqual({ bar: { baz: 'qux' } })
+  expect(getObjectValueByPath({ foo: 'bar' }, 'foo')).toBe('bar')
+  expect(getObjectValueByPath({ foo: 'bar' }, 'bar')).toBe(undefined)
 })
