@@ -446,7 +446,6 @@ export function delegateEvent(selector, eventType, handler) {
       const target = e.target.closest(selector)
       if (target) handler(e, target)
     })
-
     return null
   }
 
@@ -454,10 +453,18 @@ export function delegateEvent(selector, eventType, handler) {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (!(node instanceof HTMLElement)) continue
-        if (!node.matches(selector)) continue
-        node.addEventListener(eventType, (e) => {
-          handler(e, e.currentTarget)
-        })
+        if (node.matches(selector)) {
+          node.addEventListener(eventType, (e) => {
+            handler(e, e.currentTarget)
+          })
+          continue
+        }
+
+        for (const child of node.querySelectorAll(selector)) {
+          child.addEventListener(eventType, (e) => {
+            handler(e, e.currentTarget)
+          })
+        }
       }
     }
   })
@@ -467,14 +474,13 @@ export function delegateEvent(selector, eventType, handler) {
       handler(e, e.currentTarget)
     })
   }
-
   observer.observe(document.body, { childList: true, subtree: true })
   return observer
 }
 
 /**
- * Run a handler on selected elements and on elements added to the DOM with the same selector, 
- * or can be delegateEvent alias.
+ * Run a handler on selected elements and on elements added to the DOM with the same selector as a MutationObserver abstraction,
+ * or use it to delegate events as a `delegateEvent` alias
  * 
  * @param {string} selector The selector to select the elements to run the handler on
  * @param {string | Function} eventTypeOrHandler The event type to delegate, like `click`, or the handler to call on every element
@@ -490,6 +496,7 @@ export function delegateEvent(selector, eventType, handler) {
  * console.log('Clicked on', target)
  * })
  */
+
 export function on(selector, eventTypeOrHandler, handler) {
   if (isString(eventTypeOrHandler)) {
     return delegateEvent(selector, eventTypeOrHandler, handler)
@@ -499,8 +506,14 @@ export function on(selector, eventTypeOrHandler, handler) {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (!(node instanceof HTMLElement)) continue
-        if (!node.matches(selector)) continue
-        eventTypeOrHandler(node)
+        if (node.matches(selector)) {
+          eventTypeOrHandler(node)
+          continue
+        }
+
+        for (const child of node.querySelectorAll(selector)) {
+          eventTypeOrHandler(child)
+        }
       }
     }
   })
@@ -510,7 +523,6 @@ export function on(selector, eventTypeOrHandler, handler) {
   }
 
   observer.observe(document.body, { childList: true, subtree: true })
-
   return observer
 }
 
