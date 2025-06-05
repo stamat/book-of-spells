@@ -606,7 +606,7 @@ export function proportionalParentCoverResize(elements, ratio = 1, offset = 0) {
  * @example
  * isVisible(document.getElementById('foo'))
  */
-export function isVisible(element) {
+export function isVisible(element, checkOpacity = true) {
   if (!element || !(element instanceof HTMLElement)) return false
   if (typeof element.checkVisibility === 'function') return element.checkVisibility()
   if (element.getAttribute('hidden') !== null) return false;
@@ -614,10 +614,65 @@ export function isVisible(element) {
   if (
     computedStyle.getPropertyValue('display') === 'none' ||
     computedStyle.getPropertyValue('visibility') === 'hidden' ||
-    computedStyle.getPropertyValue('opacity') === '0'
+    (checkOpacity && computedStyle.getPropertyValue('opacity') === '0')
   )
     return false
   return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length)
+}
+
+/**
+ * Returns all focusable elements from a given element or the document.
+ * Focusable elements are those that can be focused by the user, such as links, buttons, inputs, etc.
+ * Always use getVisibleFocusableElements instead of this function to ensure that only visible elements are returned, since only visible elements can be focused by the user.
+ * 
+ * @see {@link getVisibleFocusableElements}
+ * @param {HTMLElement|Element|Document} [from=document] The element to get the focusable elements from
+ * @returns {Array<HTMLElement>} An array of focusable elements
+ * @example
+ * document.body.innerHTML = `
+ * <div id="foo" tabindex="0">Foo</div>
+ * <div id="bar" tabindex="-1">Bar</div>
+ * <button id="baz">Baz</button>
+ * <div id="qux" contenteditable="true">Qux</div>`
+ * <a href="#quux" id="quux">Quux</a>
+ * 
+ * getFocusableElements() // => [<div id="foo" tabindex="0">Foo</div>, <button id="baz">Baz</button>, <div id="qux" contenteditable="true">Qux</div>, <a href="#quux" id="quux">Quux</a>]
+ */
+export function getFocusableElements(from = document) {
+  if (from instanceof Element || from instanceof Document) {
+    return Array.from(from.querySelectorAll('a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"]), video, audio, summary'))
+  }
+  if (isString(from)) from = query(from)
+  if (!isArray(from) && !(from instanceof NodeList)) return []
+  const res = []
+  for (const element of from) {
+    res.push(...getFocusableElements(element))
+  }
+  return res
+}
+
+/**
+ * Returns all visible focusable elements from a given element or the document.
+ * 
+ * @see {@link getFocusableElements}
+ * @see {@link isVisible}
+ * @param {HTMLElement|Element|Document} [from=document] The element to get the focusable elements from
+ * @param {string} [excludeSelector] A selector to exclude elements from the result
+ * @returns {Array<HTMLElement>} An array of visible focusable elements
+ * 
+ * @example
+ * document.body.innerHTML = `
+ * <div id="foo" tabindex="0">Foo</div>
+ * <div id="bar" tabindex="-1">Bar</div>
+ * <button id="baz" style="display: none;">Baz</button>
+ * <div id="qux" contenteditable="true">Qux</div>`
+ * 
+ * getVisibleFocusableElements() // => [<div id="foo" tabindex="0">Foo</div>, <div id="qux" contenteditable="true">Qux</div>]
+ * getVisibleFocusableElements(document.body, '#foo') // => [<div id="qux" contenteditable="true">Qux</div>]
+ */
+export function getVisibleFocusableElements(from = document, excludeSelector) {
+  const elements = getFocusableElements(from)
+  return Array.from(elements).filter(el => isVisible(el, false) && (!excludeSelector || !el.matches(excludeSelector)))
 }
 
 /**
