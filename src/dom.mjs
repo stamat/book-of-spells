@@ -607,7 +607,7 @@ export function proportionalParentCoverResize(elements, ratio = 1, offset = 0) {
  * isVisible(document.getElementById('foo'))
  */
 export function isVisible(element) {
-  if (!element || !(element instanceof HTMLElement)) return false;
+  if (!element || !(element instanceof HTMLElement)) return false
   if (typeof element.checkVisibility === 'function') return element.checkVisibility()
   if (element.getAttribute('hidden') !== null) return false;
   const computedStyle = getComputedStyle(element)
