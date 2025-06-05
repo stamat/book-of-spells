@@ -607,10 +607,16 @@ export function proportionalParentCoverResize(elements, ratio = 1, offset = 0) {
  * isVisible(document.getElementById('foo'))
  */
 export function isVisible(element) {
-  if (!element) return false;
-  const computedStyle = getComputedStyle(element);
-  if (computedStyle.getPropertyValue('display') === 'none') return false;
-  if (element.getAttribute('hidden') !== null || computedStyle.getPropertyValue('visibility') === 'hidden' || computedStyle.getPropertyValue('opacity') == "0") return false;
+  if (!element || !(element instanceof HTMLElement)) return false;
+  if (typeof element.checkVisibility === 'function') return element.checkVisibility()
+  if (element.getAttribute('hidden') !== null) return false;
+  const computedStyle = getComputedStyle(element)
+  if (
+    computedStyle.getPropertyValue('display') === 'none' ||
+    computedStyle.getPropertyValue('visibility') === 'hidden' ||
+    computedStyle.getPropertyValue('opacity') === '0'
+  )
+    return false
   return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length)
 }
 
