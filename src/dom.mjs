@@ -1089,16 +1089,22 @@ export function isScrollVisible(element) {
  * console.log(scrollState.atEnd) // => true or false
  */
 export function getVerticalScrollState(element, threshold = 0) {
-    if (!element || !(element instanceof HTMLElement)) return
-    const { scrollTop, scrollHeight, clientHeight } = element
-    const scrollBottom = scrollHeight - scrollTop - clientHeight
-    const scrollEndThreshold = scrollBottom <= threshold
-    const scrollStartThreshold = scrollTop <= threshold
+  const noState = {
+    atStart: false,
+    atEnd: false
+  }
+  if (!element || !(element instanceof HTMLElement)) return noState
+  if (!isVerticalScrollVisible(element)) return noState
 
-    return {
-      atStart: scrollStartThreshold,
-      atEnd: scrollEndThreshold
-    }
+  const { scrollTop, scrollHeight, clientHeight } = element
+  const scrollBottom = scrollHeight - scrollTop - clientHeight
+  const scrollEndThreshold = scrollBottom <= threshold
+  const scrollStartThreshold = scrollTop <= threshold
+
+  return {
+    atStart: scrollStartThreshold,
+    atEnd: scrollEndThreshold
+  }
 }
 
 /**
@@ -1114,14 +1120,20 @@ export function getVerticalScrollState(element, threshold = 0) {
  * console.log(scrollState.atEnd) // => true or false
  */
 export function getHorizontalScrollState(element, threshold = 0) {
-    if (!element || !(element instanceof HTMLElement)) return
-    const { scrollLeft, scrollWidth, clientWidth } = element
-    const scrollRight = scrollWidth - scrollLeft - clientWidth
-    const scrollEndThreshold = scrollRight <= threshold
-    const scrollStartThreshold = scrollLeft <= threshold
+  const noState = {
+    atStart: false,
+    atEnd: false
+  }
+  if (!element || !(element instanceof HTMLElement)) return noState
+  if (!isHorizontalScrollVisible(element)) return noState
 
-    return {
-      atStart: scrollStartThreshold,
-      atEnd: scrollEndThreshold
-    }
+  const { scrollLeft, scrollWidth, clientWidth } = element
+  const scrollRight = scrollWidth - scrollLeft - clientWidth
+  const scrollEndThreshold = scrollRight <= threshold
+  const scrollStartThreshold = scrollLeft <= threshold
+
+  return {
+    atStart: scrollStartThreshold,
+    atEnd: scrollEndThreshold
+  }
 }
