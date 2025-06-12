@@ -1030,3 +1030,48 @@ export function drag(element, opts) {
  * @deprecated Use drag instead
  */
 export const onDrag = drag
+
+/**
+ * Checks if an element is overflowing its container
+ * used to check if the scrollbar is visible.
+ * 
+ * @param {HTMLElement} element The element to check
+ * @returns {boolean} True if the element is overflowing, false otherwise
+ * @example
+ * const el = document.getElementById('foo')
+ * isOverflowing(el) // => true or false
+ */
+export function isOverflowingVertically(element) {
+  if (!element || !(element instanceof HTMLElement)) return false
+  return element.offsetHeight < element.scrollHeight
+}
+
+/**
+ * Checks if an element is overflowing horizontally
+ * used to check if the scrollbar is visible.
+ * 
+ * @param {HTMLElement} element The element to check
+ * @returns {boolean} True if the element is overflowing, false otherwise
+ * @example
+ * const el = document.getElementById('foo')
+ * isOverflowingHorizontally(el) // => true or false
+ */
+export function isOverflowingHorizontally(element) {
+  if (!element || !(element instanceof HTMLElement)) return false
+  return element.offsetWidth < element.scrollWidth
+}
+
+/**
+ * Checks if an element is overflowing its container either vertically or horizontally
+ * used to check if the scrollbar is visible.
+ * 
+ * @param {HTMLElement} element The element to check
+ * @returns {boolean} True if the element is overflowing, false otherwise
+ * @example
+ * const el = document.getElementById('foo')
+ * isOverflowing(el) // => true or false
+ */
+export function isOverflowing(element) {
+  if (!element || !(element instanceof HTMLElement)) return false
+  return isOverflowingVertically(element) || isOverflowingHorizontally(element)
+}
