@@ -1039,9 +1039,9 @@ export const onDrag = drag
  * @returns {boolean} True if the element is overflowing, false otherwise
  * @example
  * const el = document.getElementById('foo')
- * isOverflowing(el) // => true or false
+ * isVerticalScrollVisible(el) // => true or false
  */
-export function isOverflowingVertically(element) {
+export function isVerticalScrollVisible(element) {
   if (!element || !(element instanceof HTMLElement)) return false
   return element.offsetHeight < element.scrollHeight
 }
@@ -1054,9 +1054,9 @@ export function isOverflowingVertically(element) {
  * @returns {boolean} True if the element is overflowing, false otherwise
  * @example
  * const el = document.getElementById('foo')
- * isOverflowingHorizontally(el) // => true or false
+ * isHorizontalScrollVisible(el) // => true or false
  */
-export function isOverflowingHorizontally(element) {
+export function isHorizontalScrollVisible(element) {
   if (!element || !(element instanceof HTMLElement)) return false
   return element.offsetWidth < element.scrollWidth
 }
@@ -1069,9 +1069,9 @@ export function isOverflowingHorizontally(element) {
  * @returns {boolean} True if the element is overflowing, false otherwise
  * @example
  * const el = document.getElementById('foo')
- * isOverflowing(el) // => true or false
+ * isScrollVisible(el) // => true or false
  */
-export function isOverflowing(element) {
+export function isScrollVisible(element) {
   if (!element || !(element instanceof HTMLElement)) return false
   return isOverflowingVertically(element) || isOverflowingHorizontally(element)
 }
