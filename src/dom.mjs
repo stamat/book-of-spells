@@ -1075,3 +1075,53 @@ export function isOverflowing(element) {
   if (!element || !(element instanceof HTMLElement)) return false
   return isOverflowingVertically(element) || isOverflowingHorizontally(element)
 }
+
+/**
+ * Gets if the vertical scroll has reached the start or end of the element.
+ *
+ * @param {HTMLElement} element The element to check
+ * @param {number} [threshold=0] The threshold in pixels to consider the scroll as at the start or end
+ * @returns {object} An object with `atStart` and `atEnd` properties indicating if the scroll is at the start or end of the element 
+ * @example
+ * const el = document.getElementById('foo')
+ * const scrollState = getVerticalScrollState(el, 10)
+ * console.log(scrollState.atStart) // => true or false
+ * console.log(scrollState.atEnd) // => true or false
+ */
+export function getVerticalScrollState(element, threshold = 0) {
+    if (!element || !(element instanceof HTMLElement)) return
+    const { scrollTop, scrollHeight, clientHeight } = element
+    const scrollBottom = scrollHeight - scrollTop - clientHeight
+    const scrollEndThreshold = scrollBottom <= threshold
+    const scrollStartThreshold = scrollTop <= threshold
+
+    return {
+      atStart: scrollStartThreshold,
+      atEnd: scrollEndThreshold
+    }
+}
+
+/**
+ * Gets if the horizontal scroll has reached the start or end of the element.
+ * 
+ * @param {HTMLElement} element The element to check
+ * @param {number} [threshold=0] The threshold in pixels to consider the scroll as at the start or end
+ * @returns {object} An object with `atStart` and `atEnd` properties indicating if the scroll is at the start or end of the element
+ * @example
+ * const el = document.getElementById('foo')
+ * const scrollState = getHorizontalScrollState(el, 10)
+ * console.log(scrollState.atStart) // => true or false
+ * console.log(scrollState.atEnd) // => true or false
+ */
+export function getHorizontalScrollState(element, threshold = 0) {
+    if (!element || !(element instanceof HTMLElement)) return
+    const { scrollLeft, scrollWidth, clientWidth } = element
+    const scrollRight = scrollWidth - scrollLeft - clientWidth
+    const scrollEndThreshold = scrollRight <= threshold
+    const scrollStartThreshold = scrollLeft <= threshold
+
+    return {
+      atStart: scrollStartThreshold,
+      atEnd: scrollEndThreshold
+    }
+}
