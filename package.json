@@ -3,6 +3,18 @@
   "description": "📖 Stamat's Book of JavaScript Spells",
   "main": "index.mjs",
   "author": "Nikola Stamatovic <@stamat>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stamat/book-of-spells.git"
+  },
+  "website": "https://stamat.io/book-of-spells",
+  "keywords": [
+    "javascript",
+    "utility-library",
+    "utilities",
+    "esm",
+    "es6"
+  ],
   "license": "MIT",
   "scripts": {
     "test": "npx jest",
