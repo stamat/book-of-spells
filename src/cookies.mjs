@@ -1,4 +1,5 @@
 /** @module cookies */
+import { escapeRegExp } from './regex.mjs'
 
 /**
  * Returns a string with the expiration date for a cookie.
@@ -40,7 +41,8 @@ export function setCookie(name, value, days) {
  * getCookie('bar') // Returns null if the cookie named 'bar' doesn't exist
  */
 export function getCookie(name) {
-  const matches = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}\\s*=\\s*([^;]+)`))
+  const escapedName = escapeRegExp(name)
+  const matches = document.cookie.match(new RegExp(`(?:^|;\\s*)${escapedName}\\s*=\\s*([^;]+)`))
   return matches ? matches[1] : null
 }
 
@@ -55,7 +57,8 @@ export function getCookie(name) {
  * getCookie('foo') // Returns null
  */
 export function deleteCookie(name) {
-  document.cookie = `${name}=; Max-Age=-99999999;`
+  const escapedName = escapeRegExp(name)
+  document.cookie = `${escapedName}=; Max-Age=-99999999;`
 }
 
 /**

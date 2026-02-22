@@ -46,3 +46,15 @@ export const RE_ATTRIBUTE_WITH_VALUE = /^\s*([a-z_]{1}[a-z0-9\-_]*)=("[^"]+"|'[^
  * Regular expression for matching the first or last quote of a string used for removing them
  */
 export const RE_FIRST_OR_LAST_QUOTE = /^["']|["']$/g
+
+/**
+ * Escape special characters in a string to be used in a regular expression
+ * @param {string} string - The string to escape
+ * @returns {string} The escaped string
+ * @example
+ * escapeRegExp('hello world') // 'hello world'
+ * escapeRegExp('hello.*+?^${}()|[]\\world') // 'hello\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\world'
+ */
+export function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}

@@ -258,9 +258,10 @@ export function getTransitionDurations(element) {
  * matchesAny(document.querySelectorAll('div'), '#qux') // => false
  */
 export function matchesAny(elements, selector) {
-  if (!elements || !selector || !elements.length) return false
+  if (!elements || !selector) return false
   if (elements instanceof Element) elements = [elements]
   if (isString(elements)) elements = query(elements)
+  if (!elements.length) return false
   for (const element of elements) {
     if (element.matches(selector)) return true
   }
@@ -283,9 +284,10 @@ export function matchesAny(elements, selector) {
  * matchesAll(document.querySelectorAll('div'), '#foo') // => false
  */
 export function matchesAll(elements, selector) {
-  if (!elements || !selector || !elements.length) return false
+  if (!elements || !selector) return false
   if (elements instanceof Element) elements = [elements]
   if (isString(elements)) elements = query(elements)
+  if (!elements.length) return false
   for (const element of elements) {
     if (!element.matches(selector)) return false
   }

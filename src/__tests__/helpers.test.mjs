@@ -299,6 +299,7 @@ test('reject', () => {
 })
 
 test('getObjectValueByPath', () => {
+  expect(getObjectValueByPath({}, 'a.b.c')).toBe(undefined)
   expect(getObjectValueByPath({ foo: { bar: { baz: 'qux' } } }, 'foo.bar.baz')).toBe('qux')
   expect(getObjectValueByPath({ foo: { bar: { baz: 'qux' } } }, 'foo.bar')).toEqual({ baz: 'qux' })
   expect(getObjectValueByPath({ foo: { bar: { baz: 'qux' } } }, 'foo')).toEqual({ bar: { baz: 'qux' } })

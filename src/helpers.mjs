@@ -743,5 +743,5 @@ export function random() {
  */
 export function getObjectValueByPath(obj, path) {
   if (typeof path === 'string') path = path.split('.');
-  return path.reduce((acc, part) => acc[part], obj);
+  return path.reduce((acc, part) => acc !== null && acc !== undefined ? acc[part] : undefined, obj);
 }

@@ -1,4 +1,4 @@
-import { RE_VIDEO, RE_IMAGE, RE_YOUTUBE, RE_VIMEO } from '../regex.mjs'
+import { RE_VIDEO, RE_IMAGE, RE_YOUTUBE, RE_VIMEO, escapeRegExp } from '../regex.mjs'
 
 test('RE_VIDEO', () => {
   expect(RE_VIDEO.test('/video.mp4')).toBe(true)
@@ -58,4 +58,48 @@ test('RE_VIMEO', () => {
   expect('https://vimeo.com/groups/shortfilms/videos/45196645'.match(RE_VIMEO)[1]).toBe("45196645")
   expect('https://vimeo.com/album/2222222/video/45196645'.match(RE_VIMEO)[1]).toBe("45196645")
   expect('https://player.vimeo.com/video/45196645'.match(RE_VIMEO)[1]).toBe("45196645")
+})
+
+test('escapeRegExp', () => {
+  // plain string with no special characters
+  expect(escapeRegExp('hello world')).toBe('hello world')
+
+  // each special regex character individually
+  expect(escapeRegExp('.')).toBe('\\.')
+  expect(escapeRegExp('*')).toBe('\\*')
+  expect(escapeRegExp('+')).toBe('\\+')
+  expect(escapeRegExp('?')).toBe('\\?')
+  expect(escapeRegExp('^')).toBe('\\^')
+  expect(escapeRegExp('$')).toBe('\\$')
+  expect(escapeRegExp('{')).toBe('\\{')
+  expect(escapeRegExp('}')).toBe('\\}')
+  expect(escapeRegExp('(')).toBe('\\(')
+  expect(escapeRegExp(')')).toBe('\\)')
+  expect(escapeRegExp('|')).toBe('\\|')
+  expect(escapeRegExp('[')).toBe('\\[')
+  expect(escapeRegExp(']')).toBe('\\]')
+  expect(escapeRegExp('\\')).toBe('\\\\')
+
+  // multiple special characters in a string
+  expect(escapeRegExp('foo.bar')).toBe('foo\\.bar')
+  expect(escapeRegExp('price: $10.00')).toBe('price: \\$10\\.00')
+  expect(escapeRegExp('(a|b)')).toBe('\\(a\\|b\\)')
+  expect(escapeRegExp('[test]')).toBe('\\[test\\]')
+  expect(escapeRegExp('a{1,3}')).toBe('a\\{1,3\\}')
+  expect(escapeRegExp('file.*')).toBe('file\\.\\*')
+  expect(escapeRegExp('is this real?')).toBe('is this real\\?')
+  expect(escapeRegExp('end$')).toBe('end\\$')
+  expect(escapeRegExp('^start')).toBe('\\^start')
+  expect(escapeRegExp('a+b')).toBe('a\\+b')
+  expect(escapeRegExp('path\\to\\file')).toBe('path\\\\to\\\\file')
+
+  // escaped string works as a literal regex match
+  const special = 'hello.*+?^${}()|[]\\world'
+  const escaped = escapeRegExp(special)
+  const re = new RegExp(escaped)
+  expect(re.test(special)).toBe(true)
+  expect(re.test('helloXworld')).toBe(false)
+
+  // empty string
+  expect(escapeRegExp('')).toBe('')
 })
