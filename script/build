@@ -1,4 +1,4 @@
 #!/bin/bash
 
 npm run docs
-npx run types
+npm run types
