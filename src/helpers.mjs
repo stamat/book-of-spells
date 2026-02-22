@@ -1,9 +1,10 @@
 /**
  * Shallow merges two objects together. Used to pass simple options to functions.
+ * Mutates the target object. Faster than deepMerge, so use when you don't need to merge nested objects or arrays.
  * 
  * @param {object} target The target object to merge into
  * @param {object} source The source object to merge from
- * @returns object The merged object, in this case the target object with the source object's properties merged into it
+ * @returns object The mutated target object with the source object's properties merged into it
  * @example
  * const target = { foo: 'bar' }
  * const source = { bar: 'baz' }
@@ -18,11 +19,12 @@ export function shallowMerge(target, source) {
 }
 
 /**
- * Deep merge function that's mindful of arrays and objects
+ * Deep merge function that's mindful of arrays and objects. Mutates target object.
+ * shallowMerge is faster than deepMerge, so use shallowMerge when you don't need to merge nested objects or arrays.
  * 
  * @param {object} target The target object to merge into
  * @param {object} source The source object to merge from
- * @returns object The merged object, in this case the target object with the source object's properties merged into it
+ * @returns object The mutated target object with the source object's properties merged into it
  * @example
  * const target = { foo: 'bar' }
  * const source = { bar: 'baz' }
