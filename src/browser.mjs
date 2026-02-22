@@ -47,7 +47,7 @@ export function isMobile() {
  * @returns boolean True if the browser is Safari, false otherwise
  */
 export function isSafari() {
-  if (navigator.hasOwnProperty('vendor')) /apple/i.test(navigator.vendor)
+  if (navigator.hasOwnProperty('vendor')) return /apple/i.test(navigator.vendor)
   return isUserAgentSafari(navigator.userAgent)
 }
 

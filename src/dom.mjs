@@ -84,7 +84,7 @@ export function query(selector, from = document) {
   if (selector instanceof Element) return [selector]
   if (from instanceof Element || from instanceof Document) return from.querySelectorAll(selector)
   if (isString(from)) from = query(from)
-  if (!from instanceof Array  && !from instanceof NodeList) return []
+  if (!(from instanceof Array || from instanceof NodeList)) return []
   const res = []
   for (const element of from) {
     res.push(...element.querySelectorAll(selector))
@@ -227,7 +227,7 @@ export function cssTimeToMilliseconds(duration) {
  * getTransitionDurations(element) // { height: 500, opacity: 1000 } if transition in CSS is set to 'height 0.5s, opacity 1s'
  */
 export function getTransitionDurations(element) {
-  if (!element) {}
+  if (!element) return {}
   const styles = getComputedStyle(element)
   const transitionProperties = styles.getPropertyValue('transition-property').split(',')
   const transitionDurations = styles.getPropertyValue('transition-duration').split(',')
@@ -1073,7 +1073,7 @@ export function isHorizontalScrollVisible(element) {
  */
 export function isScrollVisible(element) {
   if (!element || !(element instanceof HTMLElement)) return false
-  return isOverflowingVertically(element) || isOverflowingHorizontally(element)
+  return isVerticalScrollVisible(element) || isHorizontalScrollVisible(element)
 }
 
 /**
