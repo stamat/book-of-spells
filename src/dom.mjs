@@ -105,8 +105,8 @@ export function query(selector, from = document) {
 export function css(element, styles, transform = false) {
   if (!element || !styles) return
   for (let property in styles) {
-    if (transform) property = transformDashToCamelCase(property)
-    element.style[property] = styles[property]
+    const key = transform ? transformDashToCamelCase(property) : property
+    element.style[key] = styles[property]
   }
 }
 
@@ -349,6 +349,7 @@ export function detachElement(element) {
  */
 export function getTableData(selector, headers, rowSelector = 'tr', cellSelector = 'td', headerCellSelector = 'th') {
   const table = typeof selector === 'string' ? document.querySelector(selector) : selector
+  if (!table) return []
   const res = []
   const rows = table.querySelectorAll(rowSelector)
   let start = 0
@@ -425,8 +426,7 @@ export function parseDOM(html, allChildren) {
  */
 export function loadImage(src, callback) {
   const img = new Image()
-  if (callback)
-    img.addEventListener('load', callback, false);
+  if (callback) img.addEventListener('load', callback, false)
   img.src = src
 }
 
@@ -684,7 +684,7 @@ export function getVisibleFocusableElements(from = document, excludeSelector) {
  * @param {object | Function} callback The callback to call when a swipe gesture is detected or the options object with the callback, threshold, and timeThreshold
  * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
  * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
- * @returns {object} The destroy method to remove the event listeners
+ * @returns {object | null} The destroy method to remove the event listeners
  * @example
  * swipe(document.getElementById('foo'), (e) => {
  *  console.log(e.direction)
@@ -819,7 +819,7 @@ export const onSwipe = swipe
  * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
  * @param {boolean} [opts.preventDefaultTouch=true] Whether to prevent the default touch behavior
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
- * @returns {object} The destroy method to remove the event listeners
+ * @returns {object | null} The destroy method to remove the event listeners
  * @example
  * drag(document.getElementById('foo'), (e) => {
  *  console.log(e.x)

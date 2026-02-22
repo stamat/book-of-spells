@@ -1,4 +1,4 @@
-import { isEmptyElement, getTableData } from '../dom.mjs'
+import { css, isEmptyElement, getTableData } from '../dom.mjs'
 
 document.body.innerHTML = `
   <div id="foo"></div>
@@ -9,6 +9,24 @@ document.body.innerHTML = `
 const foo = document.getElementById('foo')
 const bar = document.getElementById('bar')
 const baz = document.getElementById('baz')
+
+test('css', () => {
+  const el = document.createElement('div')
+
+  // without transform
+  css(el, { color: 'red', fontSize: '16px' })
+  expect(el.style.color).toBe('red')
+  expect(el.style.fontSize).toBe('16px')
+
+  // with transform (dash-case to camelCase)
+  css(el, { 'background-color': 'blue', 'font-weight': 'bold' }, true)
+  expect(el.style.backgroundColor).toBe('blue')
+  expect(el.style.fontWeight).toBe('bold')
+
+  // null/undefined element does not throw
+  expect(() => css(null, { color: 'red' })).not.toThrow()
+  expect(() => css(el, null)).not.toThrow()
+})
 
 test('isEmptyElement', () => {
   expect(isEmptyElement(foo)).toBe(true)

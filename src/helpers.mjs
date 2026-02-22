@@ -157,8 +157,8 @@ export function stringToBoolean(str) {
  * stringToNumber('1foo') // => null
  */
 export function stringToNumber(str) {
-  if (/^\s*\d+\s*$/.test(str)) return parseInt(str)
-  if (/^\s*[\d.]+\s*$/.test(str)) return parseFloat(str)
+  if (/^\s*-?\d+\s*$/.test(str)) return parseInt(str)
+  if (/^\s*-?\d+\.\d+\s*$/.test(str)) return parseFloat(str)
 }
 
 /**
@@ -208,9 +208,10 @@ export function stringToObject(str) {
  * stringToRegex('1') // => null
  */
 export function stringToRegex(str) {
-  if (!/^\s*\/.*\/g?i?\s*$/.test(str)) return
+  const match = str.match(/^\s*\/(.*?)\/([gimsuy]*)\s*$/)
+  if (!match) return
   try {
-    return new RegExp(str)
+    return new RegExp(match[1], match[2])
   } catch (e) {}
 }
 

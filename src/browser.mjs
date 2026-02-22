@@ -83,11 +83,10 @@ export function isIOSSafari() {
  */
 export function mediaMatcher(query, callback) {
   if (isFunction(callback)) {
-    matchMedia(query).addEventListener('change', (e) => {
+    const mql = matchMedia(query)
+    mql.addEventListener('change', (e) => {
       callback(e.matches)
     })
-
-    const mql = matchMedia(query)
     callback(mql.matches)
 
     return mql.matches

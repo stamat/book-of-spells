@@ -369,7 +369,7 @@ export function getVisibleFocusableElements(from?: HTMLElement | Element | Docum
  * @param {object | Function} callback The callback to call when a swipe gesture is detected or the options object with the callback, threshold, and timeThreshold
  * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
  * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
- * @returns {object} The destroy method to remove the event listeners
+ * @returns {object | null} The destroy method to remove the event listeners
  * @example
  * swipe(document.getElementById('foo'), (e) => {
  *  console.log(e.direction)
@@ -394,7 +394,7 @@ export function getVisibleFocusableElements(from?: HTMLElement | Element | Docum
  * element.addEventListener('swipestart', (e) => { ... })
  * element.addEventListener('swipeend', (e) => { ... })
  */
-export function swipe(element: HTMLElement, callback: object | Function, threshold?: number, timeThreshold?: number): object;
+export function swipe(element: HTMLElement, callback: object | Function, threshold?: number, timeThreshold?: number): object | null;
 /**
  * Drag event handler
  *
@@ -406,7 +406,7 @@ export function swipe(element: HTMLElement, callback: object | Function, thresho
  * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
  * @param {boolean} [opts.preventDefaultTouch=true] Whether to prevent the default touch behavior
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
- * @returns {object} The destroy method to remove the event listeners
+ * @returns {object | null} The destroy method to remove the event listeners
  * @example
  * drag(document.getElementById('foo'), (e) => {
  *  console.log(e.x)
@@ -427,7 +427,7 @@ export function swipe(element: HTMLElement, callback: object | Function, thresho
  * element.addEventListener('draginertia', (e) => { ... })
  * element.addEventListener('draginertiaend', (e) => { ... })
  */
-export function drag(element: HTMLElement, opts: object | Function): object;
+export function drag(element: HTMLElement, opts: object | Function): object | null;
 /**
  * Checks if an element is overflowing its container
  * used to check if the scrollbar is visible.
@@ -494,7 +494,7 @@ export function getHorizontalScrollState(element: HTMLElement, threshold?: numbe
  * @param {object | Function} callback The callback to call when a swipe gesture is detected or the options object with the callback, threshold, and timeThreshold
  * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
  * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
- * @returns {object} The destroy method to remove the event listeners
+ * @returns {object | null} The destroy method to remove the event listeners
  * @example
  * swipe(document.getElementById('foo'), (e) => {
  *  console.log(e.direction)
@@ -519,7 +519,7 @@ export function getHorizontalScrollState(element: HTMLElement, threshold?: numbe
  * element.addEventListener('swipestart', (e) => { ... })
  * element.addEventListener('swipeend', (e) => { ... })
  */
-export function onSwipe(element: HTMLElement, callback: object | Function, threshold?: number, timeThreshold?: number): object;
+export function onSwipe(element: HTMLElement, callback: object | Function, threshold?: number, timeThreshold?: number): object | null;
 /**
  * Drag event handler
  *
@@ -531,7 +531,7 @@ export function onSwipe(element: HTMLElement, callback: object | Function, thres
  * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
  * @param {boolean} [opts.preventDefaultTouch=true] Whether to prevent the default touch behavior
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
- * @returns {object} The destroy method to remove the event listeners
+ * @returns {object | null} The destroy method to remove the event listeners
  * @example
  * drag(document.getElementById('foo'), (e) => {
  *  console.log(e.x)
@@ -552,4 +552,4 @@ export function onSwipe(element: HTMLElement, callback: object | Function, thres
  * element.addEventListener('draginertia', (e) => { ... })
  * element.addEventListener('draginertiaend', (e) => { ... })
  */
-export function onDrag(element: HTMLElement, opts: object | Function): object;
+export function onDrag(element: HTMLElement, opts: object | Function): object | null;

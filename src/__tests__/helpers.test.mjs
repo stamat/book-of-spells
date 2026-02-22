@@ -15,6 +15,8 @@ import {
   transformDashToCamelCase,
   transformCamelCaseToDash,
   stringToPrimitive,
+  stringToNumber,
+  stringToRegex,
   stringToType,
   mapByProperty,
   mapPropertyToProperty,
@@ -171,6 +173,71 @@ test('stringToPrimitive', () => {
   expect(stringToPrimitive('1')).toBe(1)
   expect(stringToPrimitive('1.5')).toBe(1.5)
   expect(stringToPrimitive('foo')).toBe('foo')
+})
+
+test('stringToNumber', () => {
+  // integers
+  expect(stringToNumber('1')).toBe(1)
+  expect(stringToNumber('0')).toBe(0)
+  expect(stringToNumber('42')).toBe(42)
+  expect(stringToNumber(' 5 ')).toBe(5)
+
+  // negative integers
+  expect(stringToNumber('-1')).toBe(-1)
+  expect(stringToNumber('-42')).toBe(-42)
+
+  // floats
+  expect(stringToNumber('1.5')).toBe(1.5)
+  expect(stringToNumber('0.123')).toBe(0.123)
+  expect(stringToNumber(' 3.14 ')).toBe(3.14)
+
+  // negative floats
+  expect(stringToNumber('-1.5')).toBe(-1.5)
+  expect(stringToNumber('-0.99')).toBe(-0.99)
+
+  // invalid
+  expect(stringToNumber('foo')).toBe(undefined)
+  expect(stringToNumber('1foo')).toBe(undefined)
+  expect(stringToNumber('1.2.3')).toBe(undefined)
+  expect(stringToNumber('...')).toBe(undefined)
+  expect(stringToNumber('')).toBe(undefined)
+})
+
+test('stringToRegex', () => {
+  // basic regex
+  const re = stringToRegex('/foo/i')
+  expect(re).toBeInstanceOf(RegExp)
+  expect(re.source).toBe('foo')
+  expect(re.flags).toBe('i')
+
+  // global flag
+  const reG = stringToRegex('/bar/g')
+  expect(reG.source).toBe('bar')
+  expect(reG.flags).toBe('g')
+
+  // multiple flags
+  const reGI = stringToRegex('/baz/gi')
+  expect(reGI.source).toBe('baz')
+  expect(reGI.flags).toBe('gi')
+
+  // multiline flag
+  const reM = stringToRegex('/^start/m')
+  expect(reM.source).toBe('^start')
+  expect(reM.flags).toBe('m')
+
+  // no flags
+  const reNone = stringToRegex('/test/')
+  expect(reNone.source).toBe('test')
+  expect(reNone.flags).toBe('')
+
+  // pattern with special characters
+  const reSpecial = stringToRegex('/\\d+\\.\\d+/g')
+  expect(reSpecial.test('3.14')).toBe(true)
+
+  // invalid input
+  expect(stringToRegex('foo')).toBe(undefined)
+  expect(stringToRegex('1')).toBe(undefined)
+  expect(stringToRegex('')).toBe(undefined)
 })
 
 test('stringToType', () => {

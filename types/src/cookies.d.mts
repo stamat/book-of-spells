@@ -1,4 +1,3 @@
-/** @module cookies */
 /**
  * Returns a string with the expiration date for a cookie.
  *

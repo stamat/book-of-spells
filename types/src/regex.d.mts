@@ -1,4 +1,13 @@
 /**
+ * Escape special characters in a string to be used in a regular expression
+ * @param {string} string - The string to escape
+ * @returns {string} The escaped string
+ * @example
+ * escapeRegExp('hello world') // 'hello world'
+ * escapeRegExp('hello.*+?^${}()|[]\\world') // 'hello\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\world'
+ */
+export function escapeRegExp(string: string): string;
+/**
  * @module regex
  */
 /**

@@ -122,8 +122,6 @@ export function setLocal(key, value, ttl, update = false) {
   } catch (e) {
     return null
   }
-
-  return value
 }
 
 /**
