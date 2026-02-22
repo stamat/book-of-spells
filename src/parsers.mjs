@@ -2,7 +2,7 @@
 
 import { isArray, isObject, isString, stringToType } from './helpers.mjs'
 import { RE_ATTRIBUTES, RE_ATTRIBUTE_WITHOUT_VALUE, RE_ATTRIBUTE_WITH_VALUE, RE_URL_PARAMETER, RE_FIRST_OR_LAST_QUOTE } from './regex.mjs'
-import { decodeHTML, encodeHTML } from './dom.mjs'
+import { decodeHTML } from './dom.mjs'
 
 /**
  * Parse a string of attributes and return an object
@@ -55,7 +55,7 @@ export function serializeAttributes(obj) {
 	Object.keys(obj).forEach((key) => {
 		let value = obj[key]
 		if (isObject(value) || isArray(value)) value = JSON.stringify(value)
-		if (isString(value)) value = encodeHTML(value)
+		if (isString(value)) value = encodeHtmlEntities(value)
 		const valueString = value === null || value === undefined ? '' : `="${value}"`
 		res.push(`${key}${valueString}`)
 	})

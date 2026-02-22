@@ -1,5 +1,4 @@
-require = require('esm')(module)
-const { RE_VIDEO, RE_IMAGE, RE_YOUTUBE, RE_VIMEO } = require('../regex')
+import { RE_VIDEO, RE_IMAGE, RE_YOUTUBE, RE_VIMEO } from '../regex.mjs'
 
 test('RE_VIDEO', () => {
   expect(RE_VIDEO.test('/video.mp4')).toBe(true)

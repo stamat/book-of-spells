@@ -1,5 +1,4 @@
-require = require('esm')(module)
-const { isEmptyElement, getTableData } = require('../dom')
+import { isEmptyElement, getTableData } from '../dom.mjs'
 
 document.body.innerHTML = `
   <div id="foo"></div>

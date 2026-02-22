@@ -1,7 +1,6 @@
-const userAgents = require('./data/user-agents.json')
-require = require('esm')(module)
-const { isUserAgentIOS, isUserAgentSafari, isUserAgentMobile } = require('../browser')
-const { mapPropertyToProperty } = require('../helpers.mjs')
+import userAgents from './data/user-agents.json' with { type: 'json' }
+import { isUserAgentIOS, isUserAgentSafari, isUserAgentMobile } from '../browser.mjs'
+import { mapPropertyToProperty } from '../helpers.mjs'
 
 const userAgentMap = mapPropertyToProperty(userAgents, 'device', 'userAgent')
 

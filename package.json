@@ -17,7 +17,7 @@
   ],
   "license": "MIT",
   "scripts": {
-    "test": "npx jest",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' npx jest",
     "docs": "npx jsdoc --configure jsdoc.json --verbose"
   },
   "devDependencies": {

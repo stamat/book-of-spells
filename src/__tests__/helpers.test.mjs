@@ -1,19 +1,18 @@
-const userAgents = require('./data/user-agents.json')
-const slugifyData = require('./data/slugify.json')
-require = require('esm')(module)
-const { 
-  shallowMerge, 
-  deepMerge, 
-  clone, 
-  isObject, 
-  isEmptyObject, 
+import userAgents from './data/user-agents.json' with { type: 'json' }
+import slugifyData from './data/slugify.json' with { type: 'json' }
+import {
+  shallowMerge,
+  deepMerge,
+  clone,
+  isObject,
+  isEmptyObject,
   isArray,
   isEmptyArray,
   isEmpty,
-  isString, 
+  isString,
   isFunction,
-  propertyIsFunction, 
-  transformDashToCamelCase, 
+  propertyIsFunction,
+  transformDashToCamelCase,
   transformCamelCaseToDash,
   stringToPrimitive,
   stringToType,
@@ -30,11 +29,11 @@ const {
   pick,
   reject,
   getObjectValueByPath
-} = require('../helpers')
+} from '../helpers.mjs'
 
-const a = { 
-  foo: 'bar', 
-  bar: 'baz', 
+const a = {
+  foo: 'bar',
+  bar: 'baz',
   baz: [
     { a: 1, b: 2, c: { d: 3, e: 4}}
   ]
@@ -248,7 +247,7 @@ test('randomIntInclusive', () => {
   randomInt = randomIntInclusive(3, 1)
   expect(randomInt).toBeGreaterThanOrEqual(1)
   expect(randomInt).toBeLessThanOrEqual(3)
-  
+
   randomInt = randomIntInclusive(-5, 5)
   expect(randomInt).toBeGreaterThanOrEqual(-5)
   expect(randomInt).toBeLessThanOrEqual(5)

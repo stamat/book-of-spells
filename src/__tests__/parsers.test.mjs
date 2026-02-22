@@ -1,17 +1,14 @@
-require = require('esm')(module)
-const { 
-  parseAttributes, 
-  serializeAttributes, 
-  encodeHtmlEntities, 
+import {
+  parseAttributes,
+  serializeAttributes,
+  encodeHtmlEntities,
   decodeHtmlEntities,
   parseUrlParameters,
   serializeUrlParameters,
   parseResolutionString
- } = require('../parsers')
+} from '../parsers.mjs'
 
- const { 
-  fixed,
- } = require('../helpers')
+import { fixed } from '../helpers.mjs'
 
 test('parseAttributes', () => {
   expect(parseAttributes('shortcode foo="bar"')).toEqual({"foo": "bar", "shortcode": null})
