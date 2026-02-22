@@ -2,6 +2,7 @@
   "name": "book-of-spells",
   "description": "📖 Stamat's Book of JavaScript Spells",
   "main": "index.mjs",
+  "types": "types/index.d.mts",
   "author": "Nikola Stamatovic <@stamat>",
   "repository": {
     "type": "git",
@@ -10,7 +11,8 @@
   "files": [
     "index.mjs",
     "src/",
-    "!src/**/__tests__/"
+    "!src/**/__tests__/",
+    "types/"
   ],
   "website": "https://stamat.io/book-of-spells",
   "keywords": [
@@ -23,7 +25,8 @@
   "license": "MIT",
   "scripts": {
     "test": "NODE_OPTIONS='--experimental-vm-modules' npx jest",
-    "docs": "npx jsdoc --configure jsdoc.json --verbose"
+    "docs": "npx jsdoc --configure jsdoc.json --verbose",
+    "types": "npx -p typescript tsc --declaration --allowJs --emitDeclarationOnly --skipLibCheck --declarationDir types src/*.mjs index.mjs"
   },
   "devDependencies": {
     "esm": "^3.2.25",
