@@ -57,8 +57,7 @@ export function getCookie(name) {
  * getCookie('foo') // Returns null
  */
 export function deleteCookie(name) {
-  const escapedName = escapeRegExp(name)
-  document.cookie = `${escapedName}=; Max-Age=-99999999;`
+  document.cookie = `${name}=; Max-Age=-99999999;`
 }
 
 /**
