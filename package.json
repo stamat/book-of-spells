@@ -7,6 +7,11 @@
     "type": "git",
     "url": "git+https://github.com/stamat/book-of-spells.git"
   },
+  "files": [
+    "index.mjs",
+    "src/",
+    "!src/**/__tests__/"
+  ],
   "website": "https://stamat.io/book-of-spells",
   "keywords": [
     "javascript",
