@@ -14,10 +14,14 @@ import {
   propertyIsFunction,
   transformDashToCamelCase,
   transformCamelCaseToDash,
+  stringToBoolean,
   stringToPrimitive,
   stringToNumber,
+  stringToArray,
+  stringToObject,
   stringToRegex,
   stringToType,
+  hasOwnProperties,
   mapByProperty,
   mapPropertyToProperty,
   slugify,
@@ -30,7 +34,10 @@ import {
   percentage,
   pick,
   reject,
-  getObjectValueByPath
+  getObjectValueByPath,
+  basicUID,
+  generateUUID,
+  random
 } from '../helpers.mjs'
 
 const a = {
@@ -372,4 +379,72 @@ test('getObjectValueByPath', () => {
   expect(getObjectValueByPath({ foo: { bar: { baz: 'qux' } } }, 'foo')).toEqual({ bar: { baz: 'qux' } })
   expect(getObjectValueByPath({ foo: 'bar' }, 'foo')).toBe('bar')
   expect(getObjectValueByPath({ foo: 'bar' }, 'bar')).toBe(undefined)
+})
+
+test('stringToBoolean', () => {
+  expect(stringToBoolean('true')).toBe(true)
+  expect(stringToBoolean('false')).toBe(false)
+  expect(stringToBoolean('TRUE')).toBe(true)
+  expect(stringToBoolean('FALSE')).toBe(false)
+  expect(stringToBoolean('True')).toBe(true)
+  // note: whitespace is matched by regex but not trimmed before comparison
+  expect(stringToBoolean(' true ')).toBe(false)
+  expect(stringToBoolean('foo')).toBe(undefined)
+  expect(stringToBoolean('1')).toBe(undefined)
+  expect(stringToBoolean('')).toBe(undefined)
+})
+
+test('stringToArray', () => {
+  expect(stringToArray('[1, 2, 3]')).toEqual([1, 2, 3])
+  expect(stringToArray('["a", "b"]')).toEqual(['a', 'b'])
+  expect(stringToArray('[]')).toEqual([])
+  expect(stringToArray('foo')).toBe(undefined)
+  expect(stringToArray('1')).toBe(undefined)
+  expect(stringToArray('{"foo": "bar"}')).toBe(undefined)
+  expect(stringToArray('[invalid')).toBe(undefined)
+})
+
+test('stringToObject', () => {
+  expect(stringToObject('{"foo": "bar"}')).toEqual({ foo: 'bar' })
+  expect(stringToObject('{"a": 1, "b": 2}')).toEqual({ a: 1, b: 2 })
+  expect(stringToObject('{}')).toEqual({})
+  expect(stringToObject('foo')).toBe(undefined)
+  expect(stringToObject('1')).toBe(undefined)
+  expect(stringToObject('[1, 2, 3]')).toBe(undefined)
+  expect(stringToObject('{invalid')).toBe(undefined)
+})
+
+test('hasOwnProperties', () => {
+  const obj = { foo: 1, bar: 2, baz: 3 }
+  expect(hasOwnProperties(obj, ['foo', 'bar'])).toBe(true)
+  expect(hasOwnProperties(obj, ['foo', 'bar', 'baz'])).toBe(true)
+  expect(hasOwnProperties(obj, ['foo', 'qux'])).toBe(false)
+  expect(hasOwnProperties(obj, 'foo')).toBe(true)
+  expect(hasOwnProperties(obj, 'qux')).toBe(false)
+})
+
+test('basicUID', () => {
+  const uid = basicUID()
+  expect(typeof uid).toBe('string')
+  expect(uid).toMatch(/^[0-9a-f]+-[0-9a-f]+$/)
+
+  // two calls produce different values
+  expect(basicUID()).not.toBe(basicUID())
+})
+
+test('generateUUID', () => {
+  const uuid = generateUUID()
+  expect(typeof uuid).toBe('string')
+  // UUID v4 format: 8-4-4-4-12 hex chars
+  expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+
+  // two calls produce different values
+  expect(generateUUID()).not.toBe(generateUUID())
+})
+
+test('random', () => {
+  const val = random()
+  expect(typeof val).toBe('number')
+  expect(val).toBeGreaterThanOrEqual(0)
+  expect(val).toBeLessThanOrEqual(1)
 })

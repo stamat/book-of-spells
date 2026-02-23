@@ -208,6 +208,7 @@ export function stringToObject(str) {
  * stringToRegex('1') // => null
  */
 export function stringToRegex(str) {
+  if (typeof str !== 'string') return
   const match = str.match(/^\s*\/(.*?)\/([gimsuy]*)\s*$/)
   if (!match) return
   try {
