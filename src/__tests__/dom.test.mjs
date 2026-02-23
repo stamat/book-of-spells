@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals'
 import {
   css,
   querySingle,
@@ -8,6 +9,7 @@ import {
   insertBeforeElement,
   toggleAttributeValue,
   cssTimeToMilliseconds,
+  getTransitionDurations,
   matchesAny,
   matchesAll,
   detachElement,
@@ -196,6 +198,45 @@ test('cssTimeToMilliseconds', () => {
   expect(cssTimeToMilliseconds('2s')).toBe(2000)
   expect(cssTimeToMilliseconds('')).toBe(0)
   expect(cssTimeToMilliseconds('invalid')).toBe(0)
+})
+
+test('getTransitionDurations', () => {
+  const el = document.createElement('div')
+
+  // single property
+  const spy = jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+    getPropertyValue: (prop) => {
+      if (prop === 'transition-property') return 'height'
+      if (prop === 'transition-duration') return '1s'
+      return ''
+    }
+  })
+  expect(getTransitionDurations(el)).toEqual({ height: 1000 })
+
+  // multiple properties
+  spy.mockReturnValue({
+    getPropertyValue: (prop) => {
+      if (prop === 'transition-property') return 'height, opacity'
+      if (prop === 'transition-duration') return '0.5s, 200ms'
+      return ''
+    }
+  })
+  expect(getTransitionDurations(el)).toEqual({ height: 500, opacity: 200 })
+
+  // more properties than durations
+  spy.mockReturnValue({
+    getPropertyValue: (prop) => {
+      if (prop === 'transition-property') return 'height, opacity, color'
+      if (prop === 'transition-duration') return '1s'
+      return ''
+    }
+  })
+  expect(getTransitionDurations(el)).toEqual({ height: 1000, opacity: null, color: null })
+
+  spy.mockRestore()
+
+  // null element
+  expect(getTransitionDurations(null)).toEqual({})
 })
 
 test('matchesAny', () => {
