@@ -28,7 +28,7 @@ export function isLocalStorageAvailable() {
 
 /**
  * Used only for testing purposes to reset the cached localStorage support check result
- * @internal
+ * @ignore
  */
 export function _resetLocalStorageSupportCheck() {
   verifiedLocalStorageSupport = false
