@@ -1,12 +1,34 @@
 /**
  * Escape special characters in a string to be used in a regular expression
- * @param {string} string - The string to escape
+ * @param {string} string The string to escape
  * @returns {string} The escaped string
  * @example
  * escapeRegExp('hello world') // 'hello world'
  * escapeRegExp('hello.*+?^${}()|[]\\world') // 'hello\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\world'
  */
 export function escapeRegExp(string: string): string;
+/**
+ * Convert a glob pattern to a regular expression but unanchored (doesn't add ^ or $) by default
+ *
+ * Supports standard glob syntax (*, **, ?, [...], {...}), extended glob patterns
+ * (?(pattern), *(pattern), +(pattern), @(pattern), !(pattern)), and backslash escaping.
+ *
+ * Alternative packages to consider: micromatch, picomatch, minimatch, glob-to-regexp...
+ *
+ * @param {string} glob - The glob pattern to convert
+ * @param {boolean} [anchored=false] - Whether to anchor the regex with ^ and $ for exact matching
+ * @returns {RegExp|{test: function}|null} A RegExp (or object with test method for negation
+ * patterns), or null if the pattern is invalid
+ * @example
+ * convertGlobToRegex('*.js').test('app.js') // true
+ * convertGlobToRegex('src/**\/*.ts').test('src/lib/utils.ts') // true
+ * convertGlobToRegex('*.{js,ts}').test('app.ts') // true
+ * convertGlobToRegex('!(test).js').test('app.js') // true
+ * convertGlobToRegex('!(test).js').test('test.js') // false
+ */
+export function convertGlobToRegex(glob: string, anchored?: boolean): RegExp | {
+    test: Function;
+} | null;
 /**
  * @module regex
  */
