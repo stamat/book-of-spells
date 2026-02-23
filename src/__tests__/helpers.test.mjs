@@ -278,6 +278,14 @@ test('removeAccents', () => {
   expect(removeAccents('ÁÉÍÓÚ')).toBe('AEIOU')
   expect(removeAccents('señor')).toBe('senor')
   expect(removeAccents('œ')).toBe('oe')
+  expect(removeAccents('Œ')).toBe('OE')
+  expect(removeAccents('æ')).toBe('ae')
+  expect(removeAccents('Æ')).toBe('AE')
+  expect(removeAccents('ß')).toBe('ss')
+  expect(removeAccents('Straße')).toBe('Strasse')
+  expect(removeAccents('ﬀ')).toBe('ff')
+  expect(removeAccents('ﬁ')).toBe('fi')
+  expect(removeAccents('ﬂ')).toBe('fl')
 })
 
 test('stripHTMLTags', () => {

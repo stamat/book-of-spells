@@ -421,9 +421,17 @@ export function mapPropertyToProperty(arr, keyPropertyName, valuePropertyName) {
  * removeAccents('ÁÉÍÓÚ') // => 'AEIOU'
  * removeAccents('señor') // => 'senor'
  * removeAccents('Œ') // => 'OE'
+ * removeAccents('œ') // => 'oe'
+ * removeAccents('Æ') // => 'AE'
+ * removeAccents('æ') // => 'ae'
+ * removeAccents('ß') // => 'ss'
+ * removeAccents('Crème Brûlée') // => 'Creme Brulee'
+ * removeAccents('ﬀ') // => 'ff'
+ * removeAccents('ﬁ') // => 'fi'
+ * removeAccents('ﬂ') // => 'fl'
  */
 export function removeAccents(inputString) {
-  return inputString.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\œ/g, "oe").replace(/\æ/g, "ae").normalize('NFC')
+  return inputString.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/Œ/g, 'OE').replace(/œ/g, 'oe').replace(/Æ/g, 'AE').replace(/æ/g, 'ae').replace(/ß/g, 'ss').normalize('NFC')
 }
 
 /**
