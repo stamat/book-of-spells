@@ -60,6 +60,7 @@ export function escapeRegExp(string) {
 }
 
 /**
+ * @internal
  * Find the index of the closing parenthesis matching the opening one at the given index
  * @param {string} str The string to search
  * @param {number} openIndex The index of the opening parenthesis
@@ -76,6 +77,7 @@ function findMatchingParen(str, openIndex) {
 }
 
 /**
+ * @internal
  * Extract all !() negation extglob patterns from a glob string
  * @param {string} glob The glob pattern
  * @returns {Array<{start: number, end: number, inner: string}>} Array of negation descriptors with start/end indices and inner content
@@ -93,6 +95,7 @@ function extractNegatedGlobs(glob) {
 }
 
 /**
+ * @internal
  * Build a glob variant by replacing !() negations — one is expanded to @() for matching, the rest become * wildcards
  * @param {string} glob The original glob pattern
  * @param {Array<{start: number, end: number, inner: string}>} negations The negation descriptors from extractNegatedGlobs
@@ -112,6 +115,7 @@ function buildGlobVariant(glob, negations, expandIndex) {
 }
 
 /**
+ * @internal
  * Handle !() negation extglob patterns by building a positive regex and negative regexes, 
  * returning an object with a test method that matches the positive but rejects the negatives
  * @param {string} glob The glob pattern containing !() negations
@@ -152,6 +156,7 @@ function convertGlobNegationsToRegex(glob, anchored = false) {
 }
 
 /**
+ * @internal
  * Convert a glob pattern to a regex source string by parsing glob syntax character by character
  * @param {string} glob The glob pattern to convert
  * @param {boolean} [anchored=false] Whether to anchor the regex with ^ and $ for exact matching
