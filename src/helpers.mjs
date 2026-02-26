@@ -11,7 +11,7 @@
  * shallowMerge(target, source) // { foo: 'bar', bar: 'baz' }
  */
 export function shallowMerge(target, source) {
-  for (const key in source) {
+  for (const key of Object.keys(source)) {
     target[key] = source[key]
   }
 
@@ -32,7 +32,7 @@ export function shallowMerge(target, source) {
  */
 export function deepMerge(target, source) {
   if (isObject(source) && isObject(target)) {
-    for (const key in source) {
+    for (const key of Object.keys(source)) {
       target[key] = deepMerge(target[key], source[key])
     }
   } else if (isArray(source) && isArray(target)) {
@@ -64,13 +64,13 @@ export function clone(o) {
   let res = null
   if (isArray(o)) {
     res = []
-    for (const i in o) {
-      res[i] = clone(o[i])
+    for (const item of o) {
+      res.push(clone(item))
     }
   } else if (isObject(o)) {
     res = {}
-    for (const i in o) {
-      res[i] = clone(o[i])
+    for (const key of Object.keys(o)) {
+      res[key] = clone(o[key])
     }
   } else {
     res = o
@@ -88,10 +88,7 @@ export function clone(o) {
  * isEmptyObject({ foo: 'bar' }) // => false
  */
 export function isEmptyObject(o) {
-  for (const i in o) {
-    return false
-  }
-  return true
+  return Object.keys(o).length === 0
 }
 
 /**
