@@ -609,8 +609,8 @@ export function pickArrayElements(arr, indexes) {
 }
 
 export function rejectArrayElements(arr, indexes, clone = true) {
-  if (clone) arr = [...arr]
   if (!isArray(arr)) return
+  if (clone) arr = [...arr]
   if (!isArray(indexes)) indexes = [indexes]
   for (let i = indexes.length - 1; i >= 0; i--) {
     if (arr.hasOwnProperty(indexes[i])) arr.splice(indexes[i], 1)
