@@ -320,24 +320,18 @@ test('truncateString', () => {
   expect(truncateString('foo bar? baz', 2, '...')).toBe('foo bar? ...')
 })
 
-test('randomIntInclusive', () => {
-  expect(randomIntInclusive(1, 1)).toBe(1)
+test('randomIntInclusive stays in range at random() boundaries', () => {
+  const original = crypto.getRandomValues.bind(crypto)
 
-  let randomInt = randomIntInclusive(1, 2)
-  expect(randomInt).toBeGreaterThanOrEqual(1)
-  expect(randomInt).toBeLessThanOrEqual(2)
+  // random() returns 0 → should give min
+  crypto.getRandomValues = (arr) => { arr[0] = 0; return arr }
+  expect(randomIntInclusive(1, 10, true)).toBe(1)
 
-  randomInt = randomIntInclusive(1, 3)
-  expect(randomInt).toBeGreaterThanOrEqual(1)
-  expect(randomInt).toBeLessThanOrEqual(3)
+  // random() returns max uint32 → should give max, not max+1
+  crypto.getRandomValues = (arr) => { arr[0] = 4294967295; return arr }
+  expect(randomIntInclusive(1, 10, true)).toBe(10)
 
-  randomInt = randomIntInclusive(3, 1)
-  expect(randomInt).toBeGreaterThanOrEqual(1)
-  expect(randomInt).toBeLessThanOrEqual(3)
-
-  randomInt = randomIntInclusive(-5, 5)
-  expect(randomInt).toBeGreaterThanOrEqual(-5)
-  expect(randomInt).toBeLessThanOrEqual(5)
+  crypto.getRandomValues = original
 })
 
 test('fixed', () => {
@@ -455,9 +449,17 @@ test('generateUUID', () => {
   expect(generateUUID()).not.toBe(generateUUID())
 })
 
-test('random', () => {
-  const val = random()
-  expect(typeof val).toBe('number')
-  expect(val).toBeGreaterThanOrEqual(0)
-  expect(val).toBeLessThanOrEqual(1)
+test('random returns [0, 1) range at boundaries', () => {
+  const original = crypto.getRandomValues.bind(crypto)
+
+  // simulate min return (0)
+  crypto.getRandomValues = (arr) => { arr[0] = 0; return arr }
+  expect(random()).toBe(0)
+
+  // simulate max return (2^32 - 1)
+  crypto.getRandomValues = (arr) => { arr[0] = 4_294_967_295; return arr }
+  expect(random()).toBeGreaterThan(0.999)
+  expect(random()).toBeLessThan(1)
+
+  crypto.getRandomValues = original
 })

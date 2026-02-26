@@ -734,7 +734,7 @@ export function generateUUID(safe = true) {
  */
 export function random() {
   if (!crypto) return Math.random()
-  if (crypto.getRandomValues) return crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295 // 2^32 - 1 = 4294967295
+  if (crypto.getRandomValues) return crypto.getRandomValues(new Uint32Array(1))[0] / 4_294_967_296 // 2^32 = 4294967296
 }
 
 /**
