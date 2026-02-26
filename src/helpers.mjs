@@ -255,7 +255,7 @@ export function stringToType(str) {
   if (/^\s*null\s*$/.test(str)) return null
   const bool = stringToBoolean(str)
   if (bool !== undefined) return bool
-  return stringToNumber(str) || stringToArray(str) || stringToObject(str) || stringToRegex(str) || str
+  return stringToNumber(str) ?? stringToArray(str) ?? stringToObject(str) ?? stringToRegex(str) ?? str
 }
 
 /**
