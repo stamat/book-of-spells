@@ -574,7 +574,7 @@ export function fixed(number, digits) {
  * percentage(10, 2) // => 500
  */
 export function percentage(num, total) {
-  if (!num || !total || Number.isNaN(num) || Number.isNaN(total)) return 0
+  if (Number.isNaN(num) || Number.isNaN(total) || total === 0) return 0
   return num / total * 100
 }
 

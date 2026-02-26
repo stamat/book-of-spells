@@ -351,6 +351,9 @@ test('percentage', () => {
   expect(percentage(10, 10)).toBe(100)
   expect(percentage(10, 0)).toBe(0)
   expect(percentage(0, 0)).toBe(0)
+  expect(percentage(0, 10)).toBe(0)
+  expect(percentage(NaN, 10)).toBe(0)
+  expect(percentage(10, NaN)).toBe(0)
 })
 
 test('pick', () => {
