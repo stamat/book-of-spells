@@ -231,7 +231,7 @@ export function stringToPrimitive(str) {
   if (/^\s*null\s*$/.test(str)) return null
   const bool = stringToBoolean(str)
   if (bool !== undefined) return bool
-  return stringToNumber(str) || str
+  return stringToNumber(str) ?? str
 }
 
 /**
