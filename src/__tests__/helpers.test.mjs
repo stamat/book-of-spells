@@ -397,8 +397,8 @@ test('stringToBoolean', () => {
   expect(stringToBoolean('TRUE')).toBe(true)
   expect(stringToBoolean('FALSE')).toBe(false)
   expect(stringToBoolean('True')).toBe(true)
-  // note: whitespace is matched by regex but not trimmed before comparison
-  expect(stringToBoolean(' true ')).toBe(false)
+  expect(stringToBoolean(' true ')).toBe(true)
+  expect(stringToBoolean(' false ')).toBe(false)
   expect(stringToBoolean('foo')).toBe(undefined)
   expect(stringToBoolean('1')).toBe(undefined)
   expect(stringToBoolean('')).toBe(undefined)

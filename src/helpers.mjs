@@ -139,7 +139,7 @@ export function isEmpty(o) {
  * stringToBoolean('foo') // => null
  */
 export function stringToBoolean(str) {
-  if (/^\s*(true|false)\s*$/i.test(str)) return str.toLowerCase() === 'true'
+  if (/^\s*(true|false)\s*$/i.test(str)) return str.trim().toLowerCase() === 'true'
 }
 
 /**
