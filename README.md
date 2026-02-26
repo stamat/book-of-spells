@@ -1,5 +1,5 @@
 # 📖 Stamat's Book of JavaScript Spells
-[![npm version](https://img.shields.io/npm/v/book-of-spells)](https://www.npmjs.com/package/book-of-spells) [![license mit](https://img.shields.io/badge/license-MIT-green)](https://github.com/stamat/book-of-spells/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/book-of-spells)](https://www.npmjs.com/package/book-of-spells) [![size](https://packagephobia.com/badge?p=book-of-spells)](https://packagephobia.com/result?p=book-of-spells) [![license mit](https://img.shields.io/badge/license-MIT-green)](https://github.com/stamat/book-of-spells/blob/main/LICENSE)
 
 A collection of JavaScript functions and snippets that I use in my projects in **ESM format**. This is mainly for my own reference, but I hope it can be useful to others as well.
 
