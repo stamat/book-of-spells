@@ -110,6 +110,7 @@ test('isObject', () => {
 test('isEmptyObject', () => {
   expect(isEmptyObject({})).toBe(true)
   expect(isEmptyObject({a: 1, b: 2})).toBe(false)
+  expect(isEmptyObject(Object.create({ inherited: 'yes' }))).toBe(true)
 })
 
 test('isArray', () => {
@@ -180,6 +181,8 @@ test('stringToPrimitive', () => {
   expect(stringToPrimitive('1')).toBe(1)
   expect(stringToPrimitive('1.5')).toBe(1.5)
   expect(stringToPrimitive('foo')).toBe('foo')
+  expect(stringToPrimitive('0')).toBe(0)
+  expect(stringToPrimitive('null')).toBe(null)
 })
 
 test('stringToNumber', () => {
@@ -256,6 +259,8 @@ test('stringToType', () => {
   expect(stringToType('{"foo": "bar"}')).toEqual({ foo: 'bar' })
   expect(stringToType('[1, 2, 3]')).toEqual([1, 2, 3])
   expect(stringToType('foo')).toBe('foo')
+  expect(stringToType('0')).toBe(0)
+  expect(stringToType('null')).toBe(null)
 })
 
 test('mapByProperty', () => {
