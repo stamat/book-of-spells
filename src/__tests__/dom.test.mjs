@@ -17,7 +17,8 @@ import {
   addListenerForEvents,
   removeListenerForEvents,
   isEmptyElement,
-  getTableData
+  getTableData,
+  delegateEvent
 } from '../dom.mjs'
 
 document.body.innerHTML = `

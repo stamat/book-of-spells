@@ -430,20 +430,24 @@ export function loadImage(src, callback) {
   img.src = src
 }
 
+const NON_BUBBLING_EVENTS = new Set(['focus', 'blur', 'mouseenter', 'mouseleave', 'load', 'unload', 'scroll', 'resize'])
+
 /**
- * Delegate DOM events using MutationObserver with a fallback to document.addEventListener
- * 
+ * Delegate DOM events. Uses event bubbling with closest() for events that bubble.
+ * Uses MutationObserver for non-bubbling events (focus, blur, mouseenter, mouseleave, etc.)
+ * to attach listeners directly to matching elements as they appear in the DOM.
+ *
  * @param {string} selector The selector to select the elements to delegate the event to
  * @param {string} eventType The event type to delegate, like `click`
  * @param {Function} handler The handler to call when the event is triggered.
- * @returns {MutationObserver | null} The MutationObserver instance
+ * @returns {MutationObserver | null} The MutationObserver instance if non-bubbling event, null otherwise
  * @example
  * delegateEvent('.foo', 'click', (e, target) => {
  * console.log('Clicked on', target)
  * })
  */
 export function delegateEvent(selector, eventType, handler) {
-  if (typeof MutationObserver === 'undefined') {
+  if (!NON_BUBBLING_EVENTS.has(eventType)) {
     document.addEventListener(eventType, (e) => {
       const target = e.target.closest(selector)
       if (target) handler(e, target)
@@ -451,30 +455,30 @@ export function delegateEvent(selector, eventType, handler) {
     return null
   }
 
+  if (typeof MutationObserver === 'undefined') return null
+
+  const listener = (e) => {
+    handler(e, e.currentTarget)
+  }
+
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (!(node instanceof HTMLElement)) continue
         if (node.matches(selector)) {
-          node.addEventListener(eventType, (e) => {
-            handler(e, e.currentTarget)
-          })
+          node.addEventListener(eventType, listener)
           continue
         }
 
         for (const child of node.querySelectorAll(selector)) {
-          child.addEventListener(eventType, (e) => {
-            handler(e, e.currentTarget)
-          })
+          child.addEventListener(eventType, listener)
         }
       }
     }
   })
 
   for (const node of document.querySelectorAll(selector)) {
-    node.addEventListener(eventType, (e) => {
-      handler(e, e.currentTarget)
-    })
+    node.addEventListener(eventType, listener)
   }
   observer.observe(document.body, { childList: true, subtree: true })
   return observer
