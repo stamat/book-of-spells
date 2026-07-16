@@ -93,3 +93,15 @@ test('getCookie with special regex characters in name', () => {
   setCookie('a+b', 'value2')
   expect(getCookie('a+b')).toBe('value2')
 })
+
+test('deleteCookie writes the same path as setCookie', () => {
+  let written = ''
+  Object.defineProperty(document, 'cookie', {
+    configurable: true,
+    get: () => '',
+    set: (v) => { written = v }
+  })
+  deleteCookie('foo')
+  delete document.cookie
+  expect(written).toContain('path=/')
+})

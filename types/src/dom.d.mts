@@ -1,3 +1,4 @@
+/** @module dom */
 /**
  * Checks if an element is empty
  *
@@ -13,7 +14,7 @@
  * isEmptyElement(document.getElementById('non-empty-element1')) // => false
  * isEmptyElement(document.getElementById('non-empty-element2')) // => false
  */
-export function isEmptyElement(element: HTMLElement): boolean;
+export declare function isEmptyElement(element: HTMLElement): boolean;
 /**
  * Removes all elements matching a selector from the DOM
  *
@@ -27,7 +28,7 @@ export function isEmptyElement(element: HTMLElement): boolean;
  * `
  * remove('#foo, #bar') // => removes #foo and #bar
  */
-export function remove(selector: string | HTMLElement | Element, from?: HTMLElement | Element): void;
+export declare function remove(selector: string | HTMLElement | Element, from?: HTMLElement | Element): void;
 /**
  * Queries the DOM for a single element and returns it. Substitutes for `document.querySelector(selector)` and JQuery's `$(selector).first()`
  *
@@ -44,7 +45,7 @@ export function remove(selector: string | HTMLElement | Element, from?: HTMLElem
  * querySingle(document.getElementById('foo')) // => <div id="foo"></div>
  * querySingle(document.querySelector('#foo')) // => <div id="foo"></div>
  */
-export function querySingle(selector: string | HTMLElement | Element | Array<HTMLElement | Element> | NodeList, from?: HTMLElement | Element): HTMLElement | Element;
+export declare function querySingle(selector: string | HTMLElement | Element | Array<HTMLElement | Element> | NodeList, from?: HTMLElement | Element): HTMLElement | Element;
 /**
  * Queries the DOM for elements and returns them. Substitutes for `document.querySelectorAll(selector)` and JQuery's `$(selector)`
  *
@@ -61,7 +62,7 @@ export function querySingle(selector: string | HTMLElement | Element | Array<HTM
  * query(document.getElementById('foo')) // => [<div id="foo"></div>]
  * query('div') // => [<div id="foo"></div>, <div id="bar"></div>, <div id="baz"></div>]
  */
-export function query(selector: string | HTMLElement | Element | Array<HTMLElement | Element> | NodeList, from?: HTMLElement | Element): Array<Element> | NodeList;
+export declare function query(selector: string | HTMLElement | Element | Array<HTMLElement | Element> | NodeList, from?: HTMLElement | Element): Array<Element> | NodeList;
 /**
  * Sets element styles from passed object of styles. Can also transform dash-case to camelCase for CSS properties
  *
@@ -72,7 +73,7 @@ export function query(selector: string | HTMLElement | Element | Array<HTMLEleme
  * css(document.getElementById('foo'), { 'background-color': 'red', 'font-size': '16px' }, true) // => sets background-color and font-size
  * css(document.getElementById('foo'), { backgroundColor: 'red', fontSize: '16px' }) // => sets background-color and font-size
  */
-export function css(element: HTMLElement, styles: object, transform?: boolean): void;
+export declare function css(element: HTMLElement, styles: object, transform?: boolean): void;
 /**
  * Decodes HTML entities in a string using the browser's DOMParser. If the DOMParser is not available, it uses a regular expression to decode the basic entities.
  *
@@ -84,7 +85,7 @@ export function css(element: HTMLElement, styles: object, transform?: boolean): 
  * decodeHTML('&lt;div&gt;foo&lt;/div&gt;') // => '<div>foo</div>'
  * decodeHTML('&lt;div&gt;foo&lt;/div&gt;&lt;div&gt;bar&lt;/div&gt;') // => '<div>foo</div><div>bar</div>'
  */
-export function decodeHTML(html: string): string;
+export declare function decodeHTML(html: string): string;
 /**
  * Encodes HTML entities in a string using the browser's DOMParser. If the DOMParser is not available, it uses a regular expression to encode the basic entities.
  *
@@ -96,7 +97,7 @@ export function decodeHTML(html: string): string;
  * encodeHTML('<div>foo</div>') // => '&lt;div&gt;foo&lt;/div&gt;'
  * encodeHTML('<div>foo</div><div>bar</div>') // => '&lt;div&gt;foo&lt;/div&gt;&lt;div&gt;bar&lt;/div&gt;'
  */
-export function encodeHTML(html: string): string;
+export declare function encodeHTML(html: string): string;
 /**
  * Inserts an element before another element
  *
@@ -110,7 +111,7 @@ export function encodeHTML(html: string): string;
  * // <div id="newElement"></div>
  * // <div id="target"></div>
  */
-export function insertBeforeElement(targetElement: HTMLElement, newElement: HTMLElement): void;
+export declare function insertBeforeElement(targetElement: HTMLElement, newElement: HTMLElement): void;
 /**
  * Toggles an attribute value on an element
  *
@@ -122,7 +123,7 @@ export function insertBeforeElement(targetElement: HTMLElement, newElement: HTML
  * toggleAttributeValue(element, 'aria-expanded', 'true', 'false')
  * toggleAttributeValue(element, 'aria-expanded')
  */
-export function toggleAttributeValue(element: HTMLElement, attribute: string, on?: string, off?: string): void;
+export declare function toggleAttributeValue(element: HTMLElement, attribute: string, on?: string, off?: string): void;
 /**
  * Converts a duration string to milliseconds integer
  *
@@ -135,7 +136,7 @@ export function toggleAttributeValue(element: HTMLElement, attribute: string, on
  * convertToMilliseconds('0.5') // 0
  * convertToMilliseconds('foo') // 0
  */
-export function cssTimeToMilliseconds(duration: string): number;
+export declare function cssTimeToMilliseconds(duration: string): number;
 /**
  * Returns a map of transition properties and durations
  *
@@ -145,7 +146,7 @@ export function cssTimeToMilliseconds(duration: string): number;
  * getTransitionDurations(element) // { height: 1000 } if transition in CSS is set to 'height 1s'
  * getTransitionDurations(element) // { height: 500, opacity: 1000 } if transition in CSS is set to 'height 0.5s, opacity 1s'
  */
-export function getTransitionDurations(element: HTMLElement): object;
+export declare function getTransitionDurations(element: HTMLElement): object;
 /**
  * Check a list of elements if any of them matches a selector
  *
@@ -161,7 +162,7 @@ export function getTransitionDurations(element: HTMLElement): object;
  * matchesAny(document.querySelectorAll('div'), '#foo') // => true
  * matchesAny(document.querySelectorAll('div'), '#qux') // => false
  */
-export function matchesAny(elements: Array<HTMLElement> | NodeList | HTMLElement, selector: string): boolean;
+export declare function matchesAny(elements: Array<HTMLElement> | NodeList | HTMLElement, selector: string): boolean;
 /**
  * Check a list of elements if all of them matches a selector
  *
@@ -177,7 +178,7 @@ export function matchesAny(elements: Array<HTMLElement> | NodeList | HTMLElement
  * matchesAll(document.querySelectorAll('div'), 'div') // => true
  * matchesAll(document.querySelectorAll('div'), '#foo') // => false
  */
-export function matchesAll(elements: Array<HTMLElement> | NodeList | HTMLElement, selector: string): boolean;
+export declare function matchesAll(elements: Array<HTMLElement> | NodeList | HTMLElement, selector: string): boolean;
 /**
  * Detaches an element from the DOM and returns it
  *
@@ -187,7 +188,7 @@ export function matchesAll(elements: Array<HTMLElement> | NodeList | HTMLElement
  * // => element
  * console.log(element.parentNode) // => null
  */
-export function detachElement(element: HTMLElement): HTMLElement;
+export declare function detachElement(element: HTMLElement): HTMLElement;
 /**
  * Gets table data from a table element, a simple regular table element, or a table like structure.
  * Useful for scraping data.
@@ -224,7 +225,7 @@ export function detachElement(element: HTMLElement): HTMLElement;
  * //  { foo: 'Foo 2', bar: 'Bar 2' }
  * // ]
  */
-export function getTableData(selector: string, headers: Array<string> | string | null, rowSelector?: string, cellSelector?: string, headerCellSelector?: string): Array<object>;
+export declare function getTableData(selector: string, headers: Array<string> | string | null, rowSelector?: string, cellSelector?: string, headerCellSelector?: string): Array<object>;
 /**
  * Parses HTML string to a DOM Node
  *
@@ -237,7 +238,7 @@ export function getTableData(selector: string, headers: Array<string> | string |
  * parseDOM(document.getElementById('foo')) // => <div id="foo"></div>
  * parseDOM(document.querySelectorAll('div')) // => NodeList(2) [div, div]
  */
-export function parseDOM(html: string, allChildren?: boolean): Node;
+export declare function parseDOM(html: string, allChildren?: boolean): Node;
 /**
  * Loads an image form a provided source url and calls a callback when it's loaded
  *
@@ -248,20 +249,25 @@ export function parseDOM(html: string, allChildren?: boolean): Node;
  *  console.log('Image loaded')
  * })
  */
-export function loadImage(src: string, callback?: Function): void;
+export declare function loadImage(src: string, callback?: Function): void;
 /**
- * Delegate DOM events using MutationObserver with a fallback to document.addEventListener
+ * Delegate DOM events. Uses event bubbling with closest() for events that bubble.
+ * Uses MutationObserver for non-bubbling events (focus, blur, mouseenter, mouseleave, etc.)
+ * to attach listeners directly to matching elements as they appear in the DOM.
  *
  * @param {string} selector The selector to select the elements to delegate the event to
  * @param {string} eventType The event type to delegate, like `click`
  * @param {Function} handler The handler to call when the event is triggered.
- * @returns {MutationObserver | null} The MutationObserver instance
+ * @returns {MutationObserver | {destroy: Function, disconnect: Function} | null} For non-bubbling events the MutationObserver instance (with an added destroy() method that also removes the element listeners), for bubbling events a handle with destroy()/disconnect(), or null when MutationObserver is required but unavailable
  * @example
  * delegateEvent('.foo', 'click', (e, target) => {
  * console.log('Clicked on', target)
  * })
  */
-export function delegateEvent(selector: string, eventType: string, handler: Function): MutationObserver | null;
+export declare function delegateEvent(selector: string, eventType: string, handler: Function): MutationObserver | {
+    destroy: Function;
+    disconnect: Function;
+} | null;
 /**
  * Run a handler on selected elements and on elements added to the DOM with the same selector as a MutationObserver abstraction,
  * or use it to delegate events as a `delegateEvent` alias
@@ -269,7 +275,7 @@ export function delegateEvent(selector: string, eventType: string, handler: Func
  * @param {string} selector The selector to select the elements to run the handler on
  * @param {string | Function} eventTypeOrHandler The event type to delegate, like `click`, or the handler to call on every element
  * @param {Function} [handler] The handler to call when the event is triggered.
- * @returns {MutationObserver | null} The MutationObserver instance
+ * @returns {MutationObserver | {destroy: Function, disconnect: Function} | null} The MutationObserver instance (with an added destroy() method), a destroy/disconnect handle for bubbling delegated events, or null when MutationObserver is required but unavailable
  * @see delegateEvent
  * @example
  * on('.foo', (el) => {
@@ -280,7 +286,10 @@ export function delegateEvent(selector: string, eventType: string, handler: Func
  * console.log('Clicked on', target)
  * })
  */
-export function on(selector: string, eventTypeOrHandler: string | Function, handler?: Function): MutationObserver | null;
+export declare function on(selector: string, eventTypeOrHandler: string | Function, handler?: Function): MutationObserver | {
+    destroy: Function;
+    disconnect: Function;
+} | null;
 /**
  * Adds one listener to multiple events
  *
@@ -291,7 +300,7 @@ export function on(selector: string, eventTypeOrHandler: string | Function, hand
  * @example
  * addListenerForEvents('.foo', 'click mouseenter', (e) => { console.log(e.type) })
  */
-export function addListenerForEvents(elements: string | HTMLElement | NodeList, events: string | Array<string>, handler: Function, options?: object): void;
+export declare function addListenerForEvents(elements: string | HTMLElement | NodeList, events: string | Array<string>, handler: Function, options?: object): void;
 /**
  * Removes one listener from multiple registered events
  *
@@ -302,7 +311,7 @@ export function addListenerForEvents(elements: string | HTMLElement | NodeList, 
  * @example
  * removeListenerForEvents('.foo', 'click mouseenter', (e) => { console.log(e.type) })
  */
-export function removeListenerForEvents(elements: string | HTMLElement | NodeList, events: string | Array<string>, handler: Function, options?: object): void;
+export declare function removeListenerForEvents(elements: string | HTMLElement | NodeList, events: string | Array<string>, handler: Function, options?: object): void;
 /**
  * Resizes an element to cover its parent element while maintaining the aspect ratio
  *
@@ -312,7 +321,7 @@ export function removeListenerForEvents(elements: string | HTMLElement | NodeLis
  * @example
  * proportionalParentCoverResize('.foo', 16/9, 10)
  */
-export function proportionalParentCoverResize(elements: string | HTMLElement | NodeList, ratio?: number, offset?: number): void;
+export declare function proportionalParentCoverResize(elements: string | HTMLElement | NodeList, ratio?: number, offset?: number): void;
 /**
  * If provided element is visible. Checks if the element is not visibility hidden or display none, has no opacity, and has a width and height.
  *
@@ -322,7 +331,7 @@ export function proportionalParentCoverResize(elements: string | HTMLElement | N
  * @example
  * isVisible(document.getElementById('foo'))
  */
-export function isVisible(element: HTMLElement, checkOpacity?: boolean): boolean;
+export declare function isVisible(element: HTMLElement, checkOpacity?: boolean): boolean;
 /**
  * Returns all focusable elements from a given element or the document.
  * Focusable elements are those that can be focused by the user, such as links, buttons, inputs, etc.
@@ -341,7 +350,7 @@ export function isVisible(element: HTMLElement, checkOpacity?: boolean): boolean
  *
  * getFocusableElements() // => [<div id="foo" tabindex="0">Foo</div>, <button id="baz">Baz</button>, <div id="qux" contenteditable="true">Qux</div>, <a href="#quux" id="quux">Quux</a>]
  */
-export function getFocusableElements(from?: HTMLElement | Element | Document): Array<HTMLElement>;
+export declare function getFocusableElements(from?: HTMLElement | Element | Document): Array<HTMLElement>;
 /**
  * Returns all visible focusable elements from a given element or the document.
  *
@@ -361,7 +370,7 @@ export function getFocusableElements(from?: HTMLElement | Element | Document): A
  * getVisibleFocusableElements() // => [<div id="foo" tabindex="0">Foo</div>, <div id="qux" contenteditable="true">Qux</div>]
  * getVisibleFocusableElements(document.body, '#foo') // => [<div id="qux" contenteditable="true">Qux</div>]
  */
-export function getVisibleFocusableElements(from?: HTMLElement | Element | Document, excludeSelector?: string): Array<HTMLElement>;
+export declare function getVisibleFocusableElements(from?: HTMLElement | Element | Document, excludeSelector?: string): Array<HTMLElement>;
 /**
  * Swipe event handler
  *
@@ -394,7 +403,14 @@ export function getVisibleFocusableElements(from?: HTMLElement | Element | Docum
  * element.addEventListener('swipestart', (e) => { ... })
  * element.addEventListener('swipeend', (e) => { ... })
  */
-export function swipe(element: HTMLElement, callback: object | Function, threshold?: number, timeThreshold?: number): object | null;
+export declare function swipe(element: HTMLElement, callback: object | Function, threshold?: number, timeThreshold?: number): object | null;
+/**
+ * Alias for swipe
+ *
+ * @see swipe
+ * @deprecated Use swipe instead
+ */
+export declare const onSwipe: typeof swipe;
 /**
  * Drag event handler
  *
@@ -427,7 +443,14 @@ export function swipe(element: HTMLElement, callback: object | Function, thresho
  * element.addEventListener('draginertia', (e) => { ... })
  * element.addEventListener('draginertiaend', (e) => { ... })
  */
-export function drag(element: HTMLElement, opts: object | Function): object | null;
+export declare function drag(element: HTMLElement, opts: object | Function): object | null;
+/**
+ * Alias for drag
+ *
+ * @see drag
+ * @deprecated Use drag instead
+ */
+export declare const onDrag: typeof drag;
 /**
  * Checks if an element is overflowing its container
  * used to check if the scrollbar is visible.
@@ -438,7 +461,7 @@ export function drag(element: HTMLElement, opts: object | Function): object | nu
  * const el = document.getElementById('foo')
  * isVerticalScrollVisible(el) // => true or false
  */
-export function isVerticalScrollVisible(element: HTMLElement): boolean;
+export declare function isVerticalScrollVisible(element: HTMLElement): boolean;
 /**
  * Checks if an element is overflowing horizontally
  * used to check if the scrollbar is visible.
@@ -449,7 +472,7 @@ export function isVerticalScrollVisible(element: HTMLElement): boolean;
  * const el = document.getElementById('foo')
  * isHorizontalScrollVisible(el) // => true or false
  */
-export function isHorizontalScrollVisible(element: HTMLElement): boolean;
+export declare function isHorizontalScrollVisible(element: HTMLElement): boolean;
 /**
  * Checks if an element is overflowing its container either vertically or horizontally
  * used to check if the scrollbar is visible.
@@ -460,7 +483,7 @@ export function isHorizontalScrollVisible(element: HTMLElement): boolean;
  * const el = document.getElementById('foo')
  * isScrollVisible(el) // => true or false
  */
-export function isScrollVisible(element: HTMLElement): boolean;
+export declare function isScrollVisible(element: HTMLElement): boolean;
 /**
  * Gets if the vertical scroll has reached the start or end of the element.
  *
@@ -473,7 +496,7 @@ export function isScrollVisible(element: HTMLElement): boolean;
  * console.log(scrollState.atStart) // => true or false
  * console.log(scrollState.atEnd) // => true or false
  */
-export function getVerticalScrollState(element: HTMLElement, threshold?: number): object;
+export declare function getVerticalScrollState(element: HTMLElement, threshold?: number): object;
 /**
  * Gets if the horizontal scroll has reached the start or end of the element.
  *
@@ -486,70 +509,4 @@ export function getVerticalScrollState(element: HTMLElement, threshold?: number)
  * console.log(scrollState.atStart) // => true or false
  * console.log(scrollState.atEnd) // => true or false
  */
-export function getHorizontalScrollState(element: HTMLElement, threshold?: number): object;
-/**
- * Swipe event handler
- *
- * @param {HTMLElement} element The element to listen for swipe gestures on
- * @param {object | Function} callback The callback to call when a swipe gesture is detected or the options object with the callback, threshold, and timeThreshold
- * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
- * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
- * @returns {object | null} The destroy method to remove the event listeners
- * @example
- * swipe(document.getElementById('foo'), (e) => {
- *  console.log(e.direction)
- *  console.log(e.deltaX)
- *  console.log(e.deltaY)
- *  console.log(e.startX)
- *  console.log(e.startY)
- *  console.log(e.endX)
- *  console.log(e.endY)
- *  console.log(e.threshold)
- *  console.log(e.type)
- *  console.log(e.target)
- *  console.log(e.horizontal)
- *  console.log(e.vertical)
- *  console.log(e.horizontalDirection)
- *  console.log(e.verticalDirection)
- *  console.log(e.timeElapsed)
- *  console.log(e.timeThreshold)
- * })
- *
- * element.addEventListener('swipe', (e) => { ... })
- * element.addEventListener('swipestart', (e) => { ... })
- * element.addEventListener('swipeend', (e) => { ... })
- */
-export function onSwipe(element: HTMLElement, callback: object | Function, threshold?: number, timeThreshold?: number): object | null;
-/**
- * Drag event handler
- *
- * @param {HTMLElement} element The element to listen for drag gestures on
- * @param {object | Function} opts The options object or the callback to call when a drag gesture is detected
- * @param {boolean} [opts.inertia=false] Whether to enable inertia
- * @param {boolean} [opts.bounce=false] Whether to enable bounce when inertia is enabled
- * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
- * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
- * @param {boolean} [opts.preventDefaultTouch=true] Whether to prevent the default touch behavior
- * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
- * @returns {object | null} The destroy method to remove the event listeners
- * @example
- * drag(document.getElementById('foo'), (e) => {
- *  console.log(e.x)
- *  console.log(e.y)
- *  console.log(e.relativeX)
- *  console.log(e.relativeY)
- *  console.log(e.xPercentage)
- *  console.log(e.yPercentage)
- *  console.log(e.velocityX)
- *  console.log(e.velocityY)
- *  console.log(e.prevX)
- *  console.log(e.prevY)
- * })
- *
- * element.addEventListener('drag', (e) => { ... })
- * element.addEventListener('dragstart', (e) => { ... })
- * element.addEventListener('dragend', (e) => { ... })
- * element.addEventListener('draginertia', (e) => { ... })
- * element.addEventListener('draginertiaend', (e) => { ... })
- */
-export function onDrag(element: HTMLElement, opts: object | Function): object | null;
+export declare function getHorizontalScrollState(element: HTMLElement, threshold?: number): object;

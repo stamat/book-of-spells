@@ -1,7 +1,7 @@
 /** @module dom */
 
 import { transformDashToCamelCase, isArray, isString, isObject, isFunction, shallowMerge, percentage } from './helpers.mjs'
-import { encodeHtmlEntities, decodeHtmlEntities } from './parsers.mjs'
+import { encodeHtmlEntities, decodeHtmlEntities } from './entities.mjs'
 
 /**
  * Checks if an element is empty
@@ -236,7 +236,8 @@ export function getTransitionDurations(element) {
   
   for (let i = 0; i < transitionProperties.length; i++) {
     const property = transitionProperties[i].trim()
-    map[property] = transitionDurations.hasOwnProperty(i) ? cssTimeToMilliseconds(transitionDurations[i].trim()) : null
+    // CSS repeats the duration list when it's shorter than the property list
+    map[property] = cssTimeToMilliseconds(transitionDurations[i % transitionDurations.length].trim())
   }
   
   return map
@@ -440,7 +441,7 @@ const NON_BUBBLING_EVENTS = new Set(['focus', 'blur', 'mouseenter', 'mouseleave'
  * @param {string} selector The selector to select the elements to delegate the event to
  * @param {string} eventType The event type to delegate, like `click`
  * @param {Function} handler The handler to call when the event is triggered.
- * @returns {MutationObserver | null} The MutationObserver instance if non-bubbling event, null otherwise
+ * @returns {MutationObserver | {destroy: Function, disconnect: Function} | null} For non-bubbling events the MutationObserver instance (with an added destroy() method that also removes the element listeners), for bubbling events a handle with destroy()/disconnect(), or null when MutationObserver is required but unavailable
  * @example
  * delegateEvent('.foo', 'click', (e, target) => {
  * console.log('Clicked on', target)
@@ -448,11 +449,13 @@ const NON_BUBBLING_EVENTS = new Set(['focus', 'blur', 'mouseenter', 'mouseleave'
  */
 export function delegateEvent(selector, eventType, handler) {
   if (!NON_BUBBLING_EVENTS.has(eventType)) {
-    document.addEventListener(eventType, (e) => {
+    const documentListener = (e) => {
       const target = e.target.closest(selector)
       if (target) handler(e, target)
-    })
-    return null
+    }
+    document.addEventListener(eventType, documentListener)
+    const destroy = () => document.removeEventListener(eventType, documentListener)
+    return { destroy, disconnect: destroy }
   }
 
   if (typeof MutationObserver === 'undefined') return null
@@ -481,6 +484,12 @@ export function delegateEvent(selector, eventType, handler) {
     node.addEventListener(eventType, listener)
   }
   observer.observe(document.body, { childList: true, subtree: true })
+  observer.destroy = () => {
+    observer.disconnect()
+    for (const node of document.querySelectorAll(selector)) {
+      node.removeEventListener(eventType, listener)
+    }
+  }
   return observer
 }
 
@@ -491,7 +500,7 @@ export function delegateEvent(selector, eventType, handler) {
  * @param {string} selector The selector to select the elements to run the handler on
  * @param {string | Function} eventTypeOrHandler The event type to delegate, like `click`, or the handler to call on every element
  * @param {Function} [handler] The handler to call when the event is triggered.
- * @returns {MutationObserver | null} The MutationObserver instance
+ * @returns {MutationObserver | {destroy: Function, disconnect: Function} | null} The MutationObserver instance (with an added destroy() method), a destroy/disconnect handle for bubbling delegated events, or null when MutationObserver is required but unavailable
  * @see delegateEvent
  * @example
  * on('.foo', (el) => {
@@ -529,6 +538,7 @@ export function on(selector, eventTypeOrHandler, handler) {
   }
 
   observer.observe(document.body, { childList: true, subtree: true })
+  observer.destroy = () => observer.disconnect()
   return observer
 }
 
@@ -614,7 +624,7 @@ export function proportionalParentCoverResize(elements, ratio = 1, offset = 0) {
  */
 export function isVisible(element, checkOpacity = true) {
   if (!element || !(element instanceof HTMLElement)) return false
-  if (typeof element.checkVisibility === 'function') return element.checkVisibility()
+  if (typeof element.checkVisibility === 'function') return element.checkVisibility({ visibilityProperty: true, opacityProperty: checkOpacity })
   if (element.getAttribute('hidden') !== null) return false;
   const computedStyle = getComputedStyle(element)
   if (
@@ -897,6 +907,9 @@ export function drag(element, opts) {
     dragging = true
     rect = calcPageRelativeRect()
     element.setAttribute('dragging', 'true')
+    // Track on document so the drag survives the pointer leaving the element
+    document.addEventListener('mousemove', handleMove)
+    document.addEventListener('mouseup', handleEnd)
     if (inertiaId) {
       cancelAnimationFrame(inertiaId)
       inertiaId = null
@@ -917,8 +930,11 @@ export function drag(element, opts) {
   }
 
   const handleEnd = function() {
+    if (!dragging) return
     dragging = false
     element.setAttribute('dragging', 'false')
+    document.removeEventListener('mousemove', handleMove)
+    document.removeEventListener('mouseup', handleEnd)
     if (options.inertia) inertiaId = requestAnimationFrame(inertia)
     const event = new CustomEvent('dragend', { detail: getDetail() })
     element.dispatchEvent(event)
@@ -1005,8 +1021,6 @@ export function drag(element, opts) {
   }
 
   element.addEventListener('mousedown', handleStart)
-  element.addEventListener('mousemove', handleMove)
-  element.addEventListener('mouseup', handleEnd)
   element.addEventListener('touchstart', handleStart)
   element.addEventListener('touchmove', handleMove)
   element.addEventListener('touchend', handleEnd)
@@ -1015,11 +1029,11 @@ export function drag(element, opts) {
     //TODO: add manual start, move and end methods - for programmatic control
     destroy: function() {
       element.removeEventListener('mousedown', handleStart)
-      element.removeEventListener('mousemove', handleMove)
-      element.removeEventListener('mouseup', handleEnd)
       element.removeEventListener('touchstart', handleStart)
       element.removeEventListener('touchmove', handleMove)
       element.removeEventListener('touchend', handleEnd)
+      document.removeEventListener('mousemove', handleMove)
+      document.removeEventListener('mouseup', handleEnd)
 
       if (inertiaId) {
         cancelAnimationFrame(inertiaId)

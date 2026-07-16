@@ -12,6 +12,7 @@
  */
 export function shallowMerge(target, source) {
   for (const key of Object.keys(source)) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue
     target[key] = source[key]
   }
 
@@ -33,6 +34,7 @@ export function shallowMerge(target, source) {
 export function deepMerge(target, source) {
   if (isObject(source) && isObject(target)) {
     for (const key of Object.keys(source)) {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue
       target[key] = deepMerge(target[key], source[key])
     }
   } else if (isArray(source) && isArray(target)) {
@@ -136,7 +138,7 @@ export function isEmpty(o) {
  * @example
  * stringToBoolean('true') // => true
  * stringToBoolean('false') // => false
- * stringToBoolean('foo') // => null
+ * stringToBoolean('foo') // => undefined
  */
 export function stringToBoolean(str) {
   if (/^\s*(true|false)\s*$/i.test(str)) return str.trim().toLowerCase() === 'true'
@@ -150,8 +152,8 @@ export function stringToBoolean(str) {
  * @example
  * stringToNumber('1') // => 1
  * stringToNumber('1.5') // => 1.5
- * stringToNumber('foo') // => null
- * stringToNumber('1foo') // => null
+ * stringToNumber('foo') // => undefined
+ * stringToNumber('1foo') // => undefined
  */
 export function stringToNumber(str) {
   if (/^\s*-?\d+\s*$/.test(str)) return parseInt(str)
@@ -165,9 +167,9 @@ export function stringToNumber(str) {
  * @returns array The converted array or undefined if conversion failed
  * @example
  * stringToArray('[1, 2, 3]') // => [1, 2, 3]
- * stringToArray('foo') // => null
- * stringToArray('1') // => null
- * stringToArray('{"foo": "bar"}') // => null
+ * stringToArray('foo') // => undefined
+ * stringToArray('1') // => undefined
+ * stringToArray('{"foo": "bar"}') // => undefined
  */
 export function stringToArray(str) {
   if (!/^\s*\[.*\]\s*$/.test(str)) return
@@ -183,9 +185,9 @@ export function stringToArray(str) {
  * @returns object The converted object or undefined if conversion failed
  * @example
  * stringToObject('{ "foo": "bar" }') // => { foo: 'bar' }
- * stringToObject('foo') // => null
- * stringToObject('1') // => null
- * stringToObject('[1, 2, 3]') // => null
+ * stringToObject('foo') // => undefined
+ * stringToObject('1') // => undefined
+ * stringToObject('[1, 2, 3]') // => undefined
  */
 export function stringToObject(str) {
   if (!/^\s*\{.*\}\s*$/.test(str)) return
@@ -201,8 +203,8 @@ export function stringToObject(str) {
  * @returns regex The converted regex or undefined if conversion failed
  * @example
  * stringToRegex('/foo/i') // => /foo/i
- * stringToRegex('foo') // => null
- * stringToRegex('1') // => null
+ * stringToRegex('foo') // => undefined
+ * stringToRegex('1') // => undefined
  */
 export function stringToRegex(str) {
   if (typeof str !== 'string') return
@@ -461,6 +463,29 @@ export function slugify(str) {
 }
 
 /**
+ * Humanize a slug, e.g. 'foo-bar' => 'Foo Bar'. Opposite of slugify. Replaces dashes and underscores with spaces and applies the chosen casing.
+ *
+ * @param {string} str
+ * @param {'title'|'sentence'|'upper'|'lower'} [casing='title'] Casing to apply: 'title' capitalizes each word, 'sentence' capitalizes the first word only, 'upper' converts to upper case, 'lower' converts to lower case
+ * @returns string
+ * @example
+ * humanize('foo-bar') // => 'Foo Bar'
+ * humanize('foo_bar-baz') // => 'Foo Bar Baz'
+ * humanize('foo-bar', 'sentence') // => 'Foo bar'
+ * humanize('foo-bar', 'upper') // => 'FOO BAR'
+ * humanize('Foo-Bar', 'lower') // => 'foo bar'
+ */
+export function humanize(str, casing = 'title') {
+  str = str.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim()
+  switch (casing) {
+    case 'upper': return str.toUpperCase()
+    case 'lower': return str.toLowerCase()
+    case 'sentence': return str.charAt(0).toUpperCase() + str.slice(1)
+    default: return str.replace(/\b\w/g, c => c.toUpperCase())
+  }
+}
+
+/**
  * Check if object has multiple properties
  * 
  * @param {object} obj
@@ -534,9 +559,9 @@ export function randomIntInclusive(min, max, safe = false) {
   max = Number(max)
   if (isNaN(min) || isNaN(max)) throw new TypeError('Both min and max must be numbers')
   if (min > max) [min, max] = [max, min]
-  if (min === max) return min
   min = Math.round(min)
   max = Math.round(max)
+  if (min === max) return min
   const rand = safe ? random() : Math.random()
   return Math.floor(rand * (max - min + 1)) + min
 }
@@ -578,6 +603,16 @@ export function percentage(num, total) {
   return num / total * 100
 }
 
+/**
+ * Pick properties from an object, returning a new object with only the picked properties
+ *
+ * @param {object} obj The object to pick properties from
+ * @param {array|string} props Properties to pick, can be an array of strings or a single string
+ * @returns object A new object with only the picked properties
+ * @example
+ * pickProperties({ foo: 'bar', baz: 'qux' }, 'foo') // => { foo: 'bar' }
+ * pickProperties({ foo: 'bar', baz: 'qux' }, ['foo', 'baz']) // => { foo: 'bar', baz: 'qux' }
+ */
 export function pickProperties(obj, props) {
   const res = {}
   if (!props) return res
@@ -588,6 +623,17 @@ export function pickProperties(obj, props) {
   return res
 }
 
+/**
+ * Remove properties from an object
+ *
+ * @param {object} obj The object to remove properties from
+ * @param {array|string} props Properties to remove, can be an array of strings or a single string
+ * @param {boolean} clone Defaults to true, will clone the object before removing properties
+ * @returns object The object without the removed properties
+ * @example
+ * rejectProperties({ foo: 'bar', baz: 'qux' }, 'foo') // => { baz: 'qux' }
+ * rejectProperties({ foo: 'bar', baz: 'qux' }, ['foo', 'baz']) // => {}
+ */
 export function rejectProperties(obj, props, clone = true) {
   if (clone) obj = { ...obj }
   if (!props) return obj
@@ -598,6 +644,16 @@ export function rejectProperties(obj, props, clone = true) {
   return obj
 }
 
+/**
+ * Pick elements from an array by index, returning a new array of the picked elements
+ *
+ * @param {array} arr The array to pick elements from
+ * @param {array|number} indexes Indexes to pick, can be an array of numbers or a single number
+ * @returns array | undefined A new array of the picked elements, or undefined if arr is not an array
+ * @example
+ * pickArrayElements(['foo', 'bar', 'baz'], 0) // => ['foo']
+ * pickArrayElements(['foo', 'bar', 'baz'], [0, 2]) // => ['foo', 'baz']
+ */
 export function pickArrayElements(arr, indexes) {
   if (!isArray(arr)) return
   if (!isArray(indexes)) indexes = [indexes]
@@ -608,11 +664,23 @@ export function pickArrayElements(arr, indexes) {
   return res
 }
 
+/**
+ * Remove elements from an array by index. Indexes may be passed in any order and are deduplicated.
+ *
+ * @param {array} arr The array to remove elements from
+ * @param {array|number} indexes Indexes to remove, can be an array of numbers or a single number
+ * @param {boolean} clone Defaults to true, will clone the array before removing elements
+ * @returns array | undefined The array without the removed elements, or undefined if arr is not an array
+ * @example
+ * rejectArrayElements(['foo', 'bar', 'baz'], 0) // => ['bar', 'baz']
+ * rejectArrayElements(['foo', 'bar', 'baz'], [2, 0]) // => ['bar']
+ */
 export function rejectArrayElements(arr, indexes, clone = true) {
   if (!isArray(arr)) return
   if (clone) arr = [...arr]
   if (!isArray(indexes)) indexes = [indexes]
-  for (let i = indexes.length - 1; i >= 0; i--) {
+  indexes = [...new Set(indexes)].sort((a, b) => b - a)
+  for (let i = 0; i < indexes.length; i++) {
     if (arr.hasOwnProperty(indexes[i])) arr.splice(indexes[i], 1)
   }
   return arr
@@ -717,9 +785,10 @@ function cryptoRandomUUIDFallback() {
  * generateUUID() // UUID v4, example 09ed0fe4-8eb6-4c2a-a8d3-a862b7513294
  */
 export function generateUUID(safe = true) {
-  if (!crypto || !safe) return cryptoUUIDFallback()
+  if (typeof crypto === 'undefined' || !safe) return cryptoUUIDFallback()
   if (crypto.randomUUID) return crypto.randomUUID()
-  if (crypto.getRandomValues) return cryptoRandomUUIDFallback();
+  if (crypto.getRandomValues) return cryptoRandomUUIDFallback()
+  return cryptoUUIDFallback()
 }
 
 /**
@@ -733,8 +802,9 @@ export function generateUUID(safe = true) {
  * random() // => 0.123456789
  */
 export function random() {
-  if (!crypto) return Math.random()
+  if (typeof crypto === 'undefined') return Math.random()
   if (crypto.getRandomValues) return crypto.getRandomValues(new Uint32Array(1))[0] / 4_294_967_296 // 2^32 = 4294967296
+  return Math.random()
 }
 
 /**

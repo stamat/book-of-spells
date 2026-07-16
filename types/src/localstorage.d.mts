@@ -1,3 +1,4 @@
+/** @module localstorage */
 /**
  * Check if localStorage is available and functional. Caches the result after the first successful check for performance.
  *
@@ -7,12 +8,12 @@
  *   setLocal('key', 'value')
  * }
  */
-export function isLocalStorageAvailable(): boolean;
+export declare function isLocalStorageAvailable(): boolean;
 /**
  * Used only for testing purposes to reset the cached localStorage support check result
- * @internal
+ * @ignore
  */
-export function _resetLocalStorageSupportCheck(): void;
+export declare function _resetLocalStorageSupportCheck(): void;
 /**
  * Check if a timestamp has exceeded its TTL
  *
@@ -23,7 +24,7 @@ export function _resetLocalStorageSupportCheck(): void;
  * isExpired(Date.now() - 1000, 500) // => true
  * isExpired(Date.now() - 500, 1000) // => false
  */
-export function isExpired(timestamp: number, ttl: number): boolean;
+export declare function isExpired(timestamp: number, ttl: number): boolean;
 /**
  * Retrieve a value from localStorage by key. Automatically unwraps the storage envelope and checks TTL expiration. Expired items are removed from localStorage.
  *
@@ -34,7 +35,7 @@ export function isExpired(timestamp: number, ttl: number): boolean;
  * getLocal('user') // => { name: 'Nikola' }
  * getLocal('nonexistent') // => null
  */
-export function getLocal(key: string): any;
+export declare function getLocal(key: string): any;
 /**
  * Store a JSON-serializable value in localStorage wrapped in an envelope with a timestamp. Optionally set a TTL for automatic expiration on read. When update is true, preserves the original __storedAt timestamp and TTL of an existing item.
  *
@@ -48,7 +49,7 @@ export function getLocal(key: string): any;
  * setLocal('key', { foo: 'bar' }, 60000) // expires in 1 minute
  * setLocal('key', 'new', null, true) // update value, keep original timestamp and TTL
  */
-export function setLocal(key: string, value: any, ttl?: number, update?: boolean): any;
+export declare function setLocal(key: string, value: any, ttl?: number, update?: boolean): any;
 /**
  * Update the value of an existing localStorage item, preserving the original __storedAt timestamp and TTL. If the key doesn't exist or has no envelope, behaves like setLocal.
  *
@@ -59,7 +60,7 @@ export function setLocal(key: string, value: any, ttl?: number, update?: boolean
  * setLocal('key', 'old', 60000)
  * updateLocal('key', 'new') // => 'new' (keeps original timestamp and TTL)
  */
-export function updateLocal(key: string, value: any): any;
+export declare function updateLocal(key: string, value: any): any;
 /**
  * Remove an item from localStorage by key
  *
@@ -69,4 +70,4 @@ export function updateLocal(key: string, value: any): any;
  * removeLocal('key')
  * getLocal('key') // => null
  */
-export function removeLocal(key: string): void;
+export declare function removeLocal(key: string): void;

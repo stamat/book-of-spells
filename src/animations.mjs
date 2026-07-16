@@ -188,7 +188,7 @@ export function fadeIn(element, callback, transitionStartCallback) {
 
   const duration = setTransitionDuration(element, 'opacity')
 
-  let oldOpacity = parseInt(styles.opacity)
+  let oldOpacity = parseFloat(styles.opacity)
   if (Number.isNaN(oldOpacity)) oldOpacity = 0
 
   if (element.hasAttribute('hidden')) element.removeAttribute('hidden')
@@ -261,7 +261,7 @@ export function fadeToggle(element, callback, transitionStartCallback) {
   setTransitionDuration(element, 'opacity')
   if (!element.dataset.opacityTransitionDuration) return
 
-  if (styles.display === 'none' || parseInt(styles.opacity) === 0) {
+  if (styles.display === 'none' || parseFloat(styles.opacity) === 0) {
     fadeIn(element, callback, transitionStartCallback)
   } else {
     fadeOut(element, callback, transitionStartCallback)

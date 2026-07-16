@@ -1,4 +1,15 @@
 /**
+ * @module animations
+ * @description
+ * A collection of functions animating element transitions.
+ * Substitutes for jQuery's "animation" functions slideUp(), slideDown(), slideToggle(), fadeIn(), fadeOut() functions.
+ * Leans onto CSS transitions, reading the height transition duration and setting a timer based on that to clear the height property on animation end.
+ * There is a unique reason for this, for instance animating height is ony possible through max-height, and if the max-height, which can produce inconsistent
+ * animation duration depending on the element's actual height. Or, animating display none to display block, this can be done via opacity and pointer-events:none
+ * this means the element will have to overlay the screen but be inaccessible. This module provides "javascript wrappers" that substitute the shortcomings of
+ * the CSS transitions regarding these two cases.
+ */
+/**
  * Slides up an element. The element must have a CSS transition set for the height property.
  * The transition duration is used to determine how long the slide up animation will take.
  * Substitutes for jQuery's slideUp() function.
@@ -9,7 +20,7 @@
  * @example
  * slideUp(element)
  */
-export function slideUp(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
+export declare function slideUp(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
 /**
  * Slides down an element. The element must have a CSS transition set for the height property.
  * The transition duration is used to determine how long the slide down animation will take.
@@ -21,7 +32,7 @@ export function slideUp(element: HTMLElement, callback?: Function, transitionSta
  * @example
  * slideDown(element)
  */
-export function slideDown(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
+export declare function slideDown(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
 /**
  * Toggles the slide state of an element. The element must have a CSS transition set for the height property.
  * The transition duration is used to determine how long the slide animation will take.
@@ -33,7 +44,7 @@ export function slideDown(element: HTMLElement, callback?: Function, transitionS
  * @example
  * slideToggle(element)
  */
-export function slideToggle(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
+export declare function slideToggle(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
 /**
  * Fades in an element. The element must have a CSS transition set for the opacity property, and initial opacity to 0.
  * The transition duration is used to determine how long the fade in animation will take.
@@ -45,7 +56,7 @@ export function slideToggle(element: HTMLElement, callback?: Function, transitio
  * @example
  * fadeIn(element)
  */
-export function fadeIn(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
+export declare function fadeIn(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
 /**
  * Fades out an element. The element must have a CSS transition set for the opacity property.
  * The transition duration is used to determine how long the fade out animation will take.
@@ -57,7 +68,7 @@ export function fadeIn(element: HTMLElement, callback?: Function, transitionStar
  * @example
  * fadeOut(element)
  */
-export function fadeOut(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
+export declare function fadeOut(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
 /**
  * Toggles the fade state of an element. The element must have a CSS transition set for the opacity property.
  * The transition duration is used to determine how long the fade animation will take.
@@ -69,4 +80,4 @@ export function fadeOut(element: HTMLElement, callback?: Function, transitionSta
  * @example
  * fadeToggle(element)
  */
-export function fadeToggle(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;
+export declare function fadeToggle(element: HTMLElement, callback?: Function, transitionStartCallback?: Function): void;

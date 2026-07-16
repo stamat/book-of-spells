@@ -6,7 +6,7 @@
  * @example
  * cookieExpirationDate(7) // Returns a string in the format '; expires=Thu, 01 Jan 1970 00:00:00 UTC' for 7 days from now
  */
-export function cookieExpirationDate(days: int): string;
+export declare function cookieExpirationDate(days: int): string;
 /**
  * Sets a cookie with the given name and value. If days is provided, it will set the expiration date.
  *
@@ -17,7 +17,7 @@ export function cookieExpirationDate(days: int): string;
  * @example
  * setCookie('foo', 'bar', 7) // Sets a cookie named 'foo' with the value 'bar' that expires in 7 days
  */
-export function setCookie(name: string, value: string, days: int): void;
+export declare function setCookie(name: string, value: string, days: int): void;
 /**
  * Gets a cookie with the given name.
  *
@@ -28,7 +28,7 @@ export function setCookie(name: string, value: string, days: int): void;
  * getCookie('foo') // Returns the value of the cookie named 'foo'
  * getCookie('bar') // Returns null if the cookie named 'bar' doesn't exist
  */
-export function getCookie(name: string): string;
+export declare function getCookie(name: string): string | null;
 /**
  * Erases a cookie with the given name.
  *
@@ -39,7 +39,7 @@ export function getCookie(name: string): string;
  * deleteCookie('foo') // Erases the cookie named 'foo'
  * getCookie('foo') // Returns null
  */
-export function deleteCookie(name: string): void;
+export declare function deleteCookie(name: string): void;
 /**
  * Checks if a cookie with the given name exists.
  *
@@ -50,7 +50,7 @@ export function deleteCookie(name: string): void;
  * hasCookie('foo') // Returns true
  * hasCookie('bar') // Returns false
  */
-export function hasCookie(name: any): boolean;
+export declare function hasCookie(name: any): boolean;
 /**
  * Updates a cookie with the given name and value. If days is provided, it will set the expiration date.
  *
@@ -63,4 +63,4 @@ export function hasCookie(name: any): boolean;
  * updateCookie('foo', 'baz', 7) // Updates the cookie named 'foo' with the value 'baz' that expires in 7 days
  * getCookie('foo') // Returns 'baz'
  */
-export function updateCookie(name: string, value: string | number, days: int): void;
+export declare function updateCookie(name: string, value: string | number, days: int): void;

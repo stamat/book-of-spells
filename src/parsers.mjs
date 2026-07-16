@@ -3,6 +3,10 @@
 import { isArray, isObject, isString, stringToType } from './helpers.mjs'
 import { RE_ATTRIBUTES, RE_ATTRIBUTE_WITHOUT_VALUE, RE_ATTRIBUTE_WITH_VALUE, RE_URL_PARAMETER, RE_FIRST_OR_LAST_QUOTE } from './regex.mjs'
 import { decodeHTML } from './dom.mjs'
+import { encodeHtmlEntities, decodeHtmlEntities } from './entities.mjs'
+
+// Re-exported for backwards compatibility; implementations live in entities.mjs
+export { encodeHtmlEntities, decodeHtmlEntities }
 
 /**
  * Parse a string of attributes and return an object
@@ -18,9 +22,11 @@ export function parseAttributes(str) {
 	const reWithoutValue = RE_ATTRIBUTE_WITHOUT_VALUE
 	const reHasValue = RE_ATTRIBUTE_WITH_VALUE
 	const reReplaceFirstAndLastQuote = RE_FIRST_OR_LAST_QUOTE
-	
+
 	const res = {}
+	if (!isString(str) || str === '') return res
 	const match = str.match(re)
+	if (!match) return res
 
 	for (let i = 0; i < match.length; i++) {
 		const m = match[i]
@@ -29,12 +35,9 @@ export function parseAttributes(str) {
 		if (reWithoutValue.test(m)) {
 			const [, key] = m.match(reWithoutValue)
 			res[key] = null
-			reWithoutValue.lastIndex = 0
 		} else if (reHasValue.test(m)) {
 			const [, key, value] = m.match(reHasValue)
 			res[key] = stringToType(decodeHTML(value.replace(reReplaceFirstAndLastQuote, '')))
-			reReplaceFirstAndLastQuote.lastIndex = 0
-			reHasValue.lastIndex = 0
 		}
 	}
 
@@ -64,65 +67,6 @@ export function serializeAttributes(obj) {
 }
 
 /**
- * Encodes HTML entities in a string using the following rules:
- * 
- * - & (ampersand) becomes &amp;
- * - " (double quote) becomes &quot;
- * - ' (single quote) becomes &#039;
- * - < (less than) becomes &lt;
- * - > (greater than) becomes &gt;
- * 
- * It is different than dom.encodeHTML, which encodes all characters using the browser's DOMParser. This function only encodes the characters listed above and should be used when DOMParser is not available.
- * @see {@link module:dom.encodeHTML}
- * 
- * @param {string} str - The string to encode
- * @returns {string} The encoded string
- * @example
- * htmlEncode('<a href="#">Link</a>') // &lt;a href=&quot;#&quot;&gt;Link&lt;/a&gt;
- */
-export function encodeHtmlEntities(str) {
-	return str.replace(/[<>"'\&]/g, (m) => {
-		switch (m) {
-			case '<': return '&lt;'
-			case '>': return '&gt;'
-			case '"': return '&quot;'
-			case "'": return '&#039;'
-			case '&': return '&amp;'
-		}
-	})
-}
-
-/**
- * Decodes HTML entities in a string using the following rules:
- * 
- * - &amp; becomes &
- * - &quot; becomes "
- * - &#039; becomes '
- * - &lt; becomes <
- * - &gt; becomes >
- * 
- * It is different than dom.decodeHTML, which decodes all characters using the browser's DOMParser. This function only decodes the characters listed above and should be used when DOMParser is not available.
- * @see {@link module:dom.decodeHTML}
- * 
- * @param {string} str - The string to decode
- * @returns {string} The decoded string
- * @example
- * htmlDecode('&lt;a href=&quot;#&quot;&gt;Link&lt;/a&gt;') // <a href="#">Link</a>
- */
-export function decodeHtmlEntities(str) {
-	return str.replace(/&lt;|&gt;|&quot;|&#039;|&amp;/g, (m) => {
-		switch (m) {
-			case '&lt;': return '<'
-			case '&gt;': return '>'
-			case '&quot;': return '"'
-			case '&#039;': return "'"
-			case '&amp;': return '&'
-		}
-	})
-}
-
-
-/**
  * Parses a string of url parameters into an object of key value pairs
  * 
  * @param {string} paramString - The string to parse without ? or # and with & as separator
@@ -143,7 +87,6 @@ export function parseUrlParameters(paramString, decode = true) {
     const key = m[1]
     const value = m[2]
     res[key] = value !== undefined && decode ? stringToType(decodeURIComponent(value)) : stringToType(value)
-		RE_URL_PARAMETER.lastIndex = 0
   })
 
   return res

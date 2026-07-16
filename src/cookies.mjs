@@ -57,7 +57,7 @@ export function getCookie(name) {
  * getCookie('foo') // Returns null
  */
 export function deleteCookie(name) {
-  document.cookie = `${name}=; Max-Age=-99999999;`
+  document.cookie = `${name}=; Max-Age=-99999999; path=/`
 }
 
 /**

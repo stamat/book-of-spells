@@ -10,7 +10,7 @@
  * const source = { bar: 'baz' }
  * shallowMerge(target, source) // { foo: 'bar', bar: 'baz' }
  */
-export function shallowMerge(target: object, source: object): any;
+export declare function shallowMerge(target: object, source: object): object;
 /**
  * Deep merge function that's mindful of arrays and objects. Mutates target object.
  * shallowMerge is faster than deepMerge, so use shallowMerge when you don't need to merge nested objects or arrays.
@@ -23,7 +23,7 @@ export function shallowMerge(target: object, source: object): any;
  * const source = { bar: 'baz' }
  * deepMerge(target, source) // { foo: 'bar', bar: 'baz' }
  */
-export function deepMerge(target: object, source: object): any;
+export declare function deepMerge(target: object, source: object): object;
 /**
  * Deep clone function that's mindful of nested arrays and objects
  *
@@ -39,7 +39,7 @@ export function deepMerge(target: object, source: object): any;
  * console.log(JSON.stringify(obj) === JSON.stringify(clone)) // true
  * @todo Check if faster than assign. This function is pretty old...
  */
-export function clone(o: object): any;
+export declare function clone(o: object): any;
 /**
  * Check if an object is empty
  *
@@ -49,7 +49,7 @@ export function clone(o: object): any;
  * isEmptyObject({}) // => true
  * isEmptyObject({ foo: 'bar' }) // => false
  */
-export function isEmptyObject(o: object): boolean;
+export declare function isEmptyObject(o: object): boolean;
 /**
  * Check if an array is empty, substitute for Array.length === 0
  *
@@ -59,7 +59,7 @@ export function isEmptyObject(o: object): boolean;
  * isEmptyArray([]) // => true
  * isEmptyArray([1, 2, 3]) // => false
  */
-export function isEmptyArray(o: any[]): boolean;
+export declare function isEmptyArray(o: array): boolean;
 /**
  * Check if a variable is empty
  *
@@ -73,7 +73,7 @@ export function isEmptyArray(o: any[]): boolean;
  * isEmpty(undefined) // => false
  * isEmpty(0) // => false
  */
-export function isEmpty(o: any): boolean;
+export declare function isEmpty(o: any): boolean;
 /**
  * Try to convert a string to a boolean
  *
@@ -82,9 +82,9 @@ export function isEmpty(o: any): boolean;
  * @example
  * stringToBoolean('true') // => true
  * stringToBoolean('false') // => false
- * stringToBoolean('foo') // => null
+ * stringToBoolean('foo') // => undefined
  */
-export function stringToBoolean(str: string): boolean;
+export declare function stringToBoolean(str: string): boolean | undefined;
 /**
  * Try to convert a string to a number
  *
@@ -93,10 +93,10 @@ export function stringToBoolean(str: string): boolean;
  * @example
  * stringToNumber('1') // => 1
  * stringToNumber('1.5') // => 1.5
- * stringToNumber('foo') // => null
- * stringToNumber('1foo') // => null
+ * stringToNumber('foo') // => undefined
+ * stringToNumber('1foo') // => undefined
  */
-export function stringToNumber(str: string): number;
+export declare function stringToNumber(str: string): number | undefined;
 /**
  * Try to convert a string to an array
  *
@@ -104,11 +104,11 @@ export function stringToNumber(str: string): number;
  * @returns array The converted array or undefined if conversion failed
  * @example
  * stringToArray('[1, 2, 3]') // => [1, 2, 3]
- * stringToArray('foo') // => null
- * stringToArray('1') // => null
- * stringToArray('{"foo": "bar"}') // => null
+ * stringToArray('foo') // => undefined
+ * stringToArray('1') // => undefined
+ * stringToArray('{"foo": "bar"}') // => undefined
  */
-export function stringToArray(str: string): any;
+export declare function stringToArray(str: string): any;
 /**
  * Try to convert a string to an object
  *
@@ -116,11 +116,11 @@ export function stringToArray(str: string): any;
  * @returns object The converted object or undefined if conversion failed
  * @example
  * stringToObject('{ "foo": "bar" }') // => { foo: 'bar' }
- * stringToObject('foo') // => null
- * stringToObject('1') // => null
- * stringToObject('[1, 2, 3]') // => null
+ * stringToObject('foo') // => undefined
+ * stringToObject('1') // => undefined
+ * stringToObject('[1, 2, 3]') // => undefined
  */
-export function stringToObject(str: string): any;
+export declare function stringToObject(str: string): any;
 /**
  * Try to convert a string to a regex
  *
@@ -128,10 +128,10 @@ export function stringToObject(str: string): any;
  * @returns regex The converted regex or undefined if conversion failed
  * @example
  * stringToRegex('/foo/i') // => /foo/i
- * stringToRegex('foo') // => null
- * stringToRegex('1') // => null
+ * stringToRegex('foo') // => undefined
+ * stringToRegex('1') // => undefined
  */
-export function stringToRegex(str: string): RegExp;
+export declare function stringToRegex(str: string): RegExp | undefined;
 /**
  * Try to convert a string to a primitive
  *
@@ -146,7 +146,7 @@ export function stringToRegex(str: string): RegExp;
  * stringToPrimitive('foo') // => 'foo'
  * stringToPrimitive('1foo') // => '1foo'
  */
-export function stringToPrimitive(str: string): null | boolean | int | float | string;
+export declare function stringToPrimitive(str: string): null | boolean | int | float | string;
 /**
  * Try to convert a string to a data type
  *
@@ -164,7 +164,7 @@ export function stringToPrimitive(str: string): null | boolean | int | float | s
  * stringToData('{ "foo": "bar" }') // => { foo: 'bar' }
  * stringToData('/foo/i') // => /foo/i
  */
-export function stringToType(str: string): any;
+export declare function stringToType(str: string): any;
 /**
  * If provided variable is an object
  *
@@ -175,7 +175,7 @@ export function stringToType(str: string): any;
  * isObject([]) // => false
  * isObject(null) // => false
  */
-export function isObject(o: any): boolean;
+export declare function isObject(o: any): boolean;
 /**
  * If provided variable is an array. Just a wrapper for Array.isArray
  *
@@ -185,7 +185,7 @@ export function isObject(o: any): boolean;
  * isArray([]) // => true
  * isArray({}) // => false
  */
-export function isArray(o: any): o is any[];
+export declare function isArray(o: any): o is any[];
 /**
  * If provided variable is a string. Just a wrapper for typeof === 'string'
  *
@@ -195,7 +195,7 @@ export function isArray(o: any): o is any[];
  * isString('foo') // => true
  * isString({}) // => false
  */
-export function isString(o: any): o is string;
+export declare function isString(o: any): o is string;
 /**
  * If provided variable is a function, substitute for typeof === 'function'
  *
@@ -205,7 +205,7 @@ export function isString(o: any): o is string;
  * isFunction(function() {}) // => true
  * isFunction({}) // => false
  */
-export function isFunction(o: any): boolean;
+export declare function isFunction(o: any): boolean;
 /**
  * If object property is a function
  *
@@ -217,7 +217,7 @@ export function isFunction(o: any): boolean;
  * propertyIsFunction(obj, 'foo') // => false
  * propertyIsFunction(obj, 'baz') // => true
  */
-export function propertyIsFunction(obj: object, propertyName: string): boolean;
+export declare function propertyIsFunction(obj: object, propertyName: string): boolean;
 /**
  * If object property is a string
  *
@@ -229,7 +229,7 @@ export function propertyIsFunction(obj: object, propertyName: string): boolean;
  * propertyIsString(obj, 'foo') // => true
  * propertyIsString(obj, 'baz') // => false
  */
-export function propertyIsString(obj: object, propertyName: string): boolean;
+export declare function propertyIsString(obj: object, propertyName: string): boolean;
 /**
  * Transforms a dash separated string to camelCase
  *
@@ -241,7 +241,7 @@ export function propertyIsString(obj: object, propertyName: string): boolean;
  * transformDashToCamelCase('foo') // => 'foo'
  * transformDashToCamelCase('fooBarBaz-qux') // => 'fooBarBazQux'
  */
-export function transformDashToCamelCase(str: string): string;
+export declare function transformDashToCamelCase(str: string): string;
 /**
  * Transforms a camelCase string to dash separated string
  *
@@ -253,7 +253,7 @@ export function transformDashToCamelCase(str: string): string;
  * transformCamelCaseToDash('foo') // => 'foo'
  * transformDashToCamelCase('fooBarBaz-qux') // => 'foo-bar-baz-qux'
  */
-export function transformCamelCaseToDash(str: string): string;
+export declare function transformCamelCaseToDash(str: string): string;
 /**
  * Maps an array of objects by a property name
  *
@@ -264,7 +264,7 @@ export function transformCamelCaseToDash(str: string): string;
  * const arr = [{ foo: 'bar' }, { foo: 'baz' }]
  * mapByProperty(arr, 'foo') // => { bar: { foo: 'bar' }, baz: { foo: 'baz' } }
  */
-export function mapByProperty(arr: any[], propertyName: string): {};
+export declare function mapByProperty(arr: array, propertyName: string): {};
 /**
  * Maps an array of objects by a property name to another property name
  *
@@ -276,7 +276,7 @@ export function mapByProperty(arr: any[], propertyName: string): {};
  * const arr = [{ foo: 'bar', baz: 'qux' }, { foo: 'quux', baz: 'corge' }]
  * mapPropertyToProperty(arr, 'foo', 'baz') // => { bar: 'qux', quux: 'corge' }
  */
-export function mapPropertyToProperty(arr: any[], keyPropertyName: string, valuePropertyName: string): {};
+export declare function mapPropertyToProperty(arr: array, keyPropertyName: string, valuePropertyName: string): {};
 /**
  * Remove accents from a string
  *
@@ -287,8 +287,16 @@ export function mapPropertyToProperty(arr: any[], keyPropertyName: string, value
  * removeAccents('ÁÉÍÓÚ') // => 'AEIOU'
  * removeAccents('señor') // => 'senor'
  * removeAccents('Œ') // => 'OE'
+ * removeAccents('œ') // => 'oe'
+ * removeAccents('Æ') // => 'AE'
+ * removeAccents('æ') // => 'ae'
+ * removeAccents('ß') // => 'ss'
+ * removeAccents('Crème Brûlée') // => 'Creme Brulee'
+ * removeAccents('ﬀ') // => 'ff'
+ * removeAccents('ﬁ') // => 'fi'
+ * removeAccents('ﬂ') // => 'fl'
  */
-export function removeAccents(inputString: string): string;
+export declare function removeAccents(inputString: string): string;
 /**
  * Strip HTML tags from a string
  *
@@ -298,7 +306,7 @@ export function removeAccents(inputString: string): string;
  * stripHTMLTags('<span>foo</span>') // => 'foo'
  * stripHTMLTags('<span>foo</span> <span>bar</span>') // => 'foo bar'
  */
-export function stripHTMLTags(inputString: string): string;
+export declare function stripHTMLTags(inputString: string): string;
 /**
  * Slugify a string, e.g. 'Foo Bar' => 'foo-bar'. Similar to WordPress' sanitize_title(). Will remove accents and HTML tags.
  *
@@ -308,7 +316,21 @@ export function stripHTMLTags(inputString: string): string;
  * slugify('Foo Bar') // => 'foo-bar'
  * slugify('Foo Bar <span>baz</span>') // => 'foo-bar-baz'
  */
-export function slugify(str: string): string;
+export declare function slugify(str: string): string;
+/**
+ * Humanize a slug, e.g. 'foo-bar' => 'Foo Bar'. Opposite of slugify. Replaces dashes and underscores with spaces and applies the chosen casing.
+ *
+ * @param {string} str
+ * @param {'title'|'sentence'|'upper'|'lower'} [casing='title'] Casing to apply: 'title' capitalizes each word, 'sentence' capitalizes the first word only, 'upper' converts to upper case, 'lower' converts to lower case
+ * @returns string
+ * @example
+ * humanize('foo-bar') // => 'Foo Bar'
+ * humanize('foo_bar-baz') // => 'Foo Bar Baz'
+ * humanize('foo-bar', 'sentence') // => 'Foo bar'
+ * humanize('foo-bar', 'upper') // => 'FOO BAR'
+ * humanize('Foo-Bar', 'lower') // => 'foo bar'
+ */
+export declare function humanize(str: string, casing?: 'title' | 'sentence' | 'upper' | 'lower'): string;
 /**
  * Check if object has multiple properties
  *
@@ -320,7 +342,7 @@ export function slugify(str: string): string;
  * hasOwnProperties(obj, ['foo', 'baz']) // => true
  * hasOwnProperties(obj, ['foo', 'baz', 'qux']) // => false
  */
-export function hasOwnProperties(obj: object, properties: string | any[]): boolean;
+export declare function hasOwnProperties(obj: object, properties: string | array): boolean;
 /**
  * Finds the closest number to the set goal in an array to a given number
  *
@@ -333,7 +355,7 @@ export function hasOwnProperties(obj: object, properties: string | any[]): boole
  * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 9.5]) // => 9.5
  * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11) // => 10
  */
-export function closestNumber(goal: number, arr: any[]): any;
+export declare function closestNumber(goal: number, arr: array): any;
 /**
  * Truncate a string to a given number of words
  *
@@ -346,7 +368,7 @@ export function closestNumber(goal: number, arr: any[]): any;
  * truncateString('foo bar baz', 2, '...') // => 'foo bar...'
  * truncateString('foo bar. baz', 2, '...') // => 'foo bar. ...'
  */
-export function truncateString(str: string, numWords: number, ellipsis?: string): string;
+export declare function truncateString(str: string, numWords: number, ellipsis?: string): string;
 /**
  * Generates a random integer between two values, inclusive of both
  *
@@ -359,7 +381,7 @@ export function truncateString(str: string, numWords: number, ellipsis?: string)
  * randomIntInclusive(1, 10) // => 10
  * randomIntInclusive(1, 10) // => 5
  */
-export function randomIntInclusive(min: number, max: number, safe?: boolean): number;
+export declare function randomIntInclusive(min: number, max: number, safe?: boolean): number;
 /**
  * Gets fixed number of digits after the decimal point
  *
@@ -374,7 +396,7 @@ export function randomIntInclusive(min: number, max: number, safe?: boolean): nu
  * fixed(1.234, 5) // => 1.234
  * @note Gotta ask myself why I wrote this function in the first place... 🤔 It's just not useful in a lot of cases lol...
  */
-export function fixed(number: number, digits: number): number;
+export declare function fixed(number: number, digits: number): number;
 /**
  * Calculates the percentage of a number in relation to another number
  *
@@ -388,11 +410,53 @@ export function fixed(number: number, digits: number): number;
  * percentage(0, 10) // => 0
  * percentage(10, 2) // => 500
  */
-export function percentage(num: number, total: number): number;
-export function pickProperties(obj: any, props: any): {};
-export function rejectProperties(obj: any, props: any, clone?: boolean): any;
-export function pickArrayElements(arr: any, indexes: any): any[];
-export function rejectArrayElements(arr: any, indexes: any, clone?: boolean): any[];
+export declare function percentage(num: number, total: number): number;
+/**
+ * Pick properties from an object, returning a new object with only the picked properties
+ *
+ * @param {object} obj The object to pick properties from
+ * @param {array|string} props Properties to pick, can be an array of strings or a single string
+ * @returns object A new object with only the picked properties
+ * @example
+ * pickProperties({ foo: 'bar', baz: 'qux' }, 'foo') // => { foo: 'bar' }
+ * pickProperties({ foo: 'bar', baz: 'qux' }, ['foo', 'baz']) // => { foo: 'bar', baz: 'qux' }
+ */
+export declare function pickProperties(obj: object, props: array | string): {};
+/**
+ * Remove properties from an object
+ *
+ * @param {object} obj The object to remove properties from
+ * @param {array|string} props Properties to remove, can be an array of strings or a single string
+ * @param {boolean} clone Defaults to true, will clone the object before removing properties
+ * @returns object The object without the removed properties
+ * @example
+ * rejectProperties({ foo: 'bar', baz: 'qux' }, 'foo') // => { baz: 'qux' }
+ * rejectProperties({ foo: 'bar', baz: 'qux' }, ['foo', 'baz']) // => {}
+ */
+export declare function rejectProperties(obj: object, props: array | string, clone?: boolean): object;
+/**
+ * Pick elements from an array by index, returning a new array of the picked elements
+ *
+ * @param {array} arr The array to pick elements from
+ * @param {array|number} indexes Indexes to pick, can be an array of numbers or a single number
+ * @returns array | undefined A new array of the picked elements, or undefined if arr is not an array
+ * @example
+ * pickArrayElements(['foo', 'bar', 'baz'], 0) // => ['foo']
+ * pickArrayElements(['foo', 'bar', 'baz'], [0, 2]) // => ['foo', 'baz']
+ */
+export declare function pickArrayElements(arr: array, indexes: array | number): any[] | undefined;
+/**
+ * Remove elements from an array by index. Indexes may be passed in any order and are deduplicated.
+ *
+ * @param {array} arr The array to remove elements from
+ * @param {array|number} indexes Indexes to remove, can be an array of numbers or a single number
+ * @param {boolean} clone Defaults to true, will clone the array before removing elements
+ * @returns array | undefined The array without the removed elements, or undefined if arr is not an array
+ * @example
+ * rejectArrayElements(['foo', 'bar', 'baz'], 0) // => ['bar', 'baz']
+ * rejectArrayElements(['foo', 'bar', 'baz'], [2, 0]) // => ['bar']
+ */
+export declare function rejectArrayElements(arr: array, indexes: array | number, clone?: boolean): any;
 /**
  * Pick properties from an object or elements from an array
  *
@@ -416,7 +480,7 @@ export function rejectArrayElements(arr: any, indexes: any, clone?: boolean): an
  * pick(['foo', 'bar', 'baz'], [0, 2]) // => ['foo', 'baz']
  * pick(['foo', 'bar', 'baz'], [0, 2, 3]) // => ['foo', 'baz']
  */
-export function pick(obj: any[], props: any[] | string | number): {};
+export declare function pick(obj: array, props: array | string | number): {} | undefined;
 /**
  * Remove properties from an object or elements from an array
  *
@@ -441,7 +505,7 @@ export function pick(obj: any[], props: any[] | string | number): {};
  * reject(['foo', 'bar', 'baz'], [0, 2]) // => ['bar']
  * reject(['foo', 'bar', 'baz'], [0, 2, 3]) // => ['bar']
  */
-export function reject(obj: any[], props: any[] | string | number, clone?: boolean): any;
+export declare function reject(obj: array, props: array | string | number, clone?: boolean): any;
 /**
  * Basic timestamp first UID generator that's good enough for most use cases but not for security purposes.
  * There's an extremely small chance of collision, so create a map object to check for collisions if you're worried about that.
@@ -454,7 +518,7 @@ export function reject(obj: any[], props: any[] | string | number, clone?: boole
  * @example
  * basicUID() // => '18d4613e4d2-750bf066ac6158'
  */
-export function basicUID(safe?: boolean): string;
+export declare function basicUID(safe?: boolean): string;
 /**
  * Generates a UUID v4
  * - Uses crypto.randomUUID if available
@@ -468,7 +532,7 @@ export function basicUID(safe?: boolean): string;
  * @example
  * generateUUID() // UUID v4, example 09ed0fe4-8eb6-4c2a-a8d3-a862b7513294
  */
-export function generateUUID(safe?: boolean): string;
+export declare function generateUUID(safe?: boolean): string;
 /**
  * Generates a random number between 0 and 1, inclusive of 0 but not inclusive of 1.
  *
@@ -479,7 +543,7 @@ export function generateUUID(safe?: boolean): string;
  * @example
  * random() // => 0.123456789
  */
-export function random(): number;
+export declare function random(): number;
 /**
  * Access nested object properties using a path
  *
@@ -491,4 +555,4 @@ export function random(): number;
  * const obj = { foo: { bar: 'baz' } }
  * getObjectValueByPath(obj, 'foo.bar') // => 'baz'
  */
-export function getObjectValueByPath(obj: object, path: any[] | string): any;
+export declare function getObjectValueByPath(obj: object, path: array | string): any;

@@ -1,3 +1,6 @@
+/** @module parsers */
+import { encodeHtmlEntities, decodeHtmlEntities } from './entities.mjs';
+export { encodeHtmlEntities, decodeHtmlEntities };
 /**
  * Parse a string of attributes and return an object
  *
@@ -7,7 +10,7 @@
  * parseAttributes('button text="Click me" data='{"key": \"value"}' class="btn btn-primary"')
  * // => { button: null, text: 'Click me', data: '{"key": "value"}', class: 'btn btn-primary' }
  */
-export function parseAttributes(str: string): {};
+export declare function parseAttributes(str: string): {};
 /**
  * Serialize an object of key value pairs into a string of attributes
  *
@@ -16,43 +19,7 @@ export function parseAttributes(str: string): {};
  * @example
  * serializeAttributes({ button: null, text: 'Click me', data: '{"key": "value"}', class: 'btn btn-primary' }) // button text="Click me" data="{\"key\": \"value\"}" class="btn btn-primary"
  */
-export function serializeAttributes(obj: object): string;
-/**
- * Encodes HTML entities in a string using the following rules:
- *
- * - & (ampersand) becomes &amp;
- * - " (double quote) becomes &quot;
- * - ' (single quote) becomes &#039;
- * - < (less than) becomes &lt;
- * - > (greater than) becomes &gt;
- *
- * It is different than dom.encodeHTML, which encodes all characters using the browser's DOMParser. This function only encodes the characters listed above and should be used when DOMParser is not available.
- * @see {@link module:dom.encodeHTML}
- *
- * @param {string} str - The string to encode
- * @returns {string} The encoded string
- * @example
- * htmlEncode('<a href="#">Link</a>') // &lt;a href=&quot;#&quot;&gt;Link&lt;/a&gt;
- */
-export function encodeHtmlEntities(str: string): string;
-/**
- * Decodes HTML entities in a string using the following rules:
- *
- * - &amp; becomes &
- * - &quot; becomes "
- * - &#039; becomes '
- * - &lt; becomes <
- * - &gt; becomes >
- *
- * It is different than dom.decodeHTML, which decodes all characters using the browser's DOMParser. This function only decodes the characters listed above and should be used when DOMParser is not available.
- * @see {@link module:dom.decodeHTML}
- *
- * @param {string} str - The string to decode
- * @returns {string} The decoded string
- * @example
- * htmlDecode('&lt;a href=&quot;#&quot;&gt;Link&lt;/a&gt;') // <a href="#">Link</a>
- */
-export function decodeHtmlEntities(str: string): string;
+export declare function serializeAttributes(obj: object): string;
 /**
  * Parses a string of url parameters into an object of key value pairs
  *
@@ -64,7 +31,7 @@ export function decodeHtmlEntities(str: string): string;
  * parseUrlParams('foo=bar&baz=qux', false) // { foo: 'true', baz: '555' }
  * parseUrlParams('foo&bar&baz=qux') // { foo: undefined, bar: undefined, baz: 'qux' }
  */
-export function parseUrlParameters(paramString: string, decode?: boolean): object;
+export declare function parseUrlParameters(paramString: string, decode?: boolean): object;
 /**
  * Serialize an object of key value pairs into a string of url parameters
  *
@@ -75,7 +42,7 @@ export function parseUrlParameters(paramString: string, decode?: boolean): objec
  * serializeUrlParams({ foo: true, baz: 555 }) // foo=true&baz=555
  * serializeUrlParams({ bar: undefined, baz: 'qux' }, false) // bar=&baz=qux
  */
-export function serializeUrlParameters(obj: object, encode?: boolean): string;
+export declare function serializeUrlParameters(obj: object, encode?: boolean): string;
 /**
  * Parses a resolution string into a number. Resolution string is in the format of 'width:height', e.g. '16:9'
  *
@@ -87,4 +54,4 @@ export function serializeUrlParameters(obj: object, encode?: boolean): string;
  * parseResolutionString('4x3') // => 1.3333333333
  * parseResolutionString('4-3') // => 1.3333333333
  */
-export function parseResolutionString(res: string): number;
+export declare function parseResolutionString(res: string): number;

@@ -25,6 +25,7 @@ import {
   mapByProperty,
   mapPropertyToProperty,
   slugify,
+  humanize,
   removeAccents,
   stripHTMLTags,
   closestNumber,
@@ -305,6 +306,16 @@ test('slugify', () => {
   })
 })
 
+test('humanize', () => {
+  expect(humanize('foo-bar')).toBe('Foo Bar')
+  expect(humanize('foo_bar-baz')).toBe('Foo Bar Baz')
+  expect(humanize('  foo--bar  ')).toBe('Foo Bar')
+  expect(humanize('foo')).toBe('Foo')
+  expect(humanize('foo-bar', 'sentence')).toBe('Foo bar')
+  expect(humanize('foo-bar', 'upper')).toBe('FOO BAR')
+  expect(humanize('Foo-Bar', 'lower')).toBe('foo bar')
+})
+
 test('closestNumber', () => {
   expect(closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9])).toBe(9)
   expect(closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11])).toBe(9)
@@ -465,4 +476,44 @@ test('random returns [0, 1) range at boundaries', () => {
   expect(random()).toBeLessThan(1)
 
   crypto.getRandomValues = original
+})
+
+test('reject array handles unsorted and duplicate indexes', () => {
+  expect(reject(['foo', 'bar', 'baz'], [2, 0])).toEqual(['bar'])
+  expect(reject(['foo', 'bar', 'baz', 'qux'], [3, 1, 0])).toEqual(['baz'])
+  expect(reject(['foo', 'bar', 'baz'], [0, 0, 2])).toEqual(['bar'])
+})
+
+test('merge functions do not pollute prototypes', () => {
+  const payload = JSON.parse('{"__proto__": {"polluted": "yes"}, "constructor": {"bad": true}, "safe": 1}')
+
+  const deepTarget = {}
+  deepMerge(deepTarget, payload)
+  expect({}.polluted).toBe(undefined)
+  expect(deepTarget.safe).toBe(1)
+
+  const shallowTarget = {}
+  shallowMerge(shallowTarget, payload)
+  expect({}.polluted).toBe(undefined)
+  expect(Object.getPrototypeOf(shallowTarget)).toBe(Object.prototype)
+  expect(shallowTarget.safe).toBe(1)
+})
+
+test('randomIntInclusive returns an integer when min equals max', () => {
+  expect(randomIntInclusive(1.4, 1.4)).toBe(1)
+  expect(randomIntInclusive(2, 2)).toBe(2)
+})
+
+test('random and generateUUID fall back when crypto lacks methods', () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'crypto')
+  Object.defineProperty(globalThis, 'crypto', { value: {}, configurable: true })
+
+  const r = random()
+  expect(r).toBeGreaterThanOrEqual(0)
+  expect(r).toBeLessThan(1)
+
+  const uuid = generateUUID()
+  expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+
+  Object.defineProperty(globalThis, 'crypto', descriptor)
 })

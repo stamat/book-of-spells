@@ -1,30 +1,31 @@
-export function isUserAgentIOS(str: any): boolean;
-export function isUserAgentMobile(str: any): boolean;
-export function isUserAgentSafari(str: any): boolean;
+/** @module browser */
+export declare function isUserAgentIOS(str: any): boolean;
+export declare function isUserAgentMobile(str: any): boolean;
+export declare function isUserAgentSafari(str: any): boolean;
 /**
  * Check if the device is an iOS device
  *
  * @returns boolean True if the device is an iOS device, false otherwise
  */
-export function isIOS(): boolean;
+export declare function isIOS(): boolean;
 /**
  * Check if the device is a mobile device
  *
  * @returns boolean True if the device is a mobile device, false otherwise
  */
-export function isMobile(): boolean;
+export declare function isMobile(): boolean;
 /**
  * Check if the browser is Safari
  *
  * @returns boolean True if the browser is Safari, false otherwise
  */
-export function isSafari(): boolean;
+export declare function isSafari(): boolean;
 /**
  * Check if the browser is Safari on iOS
  *
  * @returns boolean True if the browser is Safari on iOS, false otherwise
  */
-export function isIOSSafari(): boolean;
+export declare function isIOSSafari(): boolean;
 /**
  * A wrapper for the matchMedia function, cause with `matchMedia` you can only either add a listener or check the media query
  * this function does both.
@@ -46,7 +47,7 @@ export function isIOSSafari(): boolean;
  *
  * const isDesktop = mediaMatcher('(min-width: 768px)')
  */
-export function mediaMatcher(query: string, callback?: Function): boolean;
+export declare function mediaMatcher(query: string, callback?: Function): boolean;
 /**
  * Get the scrollbar width
  *
@@ -58,33 +59,33 @@ export function mediaMatcher(query: string, callback?: Function): boolean;
  * @example
  * const scrollbarWidth = getScrollbarWidth() // 15 (on MacOS X Safari)
  */
-export function getScrollbarWidth(): number;
+export declare function getScrollbarWidth(): number;
 /**
  * Check if the vertical scrollbar is visible
  *
  * @param {number} [scrollbarWidth] The width of the scrollbar, defaults to getScrollbarWidth()
  * @returns {boolean} True if the vertical scrollbar is visible, false otherwise
  */
-export function hasVerticalScrollbarVisible(scrollbarWidth?: number): boolean;
+export declare function hasVerticalScrollbarVisible(scrollbarWidth?: number): boolean;
 /**
  * Check if the horizontal scrollbar is visible
  *
  * @param {number} [scrollbarWidth] The width of the scrollbar, defaults to getScrollbarWidth()
  * @returns {boolean} True if the horizontal scrollbar is visible, false otherwise
  */
-export function hasHorizontalScrollbarVisible(scrollbarWidth?: number): boolean;
+export declare function hasHorizontalScrollbarVisible(scrollbarWidth?: number): boolean;
 /**
  * Disable the scroll on the page.
  *
  * @param {number} [shift=0] If greater than 0 the body will be shifted to the left by the width of the scrollbar, getScrollbarWidth() is used to provide this value
  */
-export function disableScroll(shift?: number): void;
+export declare function disableScroll(shift?: number): void;
 /**
  * Enable the scroll on the page.
  *
  * @param {boolean} [shift=0] If greater than 0 the body will be shifted back to the left by the width of the scrollbar, getScrollbarWidth() is used to provide this value
  */
-export function enableScroll(shift?: boolean): void;
+export declare function enableScroll(shift?: boolean): void;
 /**
  * Parses a string of url query parameters into an object of key value pairs. Converts the values to the correct type.
  *
@@ -94,7 +95,7 @@ export function enableScroll(shift?: boolean): void;
  * // url: https://example.com/?test&foo=bar&baz=qux
  * getQueryProperties() // { test: undefined, foo: 'bar', baz: 'qux' }
  */
-export function getQueryProperties(entryQuery?: string): object;
+export declare function getQueryProperties(entryQuery?: string): object;
 /**
  * Parses a string of url hash parameters into an object of key value pairs. Converts the values to the correct type.
  *
@@ -104,7 +105,7 @@ export function getQueryProperties(entryQuery?: string): object;
  * // url: https://example.com/#test&foo=bar&baz=qux
  * getHashProperties() // { test: undefined, foo: 'bar', baz: 'qux' }
  */
-export function getHashProperties(entryHash?: string): object;
+export declare function getHashProperties(entryHash?: string): object;
 /**
  * Add a callback function to the hash change event
  *
@@ -115,4 +116,4 @@ export function getHashProperties(entryHash?: string): object;
  * // Do something with the hash
  * })
  */
-export function hashChange(callback: Function, single?: string): void;
+export declare function hashChange(callback: Function, single?: string): void;

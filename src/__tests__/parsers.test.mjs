@@ -60,3 +60,9 @@ test('parseResolutionString', () => {
   expect(parseResolutionString('')).toBe(1.7777777778)
   expect(parseResolutionString('foo')).toBe(1.7777777778)
 })
+
+test('parseAttributes returns empty object for empty or invalid input', () => {
+  expect(parseAttributes('')).toEqual({})
+  expect(parseAttributes(null)).toEqual({})
+  expect(parseAttributes(undefined)).toEqual({})
+})

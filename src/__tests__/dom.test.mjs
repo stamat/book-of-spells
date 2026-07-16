@@ -18,7 +18,8 @@ import {
   removeListenerForEvents,
   isEmptyElement,
   getTableData,
-  delegateEvent
+  delegateEvent,
+  isVisible
 } from '../dom.mjs'
 
 document.body.innerHTML = `
@@ -224,7 +225,7 @@ test('getTransitionDurations', () => {
   })
   expect(getTransitionDurations(el)).toEqual({ height: 500, opacity: 200 })
 
-  // more properties than durations
+  // more properties than durations — CSS repeats the duration list
   spy.mockReturnValue({
     getPropertyValue: (prop) => {
       if (prop === 'transition-property') return 'height, opacity, color'
@@ -232,7 +233,17 @@ test('getTransitionDurations', () => {
       return ''
     }
   })
-  expect(getTransitionDurations(el)).toEqual({ height: 1000, opacity: null, color: null })
+  expect(getTransitionDurations(el)).toEqual({ height: 1000, opacity: 1000, color: 1000 })
+
+  // duration list shorter than property list cycles through
+  spy.mockReturnValue({
+    getPropertyValue: (prop) => {
+      if (prop === 'transition-property') return 'height, opacity, color'
+      if (prop === 'transition-duration') return '1s, 200ms'
+      return ''
+    }
+  })
+  expect(getTransitionDurations(el)).toEqual({ height: 1000, opacity: 200, color: 1000 })
 
   spy.mockRestore()
 
@@ -328,4 +339,46 @@ test('addListenerForEvents / removeListenerForEvents', () => {
   el.dispatchEvent(new Event('click'))
   expect(count).toBe(1)
   removeListenerForEvents(el, ['click', 'mousedown'], handler)
+})
+
+test('delegateEvent returns a destroy handle for bubbling events', () => {
+  document.body.innerHTML = '<button class="btn"></button>'
+  let count = 0
+  const handle = delegateEvent('.btn', 'click', () => count++)
+
+  document.querySelector('.btn').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  expect(count).toBe(1)
+  // disconnect is a backwards-compatible alias of destroy
+  expect(handle.disconnect).toBe(handle.destroy)
+
+  handle.destroy()
+  document.querySelector('.btn').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  expect(count).toBe(1)
+})
+
+test('delegateEvent returns the MutationObserver with destroy for non-bubbling events', () => {
+  document.body.innerHTML = '<input class="inp">'
+  let count = 0
+  const observer = delegateEvent('.inp', 'focus', () => count++)
+
+  document.querySelector('.inp').dispatchEvent(new FocusEvent('focus'))
+  expect(count).toBe(1)
+  // old API preserved: the observer instance itself is returned
+  expect(observer).toBeInstanceOf(MutationObserver)
+
+  observer.destroy()
+  document.querySelector('.inp').dispatchEvent(new FocusEvent('focus'))
+  expect(count).toBe(1)
+})
+
+test('isVisible forwards checkOpacity to native checkVisibility', () => {
+  const el = document.createElement('div')
+  const calls = []
+  el.checkVisibility = (opts) => { calls.push(opts); return true }
+
+  expect(isVisible(el)).toBe(true)
+  expect(calls[0]).toEqual({ visibilityProperty: true, opacityProperty: true })
+
+  isVisible(el, false)
+  expect(calls[1]).toEqual({ visibilityProperty: true, opacityProperty: false })
 })
