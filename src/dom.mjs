@@ -831,6 +831,8 @@ export const onSwipe = swipe
  * @param {boolean} [opts.bounce=false] Whether to enable bounce when inertia is enabled
  * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
  * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
+ * @param {number} [opts.velocityWindow=80] Time window (ms) over which flick velocity is measured
+ * @param {number} [opts.maxVelocity=2] Cap on flick velocity magnitude (px/ms) to stop overshoot
  * @param {boolean} [opts.preventDefaultTouch=true] Whether to prevent the default touch behavior
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
  * @returns {object | null} The destroy method to remove the event listeners
@@ -867,12 +869,16 @@ export function drag(element, opts) {
   let dragging = false
   let rect = null
   let inertiaId = null
+  let inertiaTime = 0
+  let samples = []
 
   const options = {
     inertia: false,
     bounce: false,
     friction: 0.9,
     bounceFactor: 0.2,
+    velocityWindow: 80,
+    maxVelocity: 2,
     callback: null,
     preventDefaultTouch: true
   }
@@ -885,6 +891,28 @@ export function drag(element, opts) {
 
   options.friction = Math.abs(options.friction)
   options.bounceFactor = Math.abs(options.bounceFactor)
+  options.maxVelocity = Math.abs(options.maxVelocity)
+
+  const now = function() {
+    return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
+  }
+  const cap = function(v) {
+    if (v > options.maxVelocity) return options.maxVelocity
+    if (v < -options.maxVelocity) return -options.maxVelocity
+    return v
+  }
+  const sampleVelocity = function() {
+    if (samples.length < 2) return { vx: 0, vy: 0 }
+    const last = samples[samples.length - 1]
+    let start = samples[0]
+    for (let i = samples.length - 1; i >= 0; i--) {
+      start = samples[i]
+      if (last.t - samples[i].t >= options.velocityWindow) break
+    }
+    const dt = last.t - start.t
+    if (dt <= 0) return { vx: 0, vy: 0 }
+    return { vx: cap((last.x - start.x) / dt), vy: cap((last.y - start.y) / dt) }
+  }
 
   element.setAttribute('drag-enabled', 'true')
   element.setAttribute('dragging', 'false')
