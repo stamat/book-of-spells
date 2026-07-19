@@ -931,6 +931,7 @@ export function drag(element, opts) {
   rect = calcPageRelativeRect()
 
   const handleStart = function(e) {
+    samples = []
     setXY(e)
     dragging = true
     rect = calcPageRelativeRect()
@@ -949,8 +950,9 @@ export function drag(element, opts) {
   const handleMove = function(e) {
     if (!dragging) return
     setXY(e)
-    velocityX = x - prevX
-    velocityY = y - prevY
+    const v = sampleVelocity()
+    velocityX = v.vx
+    velocityY = v.vy
     const detail = getDetail()
     if (options.callback) options.callback(detail)
     const event = new CustomEvent('drag', { detail: detail })
@@ -963,6 +965,10 @@ export function drag(element, opts) {
     element.setAttribute('dragging', 'false')
     document.removeEventListener('mousemove', handleMove)
     document.removeEventListener('mouseup', handleEnd)
+    const v = sampleVelocity()
+    velocityX = v.vx
+    velocityY = v.vy
+    inertiaTime = now()
     if (options.inertia) inertiaId = requestAnimationFrame(inertia)
     const event = new CustomEvent('dragend', { detail: getDetail() })
     element.dispatchEvent(event)
@@ -975,6 +981,8 @@ export function drag(element, opts) {
     prevY = y
     x = carrier.pageX
     y = carrier.pageY
+    samples.push({ t: now(), x: x, y: y })
+    if (samples.length > 12) samples.shift()
   }
 
   const getDetail = function() {
