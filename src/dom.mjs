@@ -1014,10 +1014,14 @@ export function drag(element, opts) {
   }
 
   const inertia = function() {
-    x += velocityX
-    y += velocityY
-    velocityX *= options.friction
-    velocityY *= options.friction
+    const t = now()
+    const dt = t - inertiaTime
+    inertiaTime = t
+    x += velocityX * dt
+    y += velocityY * dt
+    const decay = Math.pow(options.friction, dt / 16.6667)
+    velocityX *= decay
+    velocityY *= decay
 
     if (options.bounce) {
       if (x < rect.left) {
@@ -1038,8 +1042,8 @@ export function drag(element, opts) {
       }
     }
 
-    if (Math.abs(velocityX) < 0.1) velocityX = 0
-    if (Math.abs(velocityY) < 0.1) velocityY = 0
+    if (Math.abs(velocityX) < 0.01) velocityX = 0
+    if (Math.abs(velocityY) < 0.01) velocityY = 0
 
     const detail = getDetail()
 
