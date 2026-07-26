@@ -420,6 +420,8 @@ export declare const onSwipe: typeof swipe;
  * @param {boolean} [opts.bounce=false] Whether to enable bounce when inertia is enabled
  * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
  * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
+ * @param {number} [opts.velocityWindow=80] Time window (ms) over which flick velocity is measured
+ * @param {number} [opts.maxVelocity=2] Cap on flick velocity magnitude (px/ms) to stop overshoot
  * @param {boolean} [opts.preventDefaultTouch=true] Whether to prevent the default touch behavior
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
  * @returns {object | null} The destroy method to remove the event listeners
