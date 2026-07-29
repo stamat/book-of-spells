@@ -148,6 +148,45 @@ export declare function cssTimeToMilliseconds(duration: string): number;
  */
 export declare function getTransitionDurations(element: HTMLElement): object;
 /**
+ * Read a set of typed options off an element's attributes.
+ *
+ * Accepts the bare, kebab-case and `data-*` spellings of each option, with `data-*`
+ * winning when both are present, so a widget can be configured whichever way the
+ * markup author reaches for. Only the options actually present come back - absent
+ * ones are left out rather than defaulted, so the result merges cleanly over
+ * whatever defaults the caller holds.
+ *
+ * Booleans follow HTML, not JavaScript: a bare attribute parses as an empty string
+ * and means "on", and only `false` and `0` mean off. Numbers that do not parse are
+ * dropped rather than coming back as NaN.
+ *
+ * @param {HTMLElement} element The element to read the attributes from
+ * @param {object<string, 'boolean'|'number'|'string'>} schema A map of camelCase option names to types
+ * @returns {object} The options present on the element, typed
+ * @example
+ * // <div data-page-step="25" exclusive label="FAQ">
+ * readOptions(element, { pageStep: 'number', exclusive: 'boolean', label: 'string', muted: 'boolean' })
+ * // => { pageStep: 25, exclusive: true, label: 'FAQ' }
+ */
+export declare function readOptions(element: HTMLElement, schema: object): object;
+/**
+ * Returns the duration a single property will actually transition with, in milliseconds.
+ *
+ * Unlike reading getTransitionDurations() by key, this resolves the `all` keyword: a
+ * `transition: all 1s` animates height too, it just isn't listed under that name. An
+ * untransitioned property reads as 0, which is also what `transition: none` gives you -
+ * so a reduced motion media query switching the transition off reads as "no animation".
+ *
+ * @param {HTMLElement} element The element to get the transition duration from
+ * @param {string} [property='all'] The CSS property to get the duration for
+ * @returns {number} The duration in milliseconds, 0 if the property is not transitioned
+ * @example
+ * getTransitionDuration(element, 'height') // 1000 if transition in CSS is set to 'height 1s'
+ * getTransitionDuration(element, 'height') // 300 if transition in CSS is set to 'all 0.3s'
+ * getTransitionDuration(element, 'height') // 0 if transition in CSS is set to 'opacity 1s'
+ */
+export declare function getTransitionDuration(element: HTMLElement, property?: string): number;
+/**
  * Check a list of elements if any of them matches a selector
  *
  * @param {Array<HTMLElement>|NodeList|HTMLElement} elements The elements to check

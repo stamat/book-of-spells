@@ -19,7 +19,8 @@ import {
   isEmptyElement,
   getTableData,
   delegateEvent,
-  isVisible
+  isVisible,
+  readOptions
 } from '../dom.mjs'
 
 document.body.innerHTML = `
@@ -381,4 +382,45 @@ test('isVisible forwards checkOpacity to native checkVisibility', () => {
 
   isVisible(el, false)
   expect(calls[1]).toEqual({ visibilityProperty: true, opacityProperty: false })
+})
+
+describe('readOptions', () => {
+  const el = (attrs) => {
+    const div = document.createElement('div')
+    for (const name in attrs) div.setAttribute(name, attrs[name])
+    return div
+  }
+
+  test('parses booleans, numbers and strings from attributes', () => {
+    const div = el({ exclusive: '', 'page-step': '25', label: 'FAQ', muted: 'false' })
+    expect(readOptions(div, { exclusive: 'boolean', muted: 'boolean', pageStep: 'number', label: 'string' }))
+      .toEqual({ exclusive: true, muted: false, pageStep: 25, label: 'FAQ' })
+  })
+
+  test('reads HTML boolean semantics, where a bare attribute means on', () => {
+    expect(readOptions(el({ open: '' }), { open: 'boolean' })).toEqual({ open: true })
+    expect(readOptions(el({ open: '0' }), { open: 'boolean' })).toEqual({ open: false })
+    expect(readOptions(el({ open: 'false' }), { open: 'boolean' })).toEqual({ open: false })
+    expect(readOptions(el({ open: 'anything' }), { open: 'boolean' })).toEqual({ open: true })
+  })
+
+  test('omits absent options instead of defaulting them', () => {
+    expect(readOptions(el({}), { exclusive: 'boolean' })).toEqual({})
+  })
+
+  test('prefers data-* over the bare attribute', () => {
+    expect(readOptions(el({ 'data-exclusive': 'false', exclusive: '' }), { exclusive: 'boolean' }))
+      .toEqual({ exclusive: false })
+  })
+
+  test('drops unparsable numbers rather than returning NaN', () => {
+    expect(readOptions(el({ 'page-step': 'nope' }), { pageStep: 'number' })).toEqual({})
+    expect(readOptions(el({ 'page-step': '25nope' }), { pageStep: 'number' })).toEqual({})
+    expect(readOptions(el({ 'page-step': '1.5' }), { pageStep: 'number' })).toEqual({ pageStep: 1.5 })
+  })
+
+  test('is a no-op without an element or a schema', () => {
+    expect(readOptions(null, { a: 'string' })).toEqual({})
+    expect(readOptions(el({}), null)).toEqual({})
+  })
 })

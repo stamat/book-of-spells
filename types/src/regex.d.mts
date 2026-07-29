@@ -10,7 +10,7 @@ export declare const RE_YOUTUBE: RegExp;
  */
 export declare const RE_VIMEO: RegExp;
 /**
- * Regular expression for matching a video URLs
+ * Regular expression for matching a video URLs, tolerates a trailing query string or hash
  */
 export declare const RE_VIDEO: RegExp;
 /**

@@ -10,6 +10,36 @@
  * the CSS transitions regarding these two cases.
  */
 /**
+ * Slides an element's height to or from its content height, without touching `display`.
+ *
+ * The counterpart to slideUp()/slideDown() for elements whose visibility something else
+ * already owns - a `<details>` panel, a popover, a dialog. Those hide their own contents,
+ * so a slide that also sets `display` fights them: on `<details>` in particular a leftover
+ * inline `display: none` survives the close and then hides the panel body even after the
+ * browser reopens it for find-in-page.
+ *
+ * The starting height is yours to pass, which is what makes an interrupted slide
+ * recoverable: hand it the element's current height and it picks up from where the last
+ * one stopped instead of jumping. Reduced motion, or no height transition in the CSS,
+ * finishes immediately and still calls back.
+ *
+ * The caller is responsible for the element being rendered before the call - an
+ * unrendered box has no height to measure and the slide has nothing to animate.
+ *
+ * @param {HTMLElement} element
+ * @param {number} from The height in pixels to start from, usually 0 or the current height
+ * @param {boolean} open True to slide to the content height, false to slide to 0
+ * @param {Function} [callback] Called when the slide ends, with the element
+ * @example
+ * // open, from collapsed
+ * details.open = true
+ * slide(content, 0, true)
+ *
+ * // close, and only actually close once the slide is done
+ * slide(content, content.offsetHeight, false, () => { details.open = false })
+ */
+export declare function slide(element: HTMLElement, from: number, open: boolean, callback?: Function): void;
+/**
  * Slides up an element. The element must have a CSS transition set for the height property.
  * The transition duration is used to determine how long the slide up animation will take.
  * Substitutes for jQuery's slideUp() function.

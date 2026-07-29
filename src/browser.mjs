@@ -96,6 +96,31 @@ export function mediaMatcher(query, callback) {
 }
 
 /**
+ * Checks whether the user has asked the system to minimize non-essential motion.
+ *
+ * Animations should be skipped or reduced when this is true - it is an accessibility
+ * setting, not a preference, and for some users motion causes nausea or worse.
+ * Returns false where `matchMedia` does not exist, so it is safe to call outside a
+ * browser: no preference expressed, no motion suppressed.
+ *
+ * @param {function} [callback] The callback function to call when the preference changes
+ * @returns {boolean} True if the user prefers reduced motion
+ *
+ * @example
+ * if (prefersReducedMotion()) duration = 0
+ *
+ * // Or, to react to the user changing it while the page is open
+ *
+ * prefersReducedMotion((reduced) => {
+ *  document.body.classList.toggle('is-still', reduced)
+ * })
+ */
+export function prefersReducedMotion(callback) {
+  if (typeof matchMedia !== 'function') return false
+  return mediaMatcher('(prefers-reduced-motion: reduce)', callback)
+}
+
+/**
  * Get the scrollbar width
  * 
  * When preventing scroll with html overflow hidden the scroll bar will disappear and the whole page will shift (if the scroll bar is visible that is).

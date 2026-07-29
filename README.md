@@ -30,9 +30,15 @@ After 14+ years of JavaScript and copy-pasting my own undocumented code, I've de
 
 It's not only laziness, if you think about it. It is this omnipresent fear of change, of the unknown, of the new. But change is good. Being unconformable is good. It means you're growing. It means you're learning. It means you're alive.
 
+## Changelog
+
+Every release is written up in [CHANGELOG.md](CHANGELOG.md), newest first.
+
 ## Contributing
 
 If you have a function or a snippet that you think is useful, please open a PR. I'd love to see what you've got.
+
+Add a line under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) while you're there — under _Added_, _Changed_ or _Fixed_, written for whoever upgrades into it.
 
 ----
 
