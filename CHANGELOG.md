@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-07-31
+
 ### Added
 
 - **`watchInputIntent(doc)`** and **`isKeyboardIntent()`** in `dom` — is the person driving
