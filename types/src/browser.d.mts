@@ -128,6 +128,22 @@ export declare function getQueryProperties(entryQuery?: string): object;
  */
 export declare function getHashProperties(entryHash?: string): object;
 /**
+ * The id a `#fragment` names - out of an `href` or out of `location.hash`, both of
+ * which arrive with the `#` still on.
+ *
+ * Decoded, because `id="café"` is reached by `href="#caf%C3%A9"` and the two have to
+ * meet somewhere. Taken as written when decoding fails: a stray `%` in a fragment is a
+ * typo, and a typo in one link is not a reason for the caller to stop working.
+ *
+ * @param {string} hash The fragment, with or without the leading `#`
+ * @returns {string} The decoded id, `''` for an empty fragment
+ * @example
+ * decodeFragment('#caf%C3%A9') // => 'café'
+ * decodeFragment(window.location.hash) // => the id the url points at
+ * decodeFragment('#100%') // => '100%', kept as written
+ */
+export declare function decodeFragment(hash: string): string;
+/**
  * Add a callback function to the hash change event
  *
  * @param {function} callback - The callback function to call when the hash changes

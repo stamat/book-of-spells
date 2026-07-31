@@ -1,5 +1,5 @@
 import userAgents from './data/user-agents.json' with { type: 'json' }
-import { isUserAgentIOS, isUserAgentSafari, isUserAgentMobile, getQueryProperties, getHashProperties, disableScroll, enableScroll } from '../browser.mjs'
+import { isUserAgentIOS, isUserAgentSafari, isUserAgentMobile, getQueryProperties, getHashProperties, decodeFragment, disableScroll, enableScroll } from '../browser.mjs'
 import { mapPropertyToProperty } from '../helpers.mjs'
 
 const userAgentMap = mapPropertyToProperty(userAgents, 'device', 'userAgent')
@@ -53,4 +53,13 @@ test('disableScroll / enableScroll', () => {
 
   enableScroll()
   expect(document.body.style.overflow).toBe('')
+})
+
+test('decodeFragment', () => {
+  expect(decodeFragment('#section-2')).toBe('section-2')
+  expect(decodeFragment('section-2')).toBe('section-2') // leading # optional
+  expect(decodeFragment('#caf%C3%A9')).toBe('café')
+  expect(decodeFragment('#100%')).toBe('100%') // a bad escape is kept as written
+  expect(decodeFragment('#')).toBe('')
+  expect(decodeFragment('')).toBe('')
 })

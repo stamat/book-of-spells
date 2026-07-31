@@ -46,6 +46,68 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   This supersedes [focus-outline](https://github.com/stamat/focus-outline), whose other half
   — hiding the outline on click — is `:focus-visible` now.
 
+- **`elements` module**, exported from the package root like the rest. The parts of a custom
+  element that are arithmetic rather than DOM: where a key moves focus, and where a panel
+  fits. They take numbers and strings and give back an index or a placement — no element is
+  touched, nothing is measured — so a menu, a tablist and an accordion can share one keyboard
+  implementation, and all of it is testable without a browser.
+
+  - **`nextIndex(current, key, length)`** — the key map every wrapping list of widgets uses:
+    Down/Up step and wrap, Home/End go to the ends, anything else is `null` so the caller
+    knows to leave the event alone. Nothing focused (`-1`) plus Up lands on the last item,
+    which is where a menu button opened with Up is meant to go.
+
+  - **`stepIndex(current, key, length)`** — the same map for a list with ends, where running
+    off one is how you get back to the rest of the page. Answers to both axes, so a toolbar
+    and a vertical stack share it, and returns `null` at the ends instead of wrapping.
+
+  - **`typeAheadIndex(labels, current, buffer)`** — where a type-ahead lands. Two rules that
+    look like edge cases and are not: a repeated letter cycles the items starting with it,
+    because `aaa` is someone pressing `a` three times looking for the next "Archive"; and a
+    one-character search starts *after* the focused item while a longer buffer starts *at* it,
+    so pressing a letter again moves on but typing more narrows onto where the reader already
+    is.
+
+  - **`placeFlyout(trigger, panel, viewport, rtl)`** and
+    **`placeSubmenu(item, panel, viewport, rtl)`** — which side a floating panel opens to, one
+    decision per axis, returned as logical `side`/`align` strings for the CSS to place. The
+    preferred placement wins ties and wins when neither side fits, so a panel with nowhere
+    good to go still lands where the reader expects. `rtl` picks which physical edge counts as
+    the inline start.
+
+    ```javascript
+    const viewport = { width: window.innerWidth, height: window.innerHeight }
+    placeFlyout(button.getBoundingClientRect(), { width: 200, height: 300 }, viewport, false)
+    // => { side: 'block-end', align: 'start' } with room below
+    // => { side: 'block-start', align: 'end' } near the bottom right corner
+    ```
+
+  - **`fits(at, size, limit)`** — whether a box of `size` starting at `at` is inside `limit`,
+    checking both ends, since a panel running off the top is as unreachable as one running off
+    the bottom. What the two placement functions are built out of, exported because a third
+    placement is always coming.
+
+  - **`define(tag, ctor)`** and **`ElementBase`** — register a custom element in the browser
+    only, and only once, so a module is safe to import twice or under Node; and extend
+    `HTMLElement` where there is one, a plain class where there is not, so a custom element
+    module still imports under test.
+
+- **`decodeFragment(hash)`** in `browser` — the id a `#fragment` names, out of an `href` or out
+  of `location.hash`, both of which arrive with the `#` still attached.
+
+  ```javascript
+  decodeFragment('#caf%C3%A9') // => 'café'
+  decodeFragment('#100%') //      => '100%', kept as written
+  ```
+
+  Decoded, because `id="café"` is reached by `href="#caf%C3%A9"` and the two have to meet
+  somewhere. A fragment that will not decode is taken as written rather than thrown over: a
+  stray `%` is a typo in one link, not a reason for the caller to stop working.
+
+### Notes
+
+- `elements` arrives with 28 tests, plus one for `decodeFragment`: 195 passing.
+
 ## [1.4.0] - 2026-07-29
 
 Four additions, pulled out of building the animated accordion in

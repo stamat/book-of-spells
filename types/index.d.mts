@@ -6,3 +6,4 @@ export * from './src/animations.mjs';
 export * from './src/cookies.mjs';
 export * from './src/regex.mjs';
 export * from './src/localstorage.mjs';
+export * from './src/elements.mjs';
