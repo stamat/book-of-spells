@@ -2,7 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -10,6 +11,10 @@ permissions:
 
 jobs:
   test:
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
     runs-on: ubuntu-latest
 
     steps:
@@ -19,11 +24,26 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: ${{ matrix.node-version }}
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
+      - name: Test
         run: npm test
+
+      # The JSDoc is the documentation site and the type declarations both, so
+      # a comment that no longer compiles is a broken release, not a typo.
+      - name: Build docs and types
+        run: script/build
+
+      # types/ is committed and shipped: if regenerating it produced a diff,
+      # the change came without it.
+      - name: Verify types are up to date
+        shell: bash
+        run: |
+          git diff --exit-code -- types || {
+            echo "types/ does not match src/ — run script/types and commit the result" >&2
+            exit 1
+          }

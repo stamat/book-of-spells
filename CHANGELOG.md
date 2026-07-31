@@ -6,8 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 **How to use it:** land changes under `## [Unreleased]`, grouped under _Added_, _Changed_,
-_Deprecated_, _Removed_, _Fixed_ or _Security_. Releasing means renaming that heading to the
-version and date, running `npm version`, and starting a fresh `[Unreleased]`. Write entries
+_Deprecated_, _Removed_, _Fixed_ or _Security_. Releasing is `script/publish`: it runs
+`script/changelog`, which renames that heading to the version and date, starts a fresh
+`[Unreleased]`, and hands the entry to the GitHub release as its body. Write entries
 for the person upgrading, not for the person who wrote the code — say what changed and why it
 matters, and link the function so they can find it.
 
