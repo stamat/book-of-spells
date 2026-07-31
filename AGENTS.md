@@ -31,7 +31,7 @@ The docs are the JSDoc, and nothing else. `npm run docs` runs
 over the same comments to emit `types/`.
 
 That makes the comment above a function load-bearing twice over: it is the
-documentation site *and* the type declaration a consumer's editor reads.
+documentation site _and_ the type declaration a consumer's editor reads.
 
 - **Every exported function has a JSDoc block** with `@param`, `@returns` and
   at least one `@example` that runs. An undocumented export is an export nobody
@@ -80,7 +80,7 @@ Run this checklist before writing any code; stop at the first "no".
    module before writing a second one.
 3. **Search for prior art.** How do lodash, or the platform's own proposals,
    name and shape it? Cite what you found — a URL per fact, no guesses. Can we
-   do it more simply?
+   do it more simply? Does it benefit this library?
 4. **Is it general?** A helper written for one project's shape of data belongs
    in that project.
 5. **Still yes?** Build the smallest version that works, in the module where it
