@@ -20,7 +20,9 @@ import {
   getTableData,
   delegateEvent,
   isVisible,
-  readOptions
+  readOptions,
+  watchInputIntent,
+  isKeyboardIntent
 } from '../dom.mjs'
 
 document.body.innerHTML = `
@@ -422,5 +424,43 @@ describe('readOptions', () => {
   test('is a no-op without an element or a schema', () => {
     expect(readOptions(null, { a: 'string' })).toEqual({})
     expect(readOptions(el({}), null)).toEqual({})
+  })
+})
+
+// The part `:focus-visible` cannot cover: a contenteditable matches that pseudo-class on a
+// mouse click too, so anything deciding whether the person is on a keyboard has to watch
+// the input itself.
+describe('watchInputIntent / isKeyboardIntent', () => {
+  const press = (type, target = document) =>
+    target.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))
+
+  test('is pointer until proven otherwise, so focus on load is not mistaken for a Tab', () => {
+    expect(isKeyboardIntent()).toBe(false)
+  })
+
+  test('a keypress means keyboard, a pointer means pointer', () => {
+    watchInputIntent()
+    press('keydown')
+    expect(isKeyboardIntent()).toBe(true)
+    press('pointerdown')
+    expect(isKeyboardIntent()).toBe(false)
+  })
+
+  test('survives a handler that stops propagation, which is why it captures', () => {
+    watchInputIntent()
+    press('keydown')
+    const swallow = (event) => event.stopPropagation()
+    document.body.addEventListener('pointerdown', swallow)
+    press('pointerdown', document.body)
+    document.body.removeEventListener('pointerdown', swallow)
+    expect(isKeyboardIntent()).toBe(false)
+  })
+
+  test('watches a document once, however many components ask', () => {
+    watchInputIntent()
+    const spy = jest.spyOn(document, 'addEventListener')
+    watchInputIntent()
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
   })
 })

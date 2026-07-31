@@ -15,6 +15,37 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Added
+
+- **`watchInputIntent(doc)`** and **`isKeyboardIntent()`** in `dom` — is the person driving
+  the page with a keyboard or with a pointer. Pulled out of
+  [code-preview-element](https://github.com/stamat/code-preview-element), where an editable
+  code block shows a `Press Esc, then Tab, to leave the editor` hint that is advice for
+  someone who tabbed in and noise for someone who clicked in and can click back out.
+
+  `:focus-visible` does not answer this. It matches a text input or a `contenteditable` on a
+  mouse click too, because a browser assumes anything taking text input wants its focus ring
+  — right for a ring, wrong for deciding whether to show a hint or move focus somewhere a
+  mouse user never asked to go.
+
+  ```javascript
+  watchInputIntent(); // once, early — before any focus you mean to judge
+
+  element.addEventListener('focusin', () => {
+    element.classList.toggle('is-key-focus', isKeyboardIntent());
+  });
+  ```
+
+  Listeners are attached in capture, so a `pointerdown` handler that calls
+  `stopPropagation` — drag implementations do, routinely — cannot hide the switch to
+  pointer. `pointerdown` rather than `mousedown`, so a pen and a touch count without waiting
+  on emulated mouse events. Pointer until proven otherwise, so focus arriving on load is not
+  mistaken for a Tab. A document is watched once however many components ask, and takes a
+  `doc` argument for watching inside an iframe.
+
+  This supersedes [focus-outline](https://github.com/stamat/focus-outline), whose other half
+  — hiding the outline on click — is `:focus-visible` now.
+
 ## [1.4.0] - 2026-07-29
 
 Four additions, pulled out of building the animated accordion in

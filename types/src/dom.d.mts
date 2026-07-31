@@ -551,3 +551,51 @@ export declare function getVerticalScrollState(element: HTMLElement, threshold?:
  * console.log(scrollState.atEnd) // => true or false
  */
 export declare function getHorizontalScrollState(element: HTMLElement, threshold?: number): object;
+/**
+ * Starts tracking whether the person is driving the page with a keyboard or with a
+ * pointer, so `isKeyboardIntent` can be asked later.
+ *
+ * This is the part `:focus-visible` cannot give you. That pseudo-class matches a text
+ * input or a `contenteditable` even when it was clicked into, because a browser assumes
+ * anything taking text input wants its focus ring — right for a ring, wrong for deciding
+ * whether to show a keyboard hint or move focus somewhere a mouse user did not ask for.
+ *
+ * Listeners go on in capture, because a `pointerdown` handler somewhere in the page that
+ * calls `stopPropagation` (drag implementations do, routinely) would otherwise hide the
+ * switch to pointer. `pointerdown` rather than `mousedown` so a pen and a touch count
+ * without waiting for emulated mouse events.
+ *
+ * Call it once, early — before any focus you intend to judge, since the keypress that
+ * moves focus lands on whatever had focus *before* the element you are asking about. It
+ * is safe to call from every component that needs it: the document is only watched once.
+ * There is no unwatch; two capture listeners for the life of the page is the whole cost.
+ *
+ * @see {@link isKeyboardIntent}
+ * @param {Document} [doc=document] The document to watch — pass an iframe's own document to watch inside it
+ * @returns {void}
+ * @example
+ * watchInputIntent()
+ *
+ * element.addEventListener('focusin', () => {
+ *   element.classList.toggle('is-key-focus', isKeyboardIntent())
+ * })
+ */
+export declare function watchInputIntent(doc?: Document): void;
+/**
+ * Whether the last input the page saw was a key rather than a pointer.
+ *
+ * Pointer until proven otherwise: before anyone has touched anything this is `false`, so
+ * focus that arrives on load — an `autofocus`, a restored scroll position — is not
+ * mistaken for someone tabbing. Requires {@link watchInputIntent} to have been called;
+ * without it this is always `false`.
+ *
+ * @see {@link watchInputIntent}
+ * @returns {boolean} `true` if the last input was a keypress
+ * @example
+ * watchInputIntent()
+ * // after the person presses Tab
+ * isKeyboardIntent() // => true
+ * // after the person clicks
+ * isKeyboardIntent() // => false
+ */
+export declare function isKeyboardIntent(): boolean;
