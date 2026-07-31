@@ -96,7 +96,7 @@ export function isEmptyObject(o) {
 /**
  * Check if an array is empty, substitute for Array.length === 0
  * 
- * @param {array} o The array to check
+ * @param {Array} o The array to check
  * @returns boolean True if the array is empty, false otherwise
  * @example
  * isEmptyArray([]) // => true
@@ -376,7 +376,7 @@ export function transformCamelCaseToDash(str) {
 /**
  * Maps an array of objects by a property name
  * 
- * @param {array} arr
+ * @param {Array} arr
  * @param {string} propertyName
  * @returns object
  * @example
@@ -394,7 +394,7 @@ export function mapByProperty(arr, propertyName) {
 /**
  * Maps an array of objects by a property name to another property name
  * 
- * @param {array} arr
+ * @param {Array} arr
  * @param {string} keyPropertyName
  * @param {string} valuePropertyName
  * @returns object
@@ -508,7 +508,7 @@ export function hasOwnProperties(obj, properties) {
  * Finds the closest number to the set goal in an array to a given number
  * 
  * @param {number} goal Number to search for
- * @param {array} arr Array of numbers to search in
+ * @param {Array} arr Array of numbers to search in
  * @returns number
  * @example
  * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9]) // => 9
@@ -607,7 +607,7 @@ export function percentage(num, total) {
  * Pick properties from an object, returning a new object with only the picked properties
  *
  * @param {object} obj The object to pick properties from
- * @param {array|string} props Properties to pick, can be an array of strings or a single string
+ * @param {Array|string} props Properties to pick, can be an array of strings or a single string
  * @returns object A new object with only the picked properties
  * @example
  * pickProperties({ foo: 'bar', baz: 'qux' }, 'foo') // => { foo: 'bar' }
@@ -627,7 +627,7 @@ export function pickProperties(obj, props) {
  * Remove properties from an object
  *
  * @param {object} obj The object to remove properties from
- * @param {array|string} props Properties to remove, can be an array of strings or a single string
+ * @param {Array|string} props Properties to remove, can be an array of strings or a single string
  * @param {boolean} clone Defaults to true, will clone the object before removing properties
  * @returns object The object without the removed properties
  * @example
@@ -647,8 +647,8 @@ export function rejectProperties(obj, props, clone = true) {
 /**
  * Pick elements from an array by index, returning a new array of the picked elements
  *
- * @param {array} arr The array to pick elements from
- * @param {array|number} indexes Indexes to pick, can be an array of numbers or a single number
+ * @param {Array} arr The array to pick elements from
+ * @param {Array|number} indexes Indexes to pick, can be an array of numbers or a single number
  * @returns array | undefined A new array of the picked elements, or undefined if arr is not an array
  * @example
  * pickArrayElements(['foo', 'bar', 'baz'], 0) // => ['foo']
@@ -667,8 +667,8 @@ export function pickArrayElements(arr, indexes) {
 /**
  * Remove elements from an array by index. Indexes may be passed in any order and are deduplicated.
  *
- * @param {array} arr The array to remove elements from
- * @param {array|number} indexes Indexes to remove, can be an array of numbers or a single number
+ * @param {Array} arr The array to remove elements from
+ * @param {Array|number} indexes Indexes to remove, can be an array of numbers or a single number
  * @param {boolean} clone Defaults to true, will clone the array before removing elements
  * @returns array | undefined The array without the removed elements, or undefined if arr is not an array
  * @example
@@ -689,8 +689,8 @@ export function rejectArrayElements(arr, indexes, clone = true) {
 /**
  * Pick properties from an object or elements from an array
  * 
- * @param {array} obj Object or array to pick properties or elements from
- * @param {array | string | number} props Properties to remove, can be an array of strings or a single string or number
+ * @param {Array} obj Object or array to pick properties or elements from
+ * @param {Array | string | number} props Properties to remove, can be an array of strings or a single string or number
  * @returns object | array | undefined
  * @example
  * 
@@ -716,8 +716,8 @@ export function pick(obj, props) {
 /**
  * Remove properties from an object or elements from an array
  * 
- * @param {array} obj Object or array to remove properties or elements from
- * @param {array | string | number} props Properties to remove, can be an array of strings or a single string or number
+ * @param {Array} obj Object or array to remove properties or elements from
+ * @param {Array | string | number} props Properties to remove, can be an array of strings or a single string or number
  * @param {boolean} clone Defaults to true, will clone the object or array before removing properties or elements.
  * @returns object | array | undefined
  * @example
@@ -811,7 +811,7 @@ export function random() {
  * Access nested object properties using a path
  * 
  * @param {object} obj The object to access
- * @param {array|string} path The path to access
+ * @param {Array|string} path The path to access
  * @returns {*} The value of the accessed property
  * 
  * @example

@@ -53,13 +53,13 @@ export declare function isEmptyObject(o: object): boolean;
 /**
  * Check if an array is empty, substitute for Array.length === 0
  *
- * @param {array} o The array to check
+ * @param {Array} o The array to check
  * @returns boolean True if the array is empty, false otherwise
  * @example
  * isEmptyArray([]) // => true
  * isEmptyArray([1, 2, 3]) // => false
  */
-export declare function isEmptyArray(o: array): boolean;
+export declare function isEmptyArray(o: any[]): boolean;
 /**
  * Check if a variable is empty
  *
@@ -257,18 +257,18 @@ export declare function transformCamelCaseToDash(str: string): string;
 /**
  * Maps an array of objects by a property name
  *
- * @param {array} arr
+ * @param {Array} arr
  * @param {string} propertyName
  * @returns object
  * @example
  * const arr = [{ foo: 'bar' }, { foo: 'baz' }]
  * mapByProperty(arr, 'foo') // => { bar: { foo: 'bar' }, baz: { foo: 'baz' } }
  */
-export declare function mapByProperty(arr: array, propertyName: string): {};
+export declare function mapByProperty(arr: any[], propertyName: string): {};
 /**
  * Maps an array of objects by a property name to another property name
  *
- * @param {array} arr
+ * @param {Array} arr
  * @param {string} keyPropertyName
  * @param {string} valuePropertyName
  * @returns object
@@ -276,7 +276,7 @@ export declare function mapByProperty(arr: array, propertyName: string): {};
  * const arr = [{ foo: 'bar', baz: 'qux' }, { foo: 'quux', baz: 'corge' }]
  * mapPropertyToProperty(arr, 'foo', 'baz') // => { bar: 'qux', quux: 'corge' }
  */
-export declare function mapPropertyToProperty(arr: array, keyPropertyName: string, valuePropertyName: string): {};
+export declare function mapPropertyToProperty(arr: any[], keyPropertyName: string, valuePropertyName: string): {};
 /**
  * Remove accents from a string
  *
@@ -347,7 +347,7 @@ export declare function hasOwnProperties(obj: object, properties: string | array
  * Finds the closest number to the set goal in an array to a given number
  *
  * @param {number} goal Number to search for
- * @param {array} arr Array of numbers to search in
+ * @param {Array} arr Array of numbers to search in
  * @returns number
  * @example
  * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9]) // => 9
@@ -355,7 +355,7 @@ export declare function hasOwnProperties(obj: object, properties: string | array
  * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 9.5]) // => 9.5
  * closestNumber(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11) // => 10
  */
-export declare function closestNumber(goal: number, arr: array): any;
+export declare function closestNumber(goal: number, arr: any[]): any;
 /**
  * Truncate a string to a given number of words
  *
@@ -415,53 +415,53 @@ export declare function percentage(num: number, total: number): number;
  * Pick properties from an object, returning a new object with only the picked properties
  *
  * @param {object} obj The object to pick properties from
- * @param {array|string} props Properties to pick, can be an array of strings or a single string
+ * @param {Array|string} props Properties to pick, can be an array of strings or a single string
  * @returns object A new object with only the picked properties
  * @example
  * pickProperties({ foo: 'bar', baz: 'qux' }, 'foo') // => { foo: 'bar' }
  * pickProperties({ foo: 'bar', baz: 'qux' }, ['foo', 'baz']) // => { foo: 'bar', baz: 'qux' }
  */
-export declare function pickProperties(obj: object, props: array | string): {};
+export declare function pickProperties(obj: object, props: any[] | string): {};
 /**
  * Remove properties from an object
  *
  * @param {object} obj The object to remove properties from
- * @param {array|string} props Properties to remove, can be an array of strings or a single string
+ * @param {Array|string} props Properties to remove, can be an array of strings or a single string
  * @param {boolean} clone Defaults to true, will clone the object before removing properties
  * @returns object The object without the removed properties
  * @example
  * rejectProperties({ foo: 'bar', baz: 'qux' }, 'foo') // => { baz: 'qux' }
  * rejectProperties({ foo: 'bar', baz: 'qux' }, ['foo', 'baz']) // => {}
  */
-export declare function rejectProperties(obj: object, props: array | string, clone?: boolean): object;
+export declare function rejectProperties(obj: object, props: any[] | string, clone?: boolean): object;
 /**
  * Pick elements from an array by index, returning a new array of the picked elements
  *
- * @param {array} arr The array to pick elements from
- * @param {array|number} indexes Indexes to pick, can be an array of numbers or a single number
+ * @param {Array} arr The array to pick elements from
+ * @param {Array|number} indexes Indexes to pick, can be an array of numbers or a single number
  * @returns array | undefined A new array of the picked elements, or undefined if arr is not an array
  * @example
  * pickArrayElements(['foo', 'bar', 'baz'], 0) // => ['foo']
  * pickArrayElements(['foo', 'bar', 'baz'], [0, 2]) // => ['foo', 'baz']
  */
-export declare function pickArrayElements(arr: array, indexes: array | number): any[] | undefined;
+export declare function pickArrayElements(arr: any[], indexes: any[] | number): any[] | undefined;
 /**
  * Remove elements from an array by index. Indexes may be passed in any order and are deduplicated.
  *
- * @param {array} arr The array to remove elements from
- * @param {array|number} indexes Indexes to remove, can be an array of numbers or a single number
+ * @param {Array} arr The array to remove elements from
+ * @param {Array|number} indexes Indexes to remove, can be an array of numbers or a single number
  * @param {boolean} clone Defaults to true, will clone the array before removing elements
  * @returns array | undefined The array without the removed elements, or undefined if arr is not an array
  * @example
  * rejectArrayElements(['foo', 'bar', 'baz'], 0) // => ['bar', 'baz']
  * rejectArrayElements(['foo', 'bar', 'baz'], [2, 0]) // => ['bar']
  */
-export declare function rejectArrayElements(arr: array, indexes: array | number, clone?: boolean): any;
+export declare function rejectArrayElements(arr: any[], indexes: any[] | number, clone?: boolean): any[] | undefined;
 /**
  * Pick properties from an object or elements from an array
  *
- * @param {array} obj Object or array to pick properties or elements from
- * @param {array | string | number} props Properties to remove, can be an array of strings or a single string or number
+ * @param {Array} obj Object or array to pick properties or elements from
+ * @param {Array | string | number} props Properties to remove, can be an array of strings or a single string or number
  * @returns object | array | undefined
  * @example
  *
@@ -480,12 +480,12 @@ export declare function rejectArrayElements(arr: array, indexes: array | number,
  * pick(['foo', 'bar', 'baz'], [0, 2]) // => ['foo', 'baz']
  * pick(['foo', 'bar', 'baz'], [0, 2, 3]) // => ['foo', 'baz']
  */
-export declare function pick(obj: array, props: array | string | number): {} | undefined;
+export declare function pick(obj: any[], props: any[] | string | number): {} | undefined;
 /**
  * Remove properties from an object or elements from an array
  *
- * @param {array} obj Object or array to remove properties or elements from
- * @param {array | string | number} props Properties to remove, can be an array of strings or a single string or number
+ * @param {Array} obj Object or array to remove properties or elements from
+ * @param {Array | string | number} props Properties to remove, can be an array of strings or a single string or number
  * @param {boolean} clone Defaults to true, will clone the object or array before removing properties or elements.
  * @returns object | array | undefined
  * @example
@@ -505,7 +505,7 @@ export declare function pick(obj: array, props: array | string | number): {} | u
  * reject(['foo', 'bar', 'baz'], [0, 2]) // => ['bar']
  * reject(['foo', 'bar', 'baz'], [0, 2, 3]) // => ['bar']
  */
-export declare function reject(obj: array, props: array | string | number, clone?: boolean): any;
+export declare function reject(obj: any[], props: any[] | string | number, clone?: boolean): object | undefined;
 /**
  * Basic timestamp first UID generator that's good enough for most use cases but not for security purposes.
  * There's an extremely small chance of collision, so create a map object to check for collisions if you're worried about that.
@@ -548,11 +548,11 @@ export declare function random(): number;
  * Access nested object properties using a path
  *
  * @param {object} obj The object to access
- * @param {array|string} path The path to access
+ * @param {Array|string} path The path to access
  * @returns {*} The value of the accessed property
  *
  * @example
  * const obj = { foo: { bar: 'baz' } }
  * getObjectValueByPath(obj, 'foo.bar') // => 'baz'
  */
-export declare function getObjectValueByPath(obj: object, path: array | string): any;
+export declare function getObjectValueByPath(obj: object, path: any[] | string): any;
