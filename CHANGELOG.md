@@ -32,6 +32,11 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   `util.isDeepStrictEqual`; browsers have nothing, which is why it earns a place
   here.
 
+  Host objects that stringify themselves — URL, Error and kin — compare by
+  their string form: an own-property walk would see two empty objects and call
+  any pair of them equal. Cross-realm values (iframe, `node:vm`) compare
+  correctly because dispatch never touches realm-bound constructors.
+
   Probed against the field (fast-deep-equal 3.1.3, dequal 2.0.3, lodash.isequal
   4.5.0, Node 25, 2026-08): the only one of the five passing all fifteen
   correctness probes — the others variously overflow on cycles, silently ignore

@@ -105,6 +105,8 @@ export function clone(o) {
  * | two invalid dates | equal | not equal | not equal | equal | equal |
  * | `NaN` inside a typed array | equal | not equal | not equal | equal | equal |
  * | distinct WeakMaps | never equal | equal | equal | never equal | never equal |
+ * | cross-realm twin (iframe, vm) | equal | not equal — realm-bound constructor check | not equal | equal | not equal |
+ * | URLs / Errors with different content | not equal — compared by toString | not equal | URL yes, Error missed | not equal | not equal |
  * | class instance vs same-shape plain object | equal — data is data | not equal — constructor check | not equal | not equal | not equal |
  *
  * The cost of the guarantees is small: the cycle guard only engages past
@@ -271,6 +273,15 @@ function deepEqualCyclic(a, b, depth, seen) {
         return false
       }
       return true
+    }
+
+    // Host objects that stringify themselves — URL, Error and kin — carry
+    // their data in toString, not in own enumerable properties; the walk
+    // below would call any two of them equal. Exotic tags only: a plain
+    // [object Object] never reaches here, so a class instance with a custom
+    // toString still equals its plain-object twin structurally.
+    if (tag !== '[object Object]' && typeof a.toString === 'function' && a.toString !== objTag) {
+      return a.toString() === b.toString()
     }
   }
 

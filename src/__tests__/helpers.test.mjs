@@ -526,8 +526,10 @@ test('random and generateUUID fall back when crypto lacks methods', () => {
 // symbol keys, and cyclic structures.
 // Deliberately not: prototype identity (data equality ignores class), sparse
 // array holes (read as undefined — JSON has no holes), WeakMap/WeakSet
-// contents (unobservable, so never equal), Error/Promise (no special case —
-// own enumerable properties only).
+// contents (unobservable, so never equal), Promise (no special case — own
+// enumerable properties only). Host objects with a custom toString (URL,
+// Error and kin) compare by that string form instead of their empty own
+// properties.
 
 test('deepEqual: primitives compare by value, never by coercion', () => {
   expect(deepEqual(1, 1)).toBe(true)
@@ -657,4 +659,21 @@ test('deepEqual: weak collections cannot be inspected, so only the same referenc
   expect(deepEqual(w, w)).toBe(true)
   expect(deepEqual(new WeakMap(), new WeakMap())).toBe(false)
   expect(deepEqual(new WeakSet(), new WeakSet())).toBe(false)
+})
+
+test('deepEqual: URLs compare by href, not by their empty own properties', () => {
+  expect(deepEqual(new URL('http://a.com/'), new URL('http://a.com/'))).toBe(true)
+  expect(deepEqual(new URL('http://a.com/'), new URL('http://b.com/'))).toBe(false)
+})
+
+test('deepEqual: errors compare by their message, not by empty own properties', () => {
+  expect(deepEqual(new Error('a'), new Error('a'))).toBe(true)
+  expect(deepEqual(new Error('a'), new Error('b'))).toBe(false)
+})
+
+test('deepEqual: cross-realm objects and arrays equal their local twins', () => {
+  // jsdom offers no second realm here; the guarantee is that dispatch never
+  // relies on realm-bound constructors — Array.isArray and toString tags only.
+  // The cross-realm probe itself runs in the node:vm benchmark harness.
+  expect(deepEqual(Object.create(null, { a: { value: 1, enumerable: true } }), { a: 1 })).toBe(true)
 })
