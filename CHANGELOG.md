@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-08-06
+
 ### Added
 
 - **`deepEqual(a, b)`** in `helpers` — structural equality for data: property order,
