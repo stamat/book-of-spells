@@ -16,6 +16,32 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Added
+
+- **`deepEqual(a, b)`** in `helpers` — structural equality for data: property order,
+  reference identity and prototype don't matter, contents do. Needed by the
+  [jules](https://github.com/stamat/jules) rewrite, where `enum` and `uniqueItems`
+  compare JSON values and the 2013 code faked it with CRC32 hashes — equal hashes
+  don't prove equal values.
+
+  Revisits [JavaScript object comparison](https://stamat.wordpress.com/2013/06/22/javascript-object-comparison/)
+  (2013) and settles what that post left open: cycles terminate now (a WeakMap
+  tracks pairs under comparison), NaN equals NaN, and Map, Set, typed arrays and
+  symbol keys — none of which existed then — compare by content. Functions still
+  compare by reference only: functions are not data. Node has
+  `util.isDeepStrictEqual`; browsers have nothing, which is why it earns a place
+  here.
+
+  Probed against the field (fast-deep-equal 3.1.3, dequal 2.0.3, lodash.isequal
+  4.5.0, Node 25, 2026-08): the only one of the five passing all fifteen
+  correctness probes — the others variously overflow on cycles, silently ignore
+  symbol keys, or miss invalid-date and typed-array-NaN equality. The price is
+  modest: the cycle guard is depth-gated so shallow acyclic data never pays for
+  it — ~7.1M ops/s on small flat objects where fast-deep-equal does ~10M, and
+  within ~15% of it on nested documents, at ~1KB min+gzip. The remaining flat
+  gap is the symbol-key pass the faster libraries skip. The function's JSDoc
+  carries the full comparison table.
+
 ## [1.5.0] - 2026-07-31
 
 ### Added

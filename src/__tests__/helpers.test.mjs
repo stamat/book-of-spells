@@ -38,7 +38,8 @@ import {
   getObjectValueByPath,
   basicUID,
   generateUUID,
-  random
+  random,
+  deepEqual
 } from '../helpers.mjs'
 
 const a = {
@@ -516,4 +517,144 @@ test('random and generateUUID fall back when crypto lacks methods', () => {
   expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
 
   Object.defineProperty(globalThis, 'crypto', descriptor)
+})
+
+// deepEqual — structural (data) equality.
+// Covered: primitives under SameValueZero (NaN equals itself, 0 equals -0),
+// property-order independence, nesting, Date, RegExp, boxed primitives,
+// Map/Set regardless of insertion order, typed arrays and ArrayBuffer,
+// symbol keys, and cyclic structures.
+// Deliberately not: prototype identity (data equality ignores class), sparse
+// array holes (read as undefined — JSON has no holes), WeakMap/WeakSet
+// contents (unobservable, so never equal), Error/Promise (no special case —
+// own enumerable properties only).
+
+test('deepEqual: primitives compare by value, never by coercion', () => {
+  expect(deepEqual(1, 1)).toBe(true)
+  expect(deepEqual(1, '1')).toBe(false)
+  expect(deepEqual('a', 'a')).toBe(true)
+  expect(deepEqual(true, 1)).toBe(false)
+  expect(deepEqual(null, null)).toBe(true)
+  expect(deepEqual(null, undefined)).toBe(false)
+  expect(deepEqual(undefined, undefined)).toBe(true)
+})
+
+test('deepEqual: NaN equals NaN and 0 equals -0 — SameValueZero, not strict equality', () => {
+  expect(deepEqual(NaN, NaN)).toBe(true)
+  expect(deepEqual(0, -0)).toBe(true)
+  expect(deepEqual([NaN], [NaN])).toBe(true)
+})
+
+test('deepEqual: property order does not matter', () => {
+  expect(deepEqual({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true)
+})
+
+test('deepEqual: a missing property and one set to undefined are different objects', () => {
+  expect(deepEqual({ a: undefined }, {})).toBe(false)
+})
+
+test('deepEqual: nested objects and arrays compare all the way down', () => {
+  const x = { a: [1, { b: 'c', d: [2, 3] }], e: { f: null } }
+  const y = { e: { f: null }, a: [1, { d: [2, 3], b: 'c' }] }
+  expect(deepEqual(x, y)).toBe(true)
+  y.a[1].d[1] = 4
+  expect(deepEqual(x, y)).toBe(false)
+})
+
+test('deepEqual: arrays are ordered — same members in a different order are not equal', () => {
+  expect(deepEqual([1, 2], [1, 2])).toBe(true)
+  expect(deepEqual([1, 2], [2, 1])).toBe(false)
+  expect(deepEqual([1, 2], [1, 2, 3])).toBe(false)
+})
+
+test('deepEqual: an array and an object are never equal', () => {
+  expect(deepEqual([], {})).toBe(false)
+})
+
+test('deepEqual: dates compare by instant, and invalid dates equal each other', () => {
+  expect(deepEqual(new Date(5), new Date(5))).toBe(true)
+  expect(deepEqual(new Date(5), new Date(6))).toBe(false)
+  expect(deepEqual(new Date(NaN), new Date(NaN))).toBe(true)
+})
+
+test('deepEqual: regexes compare by source and flags', () => {
+  expect(deepEqual(/a+b/g, /a+b/g)).toBe(true)
+  expect(deepEqual(/a+b/g, /a+b/i)).toBe(false)
+  expect(deepEqual(/a+b/g, /a+c/g)).toBe(false)
+})
+
+test('deepEqual: functions are not data — only the same reference is equal', () => {
+  const f = () => 1
+  const g = () => 1
+  expect(deepEqual(f, f)).toBe(true)
+  expect(deepEqual(f, g)).toBe(false)
+})
+
+test('deepEqual: a boxed primitive equals a boxed primitive, never the bare value', () => {
+  expect(deepEqual(Object(1), Object(1))).toBe(true)
+  expect(deepEqual(Object(1), 1)).toBe(false)
+  expect(deepEqual(Object('a'), Object('a'))).toBe(true)
+})
+
+test('deepEqual: maps equal regardless of insertion order, keys matched deeply', () => {
+  expect(deepEqual(new Map([[1, 'a'], [2, 'b']]), new Map([[2, 'b'], [1, 'a']]))).toBe(true)
+  expect(deepEqual(new Map([[{ x: 1 }, 'a']]), new Map([[{ x: 1 }, 'a']]))).toBe(true)
+  expect(deepEqual(new Map([[1, 'a']]), new Map([[1, 'b']]))).toBe(false)
+  expect(deepEqual(new Map([[1, 'a']]), new Map([[1, 'a'], [2, 'b']]))).toBe(false)
+})
+
+test('deepEqual: sets equal regardless of order, members matched deeply', () => {
+  expect(deepEqual(new Set([1, 2, 3]), new Set([3, 2, 1]))).toBe(true)
+  expect(deepEqual(new Set([{ x: 1 }]), new Set([{ x: 1 }]))).toBe(true)
+  expect(deepEqual(new Set([{ x: 1 }]), new Set([{ x: 2 }]))).toBe(false)
+})
+
+test('deepEqual: typed arrays compare element by element, NaN included', () => {
+  expect(deepEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 3]))).toBe(true)
+  expect(deepEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 4]))).toBe(false)
+  expect(deepEqual(new Float64Array([NaN]), new Float64Array([NaN]))).toBe(true)
+  expect(deepEqual(new Uint8Array([1]), new Int8Array([1]))).toBe(false)
+})
+
+test('deepEqual: array buffers compare by byte', () => {
+  expect(deepEqual(new Uint8Array([1, 2]).buffer, new Uint8Array([1, 2]).buffer)).toBe(true)
+  expect(deepEqual(new Uint8Array([1, 2]).buffer, new Uint8Array([1, 3]).buffer)).toBe(false)
+})
+
+test('deepEqual: symbol keys count toward equality', () => {
+  const s = Symbol('k')
+  expect(deepEqual({ [s]: 1 }, { [s]: 1 })).toBe(true)
+  expect(deepEqual({ [s]: 1 }, { [s]: 2 })).toBe(false)
+  expect(deepEqual({ [s]: 1 }, {})).toBe(false)
+})
+
+test('deepEqual: a cycle terminates instead of overflowing the stack', () => {
+  const x = { v: 1 }
+  x.self = x
+  const y = { v: 1 }
+  y.self = y
+  expect(deepEqual(x, y)).toBe(true)
+
+  const z = { self: null, v: 2 }
+  z.self = z
+  expect(deepEqual(x, z)).toBe(false)
+
+  const p = []
+  p.push(p)
+  const q = []
+  q.push(q)
+  expect(deepEqual(p, q)).toBe(true)
+})
+
+test('deepEqual: prototype identity is ignored — data is data', () => {
+  expect(deepEqual(Object.assign(Object.create(null), { a: 1 }), { a: 1 })).toBe(true)
+  class Point { constructor () { this.a = 1 } }
+  expect(deepEqual(new Point(), { a: 1 })).toBe(true)
+})
+
+test('deepEqual: weak collections cannot be inspected, so only the same reference is equal', () => {
+  const w = new WeakMap()
+  expect(deepEqual(w, w)).toBe(true)
+  expect(deepEqual(new WeakMap(), new WeakMap())).toBe(false)
+  expect(deepEqual(new WeakSet(), new WeakSet())).toBe(false)
 })
