@@ -93,6 +93,31 @@ export declare function clone(o: object): any;
  */
 export declare function deepEqual(a: any, b: any): boolean;
 /**
+ * Removes structural duplicates from an array — deepEqual decides what a
+ * duplicate is, so property order, prototype and reference identity don't
+ * matter, contents do. The first occurrence of every distinct value is kept,
+ * in order, and the input array is left untouched.
+ *
+ * The platform's `new Set(arr)` dedupes by reference identity and lodash's
+ * `uniqWith(arr, isEqual)` compares every pair — O(N²). Here every value
+ * folds to a 32-bit FNV-1a hash in a single walk, values collide into
+ * buckets, and deepEqual runs only within a bucket: linear in practice. The
+ * hash is free to be coarse — a shared bucket costs one comparison, while
+ * correctness comes from deepEqual alone. The bucket-then-verify idea is
+ * HashCache (2013,
+ * https://stamat.wordpress.com/2013/07/03/javascript-quickly-find-very-large-objects-in-a-large-array/)
+ * with the CRC32-over-canonical-string hash replaced by a fold over the live
+ * values — no string is ever built.
+ *
+ * @param {Array} arr The array to dedupe
+ * @returns {Array} A new array: first occurrence of every distinct value, in order
+ * @example
+ * dedupe([{ a: 1, b: 2 }, { b: 2, a: 1 }]) // => [{ a: 1, b: 2 }]
+ * dedupe([NaN, NaN, 0, -0]) // => [NaN, 0]
+ * dedupe([new Set([1, 2]), new Set([2, 1])]) // => [new Set([1, 2])]
+ */
+export declare function dedupe(arr: any[]): any[];
+/**
  * Check if an object is empty
  *
  * @param {object} o The object to check

@@ -47,6 +47,38 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   gap is the symbol-key pass the faster libraries skip. The function's JSDoc
   carries the full comparison table.
 
+- **`dedupe(arr)`** in `helpers` — structural dedup of an array: `deepEqual`
+  decides what a duplicate is, the first occurrence wins, the input stays
+  untouched. The other half of the jules rewrite: `uniqueItems` asks "have I
+  seen this value" across thousands of JSON documents, where pairwise
+  `deepEqual` is O(N²) and a reference-keyed `Set` sees no duplicates at all.
+
+  The internals are [HashCache](https://stamat.wordpress.com/2013/07/03/javascript-quickly-find-very-large-objects-in-a-large-array/)
+  (2013) grown up: hash into buckets, let deep equality settle matters only
+  inside a bucket. What changed since 2013 is the hash — values fold to a
+  32-bit FNV-1a during one walk of the live data, so no canonical string and
+  no CRC table. Measured on 11,351 real GitHub event objects with 10% seeded
+  duplicates (Node 25, 2026-08): the fold dedupes in ~91ms, hashing a
+  canonical string instead takes ~274ms, a table-driven JS CRC32 over that
+  string ~369ms, and pairwise `deepEqual` 7.3s. On a generated mixed-shape
+  corpus it holds near-linear to a million: 3.1s for 1.1M documents, against
+  11.4s for the canonical-string key — and the folk `JSON.stringify`-as-key
+  dedup both misses ~99% of key-order-shuffled duplicates and still loses on
+  time past half a million. The hash stays deliberately
+  coarse where deepEqual is subtle — Sets and Maps fold by size, Errors by
+  tag — because a hash finer than `deepEqual` would split real duplicates
+  into separate buckets and miss them, while a shared bucket only costs one
+  comparison; correctness never rests on the hash.
+
+- **`bench/`** — benchmarks as a convention beside the tests: `script/bench`
+  runs every `bench/*.bench.mjs`, each a plain node script over a
+  deterministic generated corpus, and each asserts its contenders' output is
+  correct before timing it — a bench that times wrong code measures nothing.
+  First occupant: `dedupe` against its 2013 ancestor HashCache (CRC32 over
+  the ordered stringify, buckets, deep-compare in the bucket), a
+  canonical-string key, the (unsound) `JSON.stringify` key, and pairwise
+  `deepEqual`. Not shipped in the package.
+
 ## [1.5.0] - 2026-07-31
 
 ### Added

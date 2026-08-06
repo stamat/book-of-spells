@@ -7,6 +7,7 @@ grouped by subject. Some run anywhere, some touch the DOM.
 
 ```bash
 script/test      # jest
+script/bench     # benchmarks; `--full` for the big sizes
 script/build     # regenerates the docs and the type declarations
 script/types     # type declarations only
 ```
@@ -19,6 +20,8 @@ script/types     # type declarations only
 - `index.mjs` re-exports them; a new module is added there, and to `files` in
   `package.json` if it lives outside `src/`.
 - Tests live in `src/__tests__/`.
+- Benchmarks live in `bench/*.bench.mjs` — runnable node scripts, not shipped.
+  Every contender's output is asserted correct before its timing is reported.
 - `types/` and `docs/` are **generated** — `docs/` is gitignored, `types/` ships
   in the package.
 

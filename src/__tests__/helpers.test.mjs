@@ -39,7 +39,8 @@ import {
   basicUID,
   generateUUID,
   random,
-  deepEqual
+  deepEqual,
+  dedupe
 } from '../helpers.mjs'
 
 const a = {
@@ -702,4 +703,89 @@ test('deepEqual: values built in another realm equal their local twins', async (
   expect(deepEqual(vm.runInNewContext('({a: 1, b: [1, 2]})'), { a: 1, b: [1, 2] })).toBe(true)
   expect(deepEqual(vm.runInNewContext('[1, 2, 3]'), [1, 2, 3])).toBe(true)
   expect(deepEqual(vm.runInNewContext('[1, 2, 3]'), [1, 2, 4])).toBe(false)
+})
+
+// dedupe — structural dedup of an array, deepEqual deciding what a duplicate is.
+// Covered: deep duplicates regardless of property order, first-occurrence
+// identity, input left untouched, SameValueZero primitives (NaN, -0), mixed
+// types staying apart, hash-coarse values that share a bucket yet must not
+// merge (Errors), values only deepEqual can equate across shapes (class
+// instance vs plain twin, Sets in a different insertion order), cyclic
+// structures, and symbol-keyed near-twins only deepEqual can split.
+// Deliberately not: non-array input (the natural TypeError is the answer) and
+// scale — the linear-vs-quadratic claim lives in the changelog benchmark,
+// asserting it here would buy CI time and no spec.
+
+test('dedupe: deep-equal objects collapse to one, property order ignored', () => {
+  const out = dedupe([{ a: 1, b: { c: [1, 2] } }, { b: { c: [1, 2] }, a: 1 }, { a: 1, b: { c: [1, 3] } }])
+  expect(out).toEqual([{ a: 1, b: { c: [1, 2] } }, { a: 1, b: { c: [1, 3] } }])
+})
+
+test('dedupe: the first occurrence is the one kept, by reference', () => {
+  const first = { a: 1 }
+  const out = dedupe([first, { a: 1 }])
+  expect(out).toHaveLength(1)
+  expect(out[0]).toBe(first)
+})
+
+test('dedupe: the input array and its elements are left untouched', () => {
+  const a = { a: 1 }
+  const b = { a: 1 }
+  const input = [a, b]
+  dedupe(input)
+  expect(input).toHaveLength(2)
+  expect(input[0]).toBe(a)
+  expect(input[1]).toBe(b)
+  expect(a).toEqual({ a: 1 })
+  expect(b).toEqual({ a: 1 })
+})
+
+test('dedupe: a fresh array comes back even when there is nothing to remove', () => {
+  const input = [1, 2]
+  const out = dedupe(input)
+  expect(out).toEqual([1, 2])
+  expect(out).not.toBe(input)
+  expect(dedupe([])).toEqual([])
+})
+
+test('dedupe: NaN is one value and 0 equals -0 — SameValueZero all the way down', () => {
+  expect(dedupe([NaN, NaN])).toEqual([NaN])
+  expect(dedupe([0, -0])).toHaveLength(1)
+  expect(dedupe([[NaN], [NaN]])).toHaveLength(1)
+})
+
+test('dedupe: primitives dedupe too, and mixed types never merge', () => {
+  expect(dedupe(['a', 'a', null, null, undefined, undefined, true, true])).toEqual(['a', null, undefined, true])
+  expect(dedupe([1, '1', [1], { 0: 1 }, true])).toEqual([1, '1', [1], { 0: 1 }, true])
+})
+
+test('dedupe: dates dedupe by instant, distinct instants both stay', () => {
+  expect(dedupe([new Date(5), new Date(5), new Date(6)])).toHaveLength(2)
+})
+
+test('dedupe: sets with the same members in a different insertion order are one value', () => {
+  expect(dedupe([new Set([1, 2]), new Set([2, 1]), new Set([1, 3])])).toHaveLength(2)
+})
+
+test('dedupe: a class instance and its plain twin are one value — data is data', () => {
+  class Point { constructor () { this.x = 1 } }
+  expect(dedupe([new Point(), { x: 1 }])).toHaveLength(1)
+})
+
+test('dedupe: errors share a coarse bucket but only equal messages merge', () => {
+  expect(dedupe([new Error('a'), new Error('b')])).toHaveLength(2)
+  expect(dedupe([new Error('a'), new Error('a')])).toHaveLength(1)
+})
+
+test('dedupe: cyclic structures terminate and equal cycles collapse', () => {
+  const x = {}
+  x.self = x
+  const y = {}
+  y.self = y
+  expect(dedupe([x, y])).toHaveLength(1)
+})
+
+test('dedupe: twins that differ only in a symbol-keyed value both stay', () => {
+  const s = Symbol('s')
+  expect(dedupe([{ k: 1, [s]: 1 }, { k: 1, [s]: 2 }])).toHaveLength(2)
 })

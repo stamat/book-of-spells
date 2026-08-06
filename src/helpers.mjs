@@ -325,6 +325,142 @@ function deepEqualCyclic(a, b, depth, seen) {
   return true
 }
 
+// The contract that keeps dedupe() exact while its hash stays cheap: the fold
+// may merge values deepEqual tells apart — the in-bucket deepEqual pass
+// separates those — but must never split values deepEqual calls equal, or a
+// duplicate lands in a fresh bucket and survives. Every branch below is
+// written against that one-way rule.
+const FNV_SEED = 2166136261
+// Past this depth everything folds to one token: cycles terminate, and two
+// equal values truncate at the same node, so the cap cannot split them.
+const FOLD_DEPTH_CAP = 32
+
+// Scratch pair for reading a double's bits; safe to share because it is
+// written and read back before any recursive call can touch it.
+const foldF64 = new Float64Array(1)
+const foldU32 = new Uint32Array(foldF64.buffer)
+
+function foldString(h, s) {
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619)
+  return h
+}
+
+// SameValueZero folds: every NaN one token, -0 folded as 0 — anything finer
+// would split pairs sameValueZero calls equal
+function foldNumber(h, n) {
+  if (n !== n) return Math.imul(h ^ 0x7A3, 16777619)
+  foldF64[0] = n === 0 ? 0 : n
+  h = Math.imul(h ^ foldU32[0], 16777619)
+  return Math.imul(h ^ foldU32[1], 16777619)
+}
+
+function foldValue(h, v, depth) {
+  if (v === null) return Math.imul(h ^ 1, 16777619)
+  const t = typeof v
+  if (t === 'number') return foldNumber(Math.imul(h ^ 2, 16777619), v)
+  if (t === 'string') return foldString(Math.imul(h ^ 3, 16777619), v)
+  if (t === 'boolean') return Math.imul(h ^ (v ? 4 : 5), 16777619)
+  if (t === 'bigint') return foldString(Math.imul(h ^ 6, 16777619), String(v))
+  // undefined, symbol, function — deepEqual equates these by reference only,
+  // so one token per type is coarse but never wrong
+  if (t !== 'object') return Math.imul(h ^ 7, 16777619)
+  if (depth > FOLD_DEPTH_CAP) return Math.imul(h ^ 8, 16777619)
+  if (Array.isArray(v)) {
+    h = Math.imul(h ^ 9, 16777619)
+    for (let i = 0; i < v.length; i++) h = foldValue(h, v[i], depth + 1)
+    return Math.imul(h ^ 10, 16777619)
+  }
+  const proto = getProto(v)
+  if (proto !== objProto && proto !== null) {
+    const tag = objTag.call(v)
+    // A class instance keeps the [object Object] tag and falls through to the
+    // plain walk: deepEqual calls it equal to its plain twin, so it has to
+    // fold like one.
+    if (tag !== '[object Object]') {
+      h = foldString(h, tag)
+      switch (tag) {
+        case '[object Date]':
+        case '[object Number]':
+          return foldNumber(h, v.valueOf())
+        case '[object String]':
+          return foldString(h, v.valueOf())
+        case '[object Boolean]':
+          return Math.imul(h ^ (v.valueOf() ? 4 : 5), 16777619)
+        case '[object RegExp]':
+          return foldString(foldString(h, v.source), v.flags)
+        // members fold no further: deepEqual matches them in any order, and
+        // an order-sensitive fold would split equal collections
+        case '[object Set]':
+        case '[object Map]':
+          return foldNumber(h, v.size)
+      }
+      if (ArrayBuffer.isView(v)) return foldNumber(h, v.byteLength)
+      // URL, Error, ArrayBuffer and other exotic hosts fold by tag alone —
+      // coarse buckets the in-bucket deepEqual resolves
+      return h
+    }
+  }
+  // symbol keys are not folded — near-twins split inside the bucket instead
+  const keys = Object.keys(v).sort()
+  h = Math.imul(h ^ 11, 16777619)
+  for (let i = 0; i < keys.length; i++) {
+    h = foldString(h, keys[i])
+    h = foldValue(h, v[keys[i]], depth + 1)
+  }
+  return Math.imul(h ^ 12, 16777619)
+}
+
+/**
+ * Removes structural duplicates from an array — deepEqual decides what a
+ * duplicate is, so property order, prototype and reference identity don't
+ * matter, contents do. The first occurrence of every distinct value is kept,
+ * in order, and the input array is left untouched.
+ *
+ * The platform's `new Set(arr)` dedupes by reference identity and lodash's
+ * `uniqWith(arr, isEqual)` compares every pair — O(N²). Here every value
+ * folds to a 32-bit FNV-1a hash in a single walk, values collide into
+ * buckets, and deepEqual runs only within a bucket: linear in practice. The
+ * hash is free to be coarse — a shared bucket costs one comparison, while
+ * correctness comes from deepEqual alone. The bucket-then-verify idea is
+ * HashCache (2013,
+ * https://stamat.wordpress.com/2013/07/03/javascript-quickly-find-very-large-objects-in-a-large-array/)
+ * with the CRC32-over-canonical-string hash replaced by a fold over the live
+ * values — no string is ever built.
+ *
+ * @param {Array} arr The array to dedupe
+ * @returns {Array} A new array: first occurrence of every distinct value, in order
+ * @example
+ * dedupe([{ a: 1, b: 2 }, { b: 2, a: 1 }]) // => [{ a: 1, b: 2 }]
+ * dedupe([NaN, NaN, 0, -0]) // => [NaN, 0]
+ * dedupe([new Set([1, 2]), new Set([2, 1])]) // => [new Set([1, 2])]
+ */
+export function dedupe(arr) {
+  const buckets = new Map()
+  const out = []
+  for (let i = 0; i < arr.length; i++) {
+    const item = arr[i]
+    const key = foldValue(FNV_SEED, item, 0) >>> 0
+    const bucket = buckets.get(key)
+    if (bucket === undefined) {
+      buckets.set(key, [item])
+      out.push(item)
+      continue
+    }
+    let seen = false
+    for (let j = 0; j < bucket.length; j++) {
+      if (deepEqual(bucket[j], item)) {
+        seen = true
+        break
+      }
+    }
+    if (!seen) {
+      bucket.push(item)
+      out.push(item)
+    }
+  }
+  return out
+}
+
 /**
  * Check if an object is empty
  *

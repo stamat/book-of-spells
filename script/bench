@@ -1,0 +1,3 @@
+#!/bin/bash
+
+for f in bench/*.bench.mjs; do node "$f" "$@"; done
