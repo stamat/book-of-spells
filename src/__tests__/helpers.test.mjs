@@ -522,8 +522,10 @@ test('random and generateUUID fall back when crypto lacks methods', () => {
 // deepEqual — structural (data) equality.
 // Covered: primitives under SameValueZero (NaN equals itself, 0 equals -0),
 // property-order independence, nesting, Date, RegExp, boxed primitives,
-// Map/Set regardless of insertion order, typed arrays and ArrayBuffer,
-// symbol keys, and cyclic structures.
+// Map/Set regardless of insertion order (NaN keys included), typed arrays
+// and ArrayBuffer, symbol keys, cyclic structures, Date/Array subclasses,
+// transparent Proxies, and cross-realm values via node:vm — dispatch never
+// touches realm-bound constructors.
 // Deliberately not: prototype identity (data equality ignores class), sparse
 // array holes (read as undefined — JSON has no holes), WeakMap/WeakSet
 // contents (unobservable, so never equal), Promise (no special case — own
@@ -671,9 +673,33 @@ test('deepEqual: errors compare by their message, not by empty own properties', 
   expect(deepEqual(new Error('a'), new Error('b'))).toBe(false)
 })
 
-test('deepEqual: cross-realm objects and arrays equal their local twins', () => {
-  // jsdom offers no second realm here; the guarantee is that dispatch never
-  // relies on realm-bound constructors — Array.isArray and toString tags only.
-  // The cross-realm probe itself runs in the node:vm benchmark harness.
-  expect(deepEqual(Object.create(null, { a: { value: 1, enumerable: true } }), { a: 1 })).toBe(true)
+test('deepEqual: NaN works as a Map key', () => {
+  expect(deepEqual(new Map([[NaN, 'a']]), new Map([[NaN, 'a']]))).toBe(true)
+  expect(deepEqual(new Map([[NaN, 'a']]), new Map([[NaN, 'b']]))).toBe(false)
+})
+
+test('deepEqual: an array hole equals an explicit undefined — JSON has no holes', () => {
+  expect(deepEqual([, 1], [undefined, 1])).toBe(true)
+})
+
+test('deepEqual: -0 nested in an object equals 0', () => {
+  expect(deepEqual({ x: -0 }, { x: 0 })).toBe(true)
+})
+
+test('deepEqual: Date and Array subclasses equal their plain counterparts', () => {
+  class D extends Date {}
+  class Arr extends Array {}
+  expect(deepEqual(new D(5), new Date(5))).toBe(true)
+  expect(deepEqual(Arr.from([1, 2]), [1, 2])).toBe(true)
+})
+
+test('deepEqual: a transparent Proxy equals a twin of its target', () => {
+  expect(deepEqual(new Proxy({ a: 1 }, {}), { a: 1 })).toBe(true)
+})
+
+test('deepEqual: values built in another realm equal their local twins', async () => {
+  const vm = await import('node:vm')
+  expect(deepEqual(vm.runInNewContext('({a: 1, b: [1, 2]})'), { a: 1, b: [1, 2] })).toBe(true)
+  expect(deepEqual(vm.runInNewContext('[1, 2, 3]'), [1, 2, 3])).toBe(true)
+  expect(deepEqual(vm.runInNewContext('[1, 2, 3]'), [1, 2, 4])).toBe(false)
 })
