@@ -83,6 +83,7 @@ export declare function clone(o: object): any;
  * @returns boolean True when a and b are structurally equal
  * @example
  * deepEqual({ a: 1, b: [1, 2] }, { b: [1, 2], a: 1 }) // => true
+ * deepEqual([1, 2], [2, 1]) // => false
  * deepEqual(new Set([1, 2]), new Set([2, 1])) // => true
  * deepEqual(NaN, NaN) // => true
  * const x = {}

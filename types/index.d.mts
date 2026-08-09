@@ -7,3 +7,4 @@ export * from './src/cookies.mjs';
 export * from './src/regex.mjs';
 export * from './src/localstorage.mjs';
 export * from './src/elements.mjs';
+export * from './src/keyboard.mjs';

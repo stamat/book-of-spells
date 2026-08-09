@@ -413,11 +413,16 @@ export declare function getVisibleFocusableElements(from?: HTMLElement | Element
 /**
  * Swipe event handler
  *
+ * Two points make the gesture - where the pointer went down and where it came up - so there is
+ * no `pointermove` listener running on every frame of every scroll down the page. The axis it
+ * travelled furthest along is the one reported, and a gesture as far down as across is neither.
+ *
  * @param {HTMLElement} element The element to listen for swipe gestures on
- * @param {object | Function} callback The callback to call when a swipe gesture is detected or the options object with the callback, threshold, and timeThreshold
+ * @param {object | Function} callback The callback to call when a swipe gesture is detected or the options object with the callback, threshold, timeThreshold and mouse
  * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
  * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
- * @returns {object | null} The destroy method to remove the event listeners
+ * @param {boolean} [mouse=true] Whether a mouse drag counts as a swipe. Options object only. Turn it off on anything with selectable text, draggable images or links in it - reading a swipe from a mouse costs the page all three.
+ * @returns {object | null} The destroy method to remove the event listeners, or null without an element
  * @example
  * swipe(document.getElementById('foo'), (e) => {
  *  console.log(e.direction)
@@ -437,6 +442,8 @@ export declare function getVisibleFocusableElements(from?: HTMLElement | Element
  *  console.log(e.timeElapsed)
  *  console.log(e.timeThreshold)
  * })
+ *
+ * swipe(document.getElementById('foo'), { callback: onSwipe, threshold: 40, mouse: false })
  *
  * element.addEventListener('swipe', (e) => { ... })
  * element.addEventListener('swipestart', (e) => { ... })
@@ -551,51 +558,3 @@ export declare function getVerticalScrollState(element: HTMLElement, threshold?:
  * console.log(scrollState.atEnd) // => true or false
  */
 export declare function getHorizontalScrollState(element: HTMLElement, threshold?: number): object;
-/**
- * Starts tracking whether the person is driving the page with a keyboard or with a
- * pointer, so `isKeyboardIntent` can be asked later.
- *
- * This is the part `:focus-visible` cannot give you. That pseudo-class matches a text
- * input or a `contenteditable` even when it was clicked into, because a browser assumes
- * anything taking text input wants its focus ring — right for a ring, wrong for deciding
- * whether to show a keyboard hint or move focus somewhere a mouse user did not ask for.
- *
- * Listeners go on in capture, because a `pointerdown` handler somewhere in the page that
- * calls `stopPropagation` (drag implementations do, routinely) would otherwise hide the
- * switch to pointer. `pointerdown` rather than `mousedown` so a pen and a touch count
- * without waiting for emulated mouse events.
- *
- * Call it once, early — before any focus you intend to judge, since the keypress that
- * moves focus lands on whatever had focus *before* the element you are asking about. It
- * is safe to call from every component that needs it: the document is only watched once.
- * There is no unwatch; two capture listeners for the life of the page is the whole cost.
- *
- * @see {@link isKeyboardIntent}
- * @param {Document} [doc=document] The document to watch — pass an iframe's own document to watch inside it
- * @returns {void}
- * @example
- * watchInputIntent()
- *
- * element.addEventListener('focusin', () => {
- *   element.classList.toggle('is-key-focus', isKeyboardIntent())
- * })
- */
-export declare function watchInputIntent(doc?: Document): void;
-/**
- * Whether the last input the page saw was a key rather than a pointer.
- *
- * Pointer until proven otherwise: before anyone has touched anything this is `false`, so
- * focus that arrives on load — an `autofocus`, a restored scroll position — is not
- * mistaken for someone tabbing. Requires {@link watchInputIntent} to have been called;
- * without it this is always `false`.
- *
- * @see {@link watchInputIntent}
- * @returns {boolean} `true` if the last input was a keypress
- * @example
- * watchInputIntent()
- * // after the person presses Tab
- * isKeyboardIntent() // => true
- * // after the person clicks
- * isKeyboardIntent() // => false
- */
-export declare function isKeyboardIntent(): boolean;

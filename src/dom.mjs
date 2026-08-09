@@ -759,12 +759,17 @@ export function getVisibleFocusableElements(from = document, excludeSelector) {
 
 /**
  * Swipe event handler
- * 
+ *
+ * Two points make the gesture - where the pointer went down and where it came up - so there is
+ * no `pointermove` listener running on every frame of every scroll down the page. The axis it
+ * travelled furthest along is the one reported, and a gesture as far down as across is neither.
+ *
  * @param {HTMLElement} element The element to listen for swipe gestures on
- * @param {object | Function} callback The callback to call when a swipe gesture is detected or the options object with the callback, threshold, and timeThreshold
+ * @param {object | Function} callback The callback to call when a swipe gesture is detected or the options object with the callback, threshold, timeThreshold and mouse
  * @param {number} [threshold=150] The threshold in pixels to trigger the callback.
  * @param {number} [timeThreshold=0] The threshold in milliseconds to trigger the callback. Defaults to 0, which means the callback will be called regardless of the time it took to swipe.
- * @returns {object | null} The destroy method to remove the event listeners
+ * @param {boolean} [mouse=true] Whether a mouse drag counts as a swipe. Options object only. Turn it off on anything with selectable text, draggable images or links in it - reading a swipe from a mouse costs the page all three.
+ * @returns {object | null} The destroy method to remove the event listeners, or null without an element
  * @example
  * swipe(document.getElementById('foo'), (e) => {
  *  console.log(e.direction)
@@ -784,98 +789,122 @@ export function getVisibleFocusableElements(from = document, excludeSelector) {
  *  console.log(e.timeElapsed)
  *  console.log(e.timeThreshold)
  * })
- * 
+ *
+ * swipe(document.getElementById('foo'), { callback: onSwipe, threshold: 40, mouse: false })
+ *
  * element.addEventListener('swipe', (e) => { ... })
  * element.addEventListener('swipestart', (e) => { ... })
  * element.addEventListener('swipeend', (e) => { ... })
  */
 export function swipe(element, callback, threshold = 150, timeThreshold = 0) {
-  let startX = 0
-  let startY = 0
-  let endX = 0
-  let endY = 0
-  let startTime = 0
-  let endTime = 0
+  let mouse = true
+  let start = null
+  let swiped = false
 
   if (isObject(callback)) {
     const options = callback
     callback = options.callback
     threshold = options.threshold || threshold
     timeThreshold = options.timeThreshold || timeThreshold
+    if (options.mouse === false) mouse = false
   }
 
-  if (!element) return
-  if (element.getAttribute('swipe-enabled') === 'true') return
-  element.setAttribute('swipe-enabled', 'true')
+  if (!element) return null
 
   const handleStart = function(e) {
-    const carrier = e.touches ? e.touches[0] : e
-    startX = carrier.clientX
-    startY = carrier.clientY
-    startTime = Date.now();
-    element.dispatchEvent(new CustomEvent('swipestart', { detail: { target: element, startX, startY, startTime } }))
+    swiped = false
+    // A second pointer while one is already down is a pinch, and the first one's numbers are
+    // noise from here on, so the gesture is dropped rather than answered wrongly.
+    if (start || (!mouse && e.pointerType === 'mouse')) {
+      start = null
+      return
+    }
+    start = { id: e.pointerId, x: e.clientX, y: e.clientY, time: Date.now() }
+    // Touch and pen are captured implicitly by the browser, the mouse is not - without this a
+    // mouse swipe that ends off the element never reports its `pointerup`. It throws when the
+    // id is not an active pointer, which a synthesised event is.
+    if (element.setPointerCapture) {
+      try { element.setPointerCapture(e.pointerId) } catch { /* the gesture still ends on the element */ }
+    }
+    element.dispatchEvent(new CustomEvent('swipestart', { detail: { target: element, startX: start.x, startY: start.y, startTime: start.time } }))
   }
 
   const handleEnd = function(e) {
-    const carrier = e.changedTouches ? e.changedTouches[0] : e
-    endX = carrier.clientX
-    endY = carrier.clientY
-    endTime = Date.now();
-    handleSwipeGesture()
-    element.dispatchEvent(new CustomEvent('swipeend', { detail: { target: element, startX, startY, startTime, endX, endY, endTime } }))
-  }
+    const from = start
+    start = null
+    if (!from || e.pointerId !== from.id) return
 
-  const handleSwipeGesture = function() {
-    const deltaX = Math.abs(endX - startX)
-    const deltaY = Math.abs(endY - startY)
-    const horizontal = deltaX > threshold
-    const vertical = deltaY > threshold
-    const left = endX < startX
-    const up = endY < startY
-    const direction = []
-    const timeElapsed = endTime - startTime;
-    
-    if (horizontal) direction.push(left ? 'left' : 'right')
-    if (vertical) direction.push(up ? 'up' : 'down')
+    const endX = e.clientX
+    const endY = e.clientY
+    const endTime = Date.now()
+    const deltaX = Math.abs(endX - from.x)
+    const deltaY = Math.abs(endY - from.y)
+    const left = endX < from.x
+    const up = endY < from.y
+    const horizontal = deltaX > deltaY && deltaX > threshold
+    const vertical = deltaY > deltaX && deltaY > threshold
+    const timeElapsed = endTime - from.time
 
-    let condition = direction.length && callback
-    if (timeThreshold) condition = condition && timeElapsed <= timeThreshold
-    
-    if (condition) {
-      const res = {
-        target: element,
-        deltaX: deltaX,
-        deltaY: deltaY,
-        startX: startX,
-        startY: startY,
-        endX: endX,
-        endY: endY,
-        threshold: threshold,
-        horizontal: horizontal,
-        vertical: vertical,
-        horizontalDirection: left ? 'left' : 'right',
-        verticalDirection: up ? 'up' : 'down',
-        direction: direction.length === 1 ? direction[0] : direction,
-        timeElapsed: timeElapsed,
-        timeThreshold: timeThreshold
+    if (horizontal || vertical) {
+      if (!timeThreshold || timeElapsed <= timeThreshold) {
+        const res = {
+          target: element,
+          deltaX: deltaX,
+          deltaY: deltaY,
+          startX: from.x,
+          startY: from.y,
+          endX: endX,
+          endY: endY,
+          threshold: threshold,
+          horizontal: horizontal,
+          vertical: vertical,
+          horizontalDirection: left ? 'left' : 'right',
+          verticalDirection: up ? 'up' : 'down',
+          direction: horizontal ? (left ? 'left' : 'right') : (up ? 'up' : 'down'),
+          timeElapsed: timeElapsed,
+          timeThreshold: timeThreshold
+        }
+
+        swiped = true
+        if (isFunction(callback)) callback(res)
+        element.dispatchEvent(new CustomEvent('swipe', { detail: res }))
       }
-
-      callback(res)
-      element.dispatchEvent(new CustomEvent('swipe', { detail: res })) 
     }
+
+    element.dispatchEvent(new CustomEvent('swipeend', { detail: { target: element, startX: from.x, startY: from.y, startTime: from.time, endX, endY, endTime } }))
   }
 
-  element.addEventListener('touchstart', handleStart)
-  element.addEventListener('touchend', handleEnd)
-  element.addEventListener('mousedown', handleStart)
-  element.addEventListener('mouseup', handleEnd)
+  // The browser took the gesture - a scroll started under it, or the finger left the screen's
+  // edge. Whatever it became, it is not a swipe.
+  const handleCancel = function() {
+    start = null
+  }
+
+  // A swipe that ends on a link fires a click too, and the browser only stops synthesising one
+  // after a slop most thresholds are past - most, not all, and the one that still fires
+  // navigates away from a page the reader was swiping through. `detail` is what keeps this off
+  // the keyboard: Enter on a link reports zero pointer clicks.
+  const handleClick = function(e) {
+    if (!swiped) return
+    swiped = false
+    if (!e.detail) return
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  element.addEventListener('pointerdown', handleStart)
+  element.addEventListener('pointerup', handleEnd)
+  element.addEventListener('pointercancel', handleCancel)
+  element.addEventListener('click', handleClick, true)
 
   return {
     destroy: function() {
-      element.removeEventListener('touchstart', handleStart)
-      element.removeEventListener('touchend', handleEnd)
-      element.removeEventListener('mousedown', handleStart)
-      element.removeEventListener('mouseup', handleEnd)
+      element.removeEventListener('pointerdown', handleStart)
+      element.removeEventListener('pointerup', handleEnd)
+      element.removeEventListener('pointercancel', handleCancel)
+      element.removeEventListener('click', handleClick, true)
+      start = null
+      swiped = false
     }
   }
 }
@@ -1262,67 +1291,4 @@ export function getHorizontalScrollState(element, threshold = 0) {
     atStart: scrollStartThreshold,
     atEnd: scrollEndThreshold
   }
-}
-
-/** Whether the last input the page saw was a key rather than a pointer. */
-let keyboardIntent = false
-
-/** Documents already watched, so repeat calls from many components cost nothing. */
-const intentWatched = new WeakSet()
-
-/**
- * Starts tracking whether the person is driving the page with a keyboard or with a
- * pointer, so `isKeyboardIntent` can be asked later.
- *
- * This is the part `:focus-visible` cannot give you. That pseudo-class matches a text
- * input or a `contenteditable` even when it was clicked into, because a browser assumes
- * anything taking text input wants its focus ring — right for a ring, wrong for deciding
- * whether to show a keyboard hint or move focus somewhere a mouse user did not ask for.
- *
- * Listeners go on in capture, because a `pointerdown` handler somewhere in the page that
- * calls `stopPropagation` (drag implementations do, routinely) would otherwise hide the
- * switch to pointer. `pointerdown` rather than `mousedown` so a pen and a touch count
- * without waiting for emulated mouse events.
- *
- * Call it once, early — before any focus you intend to judge, since the keypress that
- * moves focus lands on whatever had focus *before* the element you are asking about. It
- * is safe to call from every component that needs it: the document is only watched once.
- * There is no unwatch; two capture listeners for the life of the page is the whole cost.
- *
- * @see {@link isKeyboardIntent}
- * @param {Document} [doc=document] The document to watch — pass an iframe's own document to watch inside it
- * @returns {void}
- * @example
- * watchInputIntent()
- *
- * element.addEventListener('focusin', () => {
- *   element.classList.toggle('is-key-focus', isKeyboardIntent())
- * })
- */
-export function watchInputIntent(doc = document) {
-  if (!doc || intentWatched.has(doc)) return
-  intentWatched.add(doc)
-  doc.addEventListener('keydown', () => { keyboardIntent = true }, true)
-  doc.addEventListener('pointerdown', () => { keyboardIntent = false }, true)
-}
-
-/**
- * Whether the last input the page saw was a key rather than a pointer.
- *
- * Pointer until proven otherwise: before anyone has touched anything this is `false`, so
- * focus that arrives on load — an `autofocus`, a restored scroll position — is not
- * mistaken for someone tabbing. Requires {@link watchInputIntent} to have been called;
- * without it this is always `false`.
- *
- * @see {@link watchInputIntent}
- * @returns {boolean} `true` if the last input was a keypress
- * @example
- * watchInputIntent()
- * // after the person presses Tab
- * isKeyboardIntent() // => true
- * // after the person clicks
- * isKeyboardIntent() // => false
- */
-export function isKeyboardIntent() {
-  return keyboardIntent
 }

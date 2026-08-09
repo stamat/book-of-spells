@@ -16,6 +16,98 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Added
+
+- **`keyboard`, a new subject module** — shortcuts, sequences, and the input-intent pair that
+  used to live in `dom`.
+
+  Every project that binds a shortcut writes the same handler, and writes it slightly wrong.
+  The check is `event.key === 'k' && (event.metaKey || event.ctrlKey)`, which also fires on
+  `Ctrl+Shift+K` — the web console, in two browsers — because the modifiers nobody named were
+  never tested. Getting it right takes a test per modifier rather than per modifier you
+  remembered, and then the same again for where it is allowed to fire.
+
+  - **`matchesShortcut(event, spec)`** — whether a keydown is the shortcut a string
+    describes. `mod+k`, `shift+alt+ArrowUp`, `Escape`. Pure, so a caller keeps its own
+    listener; **modifiers the spec did not name must be up**, which is the part that makes
+    the console shortcut unreachable. The key is compared to `event.key` without case *or* to
+    `event.code` exactly — `alt+k` on macOS arrives as `˚`, and `alt+KeyK` is how to say it.
+    An unknown modifier or a spec with no key throws, because a shortcut that silently never
+    fires gives no reason.
+
+  - **`bindShortcut(spec, handler, options)`** — the listener, returning its own unbind.
+    `when` and `except` are selectors rather than a boolean, so one page can hold a shortcut
+    that works everywhere, one that works only inside an editor, and one that works everywhere
+    *but* an editor, as a setting instead of three code paths. Repeats and IME composition are
+    ignored; `preventDefault` is on.
+
+  - **`bindSequence(specs, handler, options)`** and **`konamiCode(handler, options)`** — a run
+    of shortcuts in order, forgotten `timeout` ms after each step. A wrong key restarts the
+    run and is then tried as its first step, so `↑ ↑ ↑ ↓` still reaches step three. Modifier
+    keydowns pass through, without which no step could contain a modifier. `preventDefault` is
+    **off** here: a step matches long before the sequence does, and preventing every `ArrowUp`
+    would stop the page scrolling for everyone who never finishes.
+
+  - **`EDITABLE`** — the selector for the places a person types, for `except`.
+
+  On aliases: `mod` is Command on Apple platforms and Control everywhere else, and `cmd` and
+  `ctrl` mean *themselves*. Folding those two into "whichever this machine calls primary"
+  reads better for the nine bindings in ten that want it and takes away the only way to say
+  the tenth — macOS keeps the Emacs bindings (`Ctrl+A`, `Ctrl+E`, `Ctrl+K`) live inside every
+  text field, so an editor binding literal Control on a Mac is ordinary and would become
+  unsayable. `meta`/`cmd`/`command`/`super`/`win`, `ctrl`/`control`, `alt`/`option`/`opt` and
+  `shift` are the spellings; anything else throws.
+
+  Shaped after [tinykeys](https://github.com/jamiebuilds/tinykeys), which settled the `$mod`
+  token and the exclusivity check over
+  [`KeyboardEvent.getModifierState()`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/getModifierState).
+  What is different: no listener registry, and no key-sequence syntax inside the string — a
+  spec here is one press, and a run of them is an array.
+
+### Changed
+
+- **`watchInputIntent` and `isKeyboardIntent` moved from `dom` to `keyboard`.** Importing from
+  the package root is unaffected; a deep import of `book-of-spells/src/dom.mjs` for either of
+  these has to change to `src/keyboard.mjs`.
+
+- **`swipe(element, callback, threshold, timeThreshold)`** in `dom` reads pointer events —
+  `pointerdown`, `pointerup`, `pointercancel` — instead of a `touchstart`/`touchend` pair with
+  `mousedown`/`mouseup` beside it. One code path whatever the hand is holding: a pen swipes
+  without waiting on emulated mouse events, a gesture the browser takes back mid-scroll is
+  dropped instead of finishing as a swipe when the finger lifts, and a second finger abandons
+  the gesture rather than answering it with the first finger's numbers, which are noise from
+  the moment a pinch starts.
+
+  Two behaviour changes come with it:
+
+  | | before | now |
+  |---|---|---|
+  | a diagonal | both axes reported, `direction` an array | the axis it travelled furthest along, `direction` always a string — equal travel is no swipe |
+  | the click after a swipe | fires, and a link under the finger navigates | swallowed in capture when a swipe committed, `detail` letting Enter on a link through |
+
+  A gesture as far down as across says nothing about which was meant, and reporting both left
+  the caller to pick anyway. The click is the one that bites in the field: a browser stops
+  synthesising it past a slop most thresholds clear — most, not all, and the one that still
+  fires navigates away from a page the reader was only swiping through.
+
+  `mouse: false` in the options object refuses the mouse, because reading a drag from a
+  desktop pointer costs the page its text selection, its image dragging and its link clicks —
+  right for a carousel of linked slides, wrong where the drag *is* the interaction. It stays
+  on by default, so a mouse swipe keeps working where it already did. Thresholds are
+  untouched: 150px, 0ms.
+
+### Fixed
+
+- **`swipe`** dispatched its `swipe` event only when a callback was passed, so the
+  listener-only usage its own `@example` shows — `element.addEventListener('swipe', ...)` —
+  never fired. The event now fires whenever the gesture qualifies, callback or not.
+
+- **`swipe`** marked the element with a `swipe-enabled` attribute and refused to bind an
+  element twice, returning `undefined` rather than a handle — and `destroy()` never cleared
+  the attribute, so an element that had been unbound could never be bound again. The attribute
+  is gone; each call returns its own `destroy` and the caller owns it. Without an element it
+  returns `null` now, as its `@returns` always said.
+
 ## [1.6.0] - 2026-08-06
 
 ### Added
