@@ -60,8 +60,8 @@ export function escapeRegExp(string) {
 }
 
 /**
- * @ignore
  * Find the index of the closing parenthesis matching the opening one at the given index
+ * @ignore
  * @param {string} str The string to search
  * @param {number} openIndex The index of the opening parenthesis
  * @returns {number} The index of the matching closing parenthesis, or -1 if not found
@@ -77,8 +77,8 @@ function findMatchingParen(str, openIndex) {
 }
 
 /**
- * @ignore
  * Extract all !() negation extglob patterns from a glob string
+ * @ignore
  * @param {string} glob The glob pattern
  * @returns {Array<{start: number, end: number, inner: string}>} Array of negation descriptors with start/end indices and inner content
  */
@@ -95,8 +95,8 @@ function extractNegatedGlobs(glob) {
 }
 
 /**
- * @ignore
  * Build a glob variant by replacing !() negations — one is expanded to @() for matching, the rest become * wildcards
+ * @ignore
  * @param {string} glob The original glob pattern
  * @param {Array<{start: number, end: number, inner: string}>} negations The negation descriptors from extractNegatedGlobs
  * @param {number} expandIndex The index of the negation to expand as @(), or -1 to replace all with *
@@ -115,9 +115,9 @@ function buildGlobVariant(glob, negations, expandIndex) {
 }
 
 /**
- * @ignore
  * Handle !() negation extglob patterns by building a positive regex and negative regexes, 
  * returning an object with a test method that matches the positive but rejects the negatives
+ * @ignore
  * @param {string} glob The glob pattern containing !() negations
  * @param {boolean} [anchored=false] Whether to anchor the regex with ^ and $ for exact matching
  * @returns {{test: function}|null} An object with a test method, or null if no negations are found
@@ -156,8 +156,8 @@ function convertGlobNegationsToRegex(glob, anchored = false) {
 }
 
 /**
- * @ignore
  * Convert a glob pattern to a regex source string by parsing glob syntax character by character
+ * @ignore
  * @param {string} glob The glob pattern to convert
  * @param {boolean} [anchored=false] Whether to anchor the regex with ^ and $ for exact matching
  * @returns {string} The regex source string
