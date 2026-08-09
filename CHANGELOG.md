@@ -18,6 +18,19 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ### Added
 
+- **`fold(text)`** and **`matchesQuery(label, query)`** in `helpers` — the match a filtering
+  list needs, folded so a keyboard without diacritics still finds the words that have them.
+  `fold` lower-cases and strips accents; `matchesQuery` asks whether a label contains a query
+  with both sides folded, and an empty query matches everything so an unfiltered list is the
+  same code path as a filtered one.
+
+  Written for [`<combobox-elemental>`](https://github.com/stamat/book-of-elementals) and
+  moved down here now that a second filtering list wants them. `removeAccents` gets most of
+  the way: what it cannot do is the stroked letters, which are single code points with no
+  combining mark to strip, so `đ` survives NFKD intact and a search for `dordevic` misses
+  `Đorđević` without a second pass. Not `slugify` either — that one is for URLs and drops
+  everything outside `[\w0-9-]`, which leaves `Београд` and `北京` as empty strings.
+
 - **`keyboard`, a new subject module** — shortcuts, sequences, and the input-intent pair that
   used to live in `dom`.
 

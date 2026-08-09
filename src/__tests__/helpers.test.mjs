@@ -27,6 +27,8 @@ import {
   slugify,
   humanize,
   removeAccents,
+  fold,
+  matchesQuery,
   stripHTMLTags,
   closestNumber,
   truncateString,
@@ -788,4 +790,65 @@ test('dedupe: cyclic structures terminate and equal cycles collapse', () => {
 test('dedupe: twins that differ only in a symbol-keyed value both stay', () => {
   const s = Symbol('s')
   expect(dedupe([{ k: 1, [s]: 1 }, { k: 1, [s]: 2 }])).toHaveLength(2)
+})
+
+// Moved here from `<combobox-elemental>`, which is where these were written and where the
+// cases came from — a filtering list is the thing that needs them, and there is now more
+// than one.
+
+test('a query matches anywhere in the label, not only at its start', () => {
+  // "contains" rather than "starts with", because the reader searching a list of cities
+  // for "york" wants New York and knows it is not the first word.
+  expect(matchesQuery('New York', 'york')).toBe(true)
+  expect(matchesQuery('New York', 'new')).toBe(true)
+  expect(matchesQuery('New York', 'boston')).toBe(false)
+})
+
+test('case is not part of the search', () => {
+  expect(matchesQuery('Lemon', 'LEM')).toBe(true)
+  expect(matchesQuery('LEMON', 'lem')).toBe(true)
+})
+
+test('an empty query matches everything, so an unfiltered list is every label', () => {
+  expect(matchesQuery('Lemon', '')).toBe(true)
+  expect(matchesQuery('Lemon', '   ')).toBe(true)
+})
+
+test('a keyboard without diacritics still finds the words that have them', () => {
+  // Typing `sipka` on an English layout has to find `Šipka`, or the search is unusable
+  // to exactly the readers whose language needs it.
+  expect(matchesQuery('Šipka', 'sipka')).toBe(true)
+  expect(matchesQuery('Čačak', 'cacak')).toBe(true)
+  expect(matchesQuery('Ćuprija', 'cuprija')).toBe(true)
+  expect(matchesQuery('Kraków', 'krakow')).toBe(true)
+  expect(matchesQuery('Zürich', 'zurich')).toBe(true)
+})
+
+test('the stroked letters fold too, which decomposition alone does not do', () => {
+  // `đ`, `ø` and `ł` are single code points with no combining mark to strip, so NFD
+  // leaves them exactly as they were and a search for "dordje" finds nothing.
+  expect(fold('Đorđe')).toBe('dorde')
+  expect(fold('Łódź')).toBe('lodz')
+  expect(matchesQuery('Đorđević', 'dordevic')).toBe(true)
+  expect(matchesQuery('Nørrebro', 'norrebro')).toBe(true)
+})
+
+test('a script with no Latin in it survives folding whole', () => {
+  // The reason this is not `slugify`, which is further down the same file and would be the
+  // obvious thing to reach for: it is for URLs, so it drops everything outside `[\w0-9-]`
+  // and leaves a Cyrillic or CJK label as an empty string — a search box that cannot find
+  // Београд on a Serbian site.
+  expect(fold('Београд')).toBe('београд')
+  expect(matchesQuery('Београд', 'бео')).toBe(true)
+  expect(matchesQuery('北京', '北')).toBe(true)
+})
+
+test('a ligature is the letters it stands for', () => {
+  expect(matchesQuery('Straße', 'strasse')).toBe(true)
+  expect(matchesQuery('Œuvre', 'oeuvre')).toBe(true)
+})
+
+test('a diacritic typed in the query is not a reason to miss the word', () => {
+  // Both sides fold, so the reader who does have the layout is not punished for using it.
+  expect(matchesQuery('Cacak', 'čačak')).toBe(true)
 })

@@ -815,6 +815,63 @@ export function removeAccents(inputString) {
   return inputString.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/Œ/g, 'OE').replace(/œ/g, 'oe').replace(/Æ/g, 'AE').replace(/æ/g, 'ae').replace(/ß/g, 'ss').normalize('NFC')
 }
 
+/** Single code points that carry a stroke rather than a combining mark, so decomposition
+ * has nothing to strip off them. Serbian `đ` is the one that matters here; the rest are
+ * the same shape of problem in the neighbouring alphabets. */
+const STROKES = { đ: 'd', ð: 'd', ł: 'l', ø: 'o', ħ: 'h' }
+
+/**
+ * Text flattened to what a reader can type on any keyboard: lower case, with the
+ * diacritics taken off.
+ *
+ * `removeAccents` does the part that is the same everywhere — NFKD, the combining marks
+ * dropped, and the ligatures that are two letters wearing one glyph (`œ`, `æ`, `ß`)
+ * spelled out. What it leaves is the stroked letters, which are single code points with no
+ * mark to strip: `đ` comes out of decomposition exactly as it went in, so a search for
+ * `dordevic` would miss `Đorđević` without the second pass.
+ *
+ * Not `slugify`, further down this same file, which looks like the same job. That one is
+ * for URLs, so it drops everything outside `[\w0-9-]` — `Београд` comes out empty, `北京`
+ * comes out empty, `Đorđe` comes out as `ore`. A search box that cannot find a Cyrillic
+ * city on a Serbian site is not a smaller bug than one that cannot fold an accent.
+ *
+ * @param {string} text
+ * @returns {string}
+ * @example
+ * fold('Đorđe') // => 'dorde'
+ * fold('Łódź') // => 'lodz'
+ * fold('Straße') // => 'strasse'
+ * fold('Београд') // => 'београд', a script with no Latin in it survives whole
+ */
+export function fold(text) {
+  return removeAccents(text).toLowerCase().replace(/[đðłøħ]/g, (c) => STROKES[c])
+}
+
+/**
+ * Whether a label answers what has been typed — the match a filtering list needs.
+ *
+ * "Contains" and not "starts with": the reader looking through a list of cities for `york`
+ * knows New York is not spelled that way and is asking for the one word they remember. Both
+ * sides fold, so a query typed with diacritics and one typed without both land on the same
+ * labels.
+ *
+ * An empty query matches everything, which is what makes an unfiltered list the same code
+ * path as a filtered one.
+ *
+ * @param {string} label
+ * @param {string} query
+ * @returns {boolean}
+ * @example
+ * matchesQuery('New York', 'york') // => true
+ * matchesQuery('Šipka', 'sipka') // => true
+ * matchesQuery('Lemon', '') // => true
+ * matchesQuery('New York', 'boston') // => false
+ */
+export function matchesQuery(label, query) {
+  const needle = fold(query.trim())
+  return needle === '' || fold(label).includes(needle)
+}
+
 /**
  * Strip HTML tags from a string
  * 
