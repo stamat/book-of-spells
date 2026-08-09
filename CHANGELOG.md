@@ -18,18 +18,17 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ### Added
 
-- **`fold(text)`** and **`matchesQuery(label, query)`** in `helpers` — the match a filtering
-  list needs, folded so a keyboard without diacritics still finds the words that have them.
-  `fold` lower-cases and strips accents; `matchesQuery` asks whether a label contains a query
-  with both sides folded, and an empty query matches everything so an unfiltered list is the
-  same code path as a filtered one.
+- **`matchesSearch(label, search)`** in `helpers` — the match a filtering list needs: whether
+  a label contains what has been typed, with both sides accent-folded and lower-cased, and an
+  empty search matching everything so an unfiltered list is the same code path as a filtered
+  one. Written for [`<combobox-elemental>`](https://github.com/stamat/book-of-elementals) and
+  moved down here now that a second filtering list wants it.
 
-  Written for [`<combobox-elemental>`](https://github.com/stamat/book-of-elementals) and
-  moved down here now that a second filtering list wants them. `removeAccents` gets most of
-  the way: what it cannot do is the stroked letters, which are single code points with no
-  combining mark to strip, so `đ` survives NFKD intact and a search for `dordevic` misses
-  `Đorđević` without a second pass. Not `slugify` either — that one is for URLs and drops
-  everything outside `[\w0-9-]`, which leaves `Београд` and `北京` as empty strings.
+  Contains rather than starts-with, because the reader looking through a list of cities for
+  `york` knows New York is not spelled that way. Not `slugify`, which starts the same way and
+  then keeps going: that one is for URLs, so it drops everything outside `[\w0-9-]` and
+  leaves `Београд` and `北京` as empty strings — a search box that cannot find a Cyrillic city
+  on a Serbian site is not a smaller bug than one that cannot fold an accent.
 
 - **`keyboard`, a new subject module** — shortcuts, sequences, and the input-intent pair that
   used to live in `dom`.
@@ -110,6 +109,27 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   untouched: 150px, 0ms.
 
 ### Fixed
+
+- **`removeAccents`** left a letter alone whenever the mark is written *through* the glyph
+  instead of above it — `Đ Ł Ø Ħ Ŧ Ǥ Þ ẞ Ŋ ı` and their lower cases. NFKD has nothing to
+  separate off them, so `removeAccents('Đorđe')` returned `Đorđe` unchanged while
+  `removeAccents('Crème')` worked, and the same string could come out half-folded:
+  `removeAccents('Łódź')` was `Łodz`. They are mapped by hand now, beside `Æ`, `Œ` and `ß`,
+  which were already handled that way.
+
+  `slugify` is where this drew blood, because the `[^\w0-9-]` pass it runs afterwards does
+  not leave an unfolded letter alone — it deletes it. `Đorđe Balašević` slugified to
+  `ore-balasevic`, `Łódź` to `odz`, `Nørrebro` to `nrrebro`: the letter vanished from the URL
+  rather than losing its stroke. Nothing in `slugify` changed; it inherits the fix.
+
+  `ẞ` was the same bug wearing a hat — `ß` had spelled out to `ss` since this function was
+  written, so a word folded differently in caps than in lower case.
+
+  Where the fold stops: the IPA and Africanist letters — `Ɔ`, `Ɛ`, `Ʃ`, `Ʒ`, the click
+  letters — come through whole, because in the texts those appear in the letter is the
+  content and folding it to `O`, `E`, `S`, `3` destroys the word. Cyrillic, Greek, Arabic and
+  CJK likewise: mapping those to Latin is transliteration, which is answered per language and
+  not per character, and is not this function's job.
 
 - **`swipe`** dispatched its `swipe` event only when a callback was passed, so the
   listener-only usage its own `@example` shows — `element.addEventListener('swipe', ...)` —

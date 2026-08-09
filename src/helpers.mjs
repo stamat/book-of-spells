@@ -792,59 +792,64 @@ export function mapPropertyToProperty(arr, keyPropertyName, valuePropertyName) {
   return res
 }
 
+/** The letters NFKD cannot help with, because they carry no separable combining mark: the
+ * ones written through the glyph (`Đ`, `Ø`, `Ŧ`), the ones that are two letters wearing one
+ * (`Æ`, `ß`, `Þ`), and Turkish `ı`, which is a letter in its own right rather than an `i`
+ * missing something. Serbian `đ` is the one that matters here; the rest are the same shape
+ * of problem next door.
+ *
+ * Deliberately stops at the living orthographies. The IPA and Africanist letters — `Ɔ`, `Ɛ`,
+ * `Ʃ`, `Ʒ` and the click letters — survive whole, because in the texts they appear in the
+ * letter *is* the content and folding it to `O`, `E`, `S`, `3` would destroy the word. */
+const PLAIN = {
+  Æ: 'AE', æ: 'ae', Œ: 'OE', œ: 'oe', ß: 'ss', ẞ: 'SS', Þ: 'TH', þ: 'th',
+  Đ: 'D', đ: 'd', Ð: 'D', ð: 'd', Ø: 'O', ø: 'o', Ł: 'L', ł: 'l', Ŀ: 'L', ŀ: 'l',
+  Ħ: 'H', ħ: 'h', Ŧ: 'T', ŧ: 't', Ǥ: 'G', ǥ: 'g', Ŋ: 'N', ŋ: 'n', ı: 'i'
+}
+
+/** Runs *before* NFKD, and the order is the point: `Ŀ` has a compatibility decomposition to
+ * `L` + `·`, so after NFKD there is no `Ŀ` left to match and the middle dot survives into the
+ * output as a stray character. Every replacement is ASCII, so decomposing afterwards has
+ * nothing left to do to them. */
+const PLAIN_RE = new RegExp(`[${Object.keys(PLAIN).join('')}]`, 'g')
+
 /**
- * Remove accents from a string
- * 
+ * A string flattened to plain Latin: the accents taken off, the letters that are two letters
+ * wearing one glyph spelled out, and the stroked letters given their plain form. Case is
+ * preserved — `.toLowerCase()` afterwards if a comparison needs it.
+ *
+ * Two mechanisms, because Unicode offers no single one. NFKD decomposes and the combining
+ * marks are dropped, which handles `é` and `ź` and unpacks the ligatures and digraphs that
+ * have a compatibility decomposition — `ﬁ`, `Ǆ`, `Ǉ`, `Ĳ`. What is left has no separable
+ * mark to strip and is mapped by hand: without that pass `removeAccents('Đorđe')` returns
+ * `Đorđe` unchanged, and a `[^\w]` filter downstream then deletes the letter outright rather
+ * than plainifying it.
+ *
+ * Only the scripts that share the Latin alphabet are touched. Cyrillic, Greek, Arabic and
+ * CJK come through whole, because mapping those to Latin is transliteration — a different
+ * job, answered per language rather than per character.
+ *
  * @param {string} inputString
  * @returns string
  * @example
  * removeAccents('áéíóú') // => 'aeiou'
  * removeAccents('ÁÉÍÓÚ') // => 'AEIOU'
  * removeAccents('señor') // => 'senor'
- * removeAccents('Œ') // => 'OE'
- * removeAccents('œ') // => 'oe'
- * removeAccents('Æ') // => 'AE'
- * removeAccents('æ') // => 'ae'
- * removeAccents('ß') // => 'ss'
  * removeAccents('Crème Brûlée') // => 'Creme Brulee'
- * removeAccents('ﬀ') // => 'ff'
+ * removeAccents('Đorđe') // => 'Dorde'
+ * removeAccents('Łódź') // => 'Lodz'
+ * removeAccents('Nørrebro') // => 'Norrebro'
+ * removeAccents('Æ') // => 'AE'
+ * removeAccents('Œ') // => 'OE'
+ * removeAccents('ß') // => 'ss'
+ * removeAccents('Straẞe') // => 'Strasse'
+ * removeAccents('Þingvellir') // => 'THingvellir'
+ * removeAccents('Ǆungla') // => 'DZungla'
  * removeAccents('ﬁ') // => 'fi'
- * removeAccents('ﬂ') // => 'fl'
+ * removeAccents('Београд') // => 'Београд', a script with no Latin in it is left alone
  */
 export function removeAccents(inputString) {
-  return inputString.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/Œ/g, 'OE').replace(/œ/g, 'oe').replace(/Æ/g, 'AE').replace(/æ/g, 'ae').replace(/ß/g, 'ss').normalize('NFC')
-}
-
-/** Single code points that carry a stroke rather than a combining mark, so decomposition
- * has nothing to strip off them. Serbian `đ` is the one that matters here; the rest are
- * the same shape of problem in the neighbouring alphabets. */
-const STROKES = { đ: 'd', ð: 'd', ł: 'l', ø: 'o', ħ: 'h' }
-
-/**
- * Text flattened to what a reader can type on any keyboard: lower case, with the
- * diacritics taken off.
- *
- * `removeAccents` does the part that is the same everywhere — NFKD, the combining marks
- * dropped, and the ligatures that are two letters wearing one glyph (`œ`, `æ`, `ß`)
- * spelled out. What it leaves is the stroked letters, which are single code points with no
- * mark to strip: `đ` comes out of decomposition exactly as it went in, so a search for
- * `dordevic` would miss `Đorđević` without the second pass.
- *
- * Not `slugify`, further down this same file, which looks like the same job. That one is
- * for URLs, so it drops everything outside `[\w0-9-]` — `Београд` comes out empty, `北京`
- * comes out empty, `Đorđe` comes out as `ore`. A search box that cannot find a Cyrillic
- * city on a Serbian site is not a smaller bug than one that cannot fold an accent.
- *
- * @param {string} text
- * @returns {string}
- * @example
- * fold('Đorđe') // => 'dorde'
- * fold('Łódź') // => 'lodz'
- * fold('Straße') // => 'strasse'
- * fold('Београд') // => 'београд', a script with no Latin in it survives whole
- */
-export function fold(text) {
-  return removeAccents(text).toLowerCase().replace(/[đðłøħ]/g, (c) => STROKES[c])
+  return inputString.replace(PLAIN_RE, (c) => PLAIN[c]).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').normalize('NFC')
 }
 
 /**
@@ -852,24 +857,29 @@ export function fold(text) {
  *
  * "Contains" and not "starts with": the reader looking through a list of cities for `york`
  * knows New York is not spelled that way and is asking for the one word they remember. Both
- * sides fold, so a query typed with diacritics and one typed without both land on the same
- * labels.
+ * sides go through `removeAccents` and lower case, so a search typed with diacritics and one
+ * typed without both land on the same labels.
  *
- * An empty query matches everything, which is what makes an unfiltered list the same code
+ * An empty search matches everything, which is what makes an unfiltered list the same code
  * path as a filtered one.
  *
+ * Not `slugify`, further down this same file, which starts the same way and then keeps
+ * going: that one is for URLs, so it drops everything outside `[\w0-9-]` and leaves
+ * `Београд` and `北京` as empty strings. A search box that cannot find a Cyrillic city on a
+ * Serbian site is not a smaller bug than one that cannot fold an accent.
+ *
  * @param {string} label
- * @param {string} query
+ * @param {string} search
  * @returns {boolean}
  * @example
- * matchesQuery('New York', 'york') // => true
- * matchesQuery('Šipka', 'sipka') // => true
- * matchesQuery('Lemon', '') // => true
- * matchesQuery('New York', 'boston') // => false
+ * matchesSearch('New York', 'york') // => true
+ * matchesSearch('Šipka', 'sipka') // => true
+ * matchesSearch('Lemon', '') // => true
+ * matchesSearch('New York', 'boston') // => false
  */
-export function matchesQuery(label, query) {
-  const needle = fold(query.trim())
-  return needle === '' || fold(label).includes(needle)
+export function matchesSearch(label, search) {
+  const needle = removeAccents(search.trim()).toLowerCase()
+  return needle === '' || removeAccents(label).toLowerCase().includes(needle)
 }
 
 /**
@@ -887,16 +897,21 @@ export function stripHTMLTags(inputString) {
 
 /**
  * Slugify a string, e.g. 'Foo Bar' => 'foo-bar'. Similar to WordPress' sanitize_title(). Will remove accents and HTML tags.
- * 
- * @param {string} str 
+ *
+ * Anything outside `[\w0-9-]` is dropped, so a script with no Latin in it — `Београд`, `北京`
+ * — slugifies to the empty string. That is the job: a slug is for a URL. `matchesSearch` is
+ * the one for a search box, which keeps those scripts whole.
+ *
+ * @param {string} str
  * @returns string
  * @example
  * slugify('Foo Bar') // => 'foo-bar'
  * slugify('Foo Bar <span>baz</span>') // => 'foo-bar-baz'
+ * slugify('Đorđe Balašević') // => 'dorde-balasevic'
+ * slugify('Łódź') // => 'lodz'
  */
 export function slugify(str) {
-  str = str.trim().toLowerCase()
-  str = removeAccents(str)
+  str = removeAccents(str.trim()).toLowerCase()
   str = stripHTMLTags(str)
   return str.replace(/\s+|\.+|\/+|\\+|—+|–+/g, '-').replace(/[^\w0-9\-]+/g, '').replace(/-{2,}/g, '-').replace(/^-|-$/g, '')
 }

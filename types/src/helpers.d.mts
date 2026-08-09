@@ -356,7 +356,20 @@ export declare function mapByProperty(arr: any[], propertyName: string): {};
  */
 export declare function mapPropertyToProperty(arr: any[], keyPropertyName: string, valuePropertyName: string): {};
 /**
- * Remove accents from a string
+ * A string flattened to plain Latin: the accents taken off, the letters that are two letters
+ * wearing one glyph spelled out, and the stroked letters given their plain form. Case is
+ * preserved — `.toLowerCase()` afterwards if a comparison needs it.
+ *
+ * Two mechanisms, because Unicode offers no single one. NFKD decomposes and the combining
+ * marks are dropped, which handles `é` and `ź` and unpacks the ligatures and digraphs that
+ * have a compatibility decomposition — `ﬁ`, `Ǆ`, `Ǉ`, `Ĳ`. What is left has no separable
+ * mark to strip and is mapped by hand: without that pass `removeAccents('Đorđe')` returns
+ * `Đorđe` unchanged, and a `[^\w]` filter downstream then deletes the letter outright rather
+ * than plainifying it.
+ *
+ * Only the scripts that share the Latin alphabet are touched. Cyrillic, Greek, Arabic and
+ * CJK come through whole, because mapping those to Latin is transliteration — a different
+ * job, answered per language rather than per character.
  *
  * @param {string} inputString
  * @returns string
@@ -364,62 +377,46 @@ export declare function mapPropertyToProperty(arr: any[], keyPropertyName: strin
  * removeAccents('áéíóú') // => 'aeiou'
  * removeAccents('ÁÉÍÓÚ') // => 'AEIOU'
  * removeAccents('señor') // => 'senor'
- * removeAccents('Œ') // => 'OE'
- * removeAccents('œ') // => 'oe'
- * removeAccents('Æ') // => 'AE'
- * removeAccents('æ') // => 'ae'
- * removeAccents('ß') // => 'ss'
  * removeAccents('Crème Brûlée') // => 'Creme Brulee'
- * removeAccents('ﬀ') // => 'ff'
+ * removeAccents('Đorđe') // => 'Dorde'
+ * removeAccents('Łódź') // => 'Lodz'
+ * removeAccents('Nørrebro') // => 'Norrebro'
+ * removeAccents('Æ') // => 'AE'
+ * removeAccents('Œ') // => 'OE'
+ * removeAccents('ß') // => 'ss'
+ * removeAccents('Straẞe') // => 'Strasse'
+ * removeAccents('Þingvellir') // => 'THingvellir'
+ * removeAccents('Ǆungla') // => 'DZungla'
  * removeAccents('ﬁ') // => 'fi'
- * removeAccents('ﬂ') // => 'fl'
+ * removeAccents('Београд') // => 'Београд', a script with no Latin in it is left alone
  */
 export declare function removeAccents(inputString: string): string;
-/**
- * Text flattened to what a reader can type on any keyboard: lower case, with the
- * diacritics taken off.
- *
- * `removeAccents` does the part that is the same everywhere — NFKD, the combining marks
- * dropped, and the ligatures that are two letters wearing one glyph (`œ`, `æ`, `ß`)
- * spelled out. What it leaves is the stroked letters, which are single code points with no
- * mark to strip: `đ` comes out of decomposition exactly as it went in, so a search for
- * `dordevic` would miss `Đorđević` without the second pass.
- *
- * Not `slugify`, further down this same file, which looks like the same job. That one is
- * for URLs, so it drops everything outside `[\w0-9-]` — `Београд` comes out empty, `北京`
- * comes out empty, `Đorđe` comes out as `ore`. A search box that cannot find a Cyrillic
- * city on a Serbian site is not a smaller bug than one that cannot fold an accent.
- *
- * @param {string} text
- * @returns {string}
- * @example
- * fold('Đorđe') // => 'dorde'
- * fold('Łódź') // => 'lodz'
- * fold('Straße') // => 'strasse'
- * fold('Београд') // => 'београд', a script with no Latin in it survives whole
- */
-export declare function fold(text: string): string;
 /**
  * Whether a label answers what has been typed — the match a filtering list needs.
  *
  * "Contains" and not "starts with": the reader looking through a list of cities for `york`
  * knows New York is not spelled that way and is asking for the one word they remember. Both
- * sides fold, so a query typed with diacritics and one typed without both land on the same
- * labels.
+ * sides go through `removeAccents` and lower case, so a search typed with diacritics and one
+ * typed without both land on the same labels.
  *
- * An empty query matches everything, which is what makes an unfiltered list the same code
+ * An empty search matches everything, which is what makes an unfiltered list the same code
  * path as a filtered one.
  *
+ * Not `slugify`, further down this same file, which starts the same way and then keeps
+ * going: that one is for URLs, so it drops everything outside `[\w0-9-]` and leaves
+ * `Београд` and `北京` as empty strings. A search box that cannot find a Cyrillic city on a
+ * Serbian site is not a smaller bug than one that cannot fold an accent.
+ *
  * @param {string} label
- * @param {string} query
+ * @param {string} search
  * @returns {boolean}
  * @example
- * matchesQuery('New York', 'york') // => true
- * matchesQuery('Šipka', 'sipka') // => true
- * matchesQuery('Lemon', '') // => true
- * matchesQuery('New York', 'boston') // => false
+ * matchesSearch('New York', 'york') // => true
+ * matchesSearch('Šipka', 'sipka') // => true
+ * matchesSearch('Lemon', '') // => true
+ * matchesSearch('New York', 'boston') // => false
  */
-export declare function matchesQuery(label: string, query: string): boolean;
+export declare function matchesSearch(label: string, search: string): boolean;
 /**
  * Strip HTML tags from a string
  *
@@ -433,11 +430,17 @@ export declare function stripHTMLTags(inputString: string): string;
 /**
  * Slugify a string, e.g. 'Foo Bar' => 'foo-bar'. Similar to WordPress' sanitize_title(). Will remove accents and HTML tags.
  *
+ * Anything outside `[\w0-9-]` is dropped, so a script with no Latin in it — `Београд`, `北京`
+ * — slugifies to the empty string. That is the job: a slug is for a URL. `matchesSearch` is
+ * the one for a search box, which keeps those scripts whole.
+ *
  * @param {string} str
  * @returns string
  * @example
  * slugify('Foo Bar') // => 'foo-bar'
  * slugify('Foo Bar <span>baz</span>') // => 'foo-bar-baz'
+ * slugify('Đorđe Balašević') // => 'dorde-balasevic'
+ * slugify('Łódź') // => 'lodz'
  */
 export declare function slugify(str: string): string;
 /**

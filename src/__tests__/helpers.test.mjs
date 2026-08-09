@@ -27,8 +27,7 @@ import {
   slugify,
   humanize,
   removeAccents,
-  fold,
-  matchesQuery,
+  matchesSearch,
   stripHTMLTags,
   closestNumber,
   truncateString,
@@ -308,6 +307,15 @@ test('slugify', () => {
   slugifyData.forEach(({ input, expected }) => {
     expect(slugify(input)).toBe(expected)
   })
+})
+
+test('a slug keeps the stroked letters instead of dropping them on the floor', () => {
+  // Before `removeAccents` mapped the strokes, `đ` and `ł` came through it intact — there is
+  // no combining mark on them to strip — and the `[^\w0-9-]` pass that follows deleted them
+  // outright, so the letter vanished from the URL instead of losing its stroke.
+  expect(slugify('Đorđe Balašević')).toBe('dorde-balasevic')
+  expect(slugify('Łódź')).toBe('lodz')
+  expect(slugify('Nørrebro')).toBe('norrebro')
 })
 
 test('humanize', () => {
@@ -796,59 +804,92 @@ test('dedupe: twins that differ only in a symbol-keyed value both stay', () => {
 // cases came from — a filtering list is the thing that needs them, and there is now more
 // than one.
 
-test('a query matches anywhere in the label, not only at its start', () => {
+test('a search matches anywhere in the label, not only at its start', () => {
   // "contains" rather than "starts with", because the reader searching a list of cities
   // for "york" wants New York and knows it is not the first word.
-  expect(matchesQuery('New York', 'york')).toBe(true)
-  expect(matchesQuery('New York', 'new')).toBe(true)
-  expect(matchesQuery('New York', 'boston')).toBe(false)
+  expect(matchesSearch('New York', 'york')).toBe(true)
+  expect(matchesSearch('New York', 'new')).toBe(true)
+  expect(matchesSearch('New York', 'boston')).toBe(false)
 })
 
 test('case is not part of the search', () => {
-  expect(matchesQuery('Lemon', 'LEM')).toBe(true)
-  expect(matchesQuery('LEMON', 'lem')).toBe(true)
+  expect(matchesSearch('Lemon', 'LEM')).toBe(true)
+  expect(matchesSearch('LEMON', 'lem')).toBe(true)
 })
 
-test('an empty query matches everything, so an unfiltered list is every label', () => {
-  expect(matchesQuery('Lemon', '')).toBe(true)
-  expect(matchesQuery('Lemon', '   ')).toBe(true)
+test('an empty search matches everything, so an unfiltered list is every label', () => {
+  expect(matchesSearch('Lemon', '')).toBe(true)
+  expect(matchesSearch('Lemon', '   ')).toBe(true)
 })
 
 test('a keyboard without diacritics still finds the words that have them', () => {
   // Typing `sipka` on an English layout has to find `Šipka`, or the search is unusable
   // to exactly the readers whose language needs it.
-  expect(matchesQuery('Šipka', 'sipka')).toBe(true)
-  expect(matchesQuery('Čačak', 'cacak')).toBe(true)
-  expect(matchesQuery('Ćuprija', 'cuprija')).toBe(true)
-  expect(matchesQuery('Kraków', 'krakow')).toBe(true)
-  expect(matchesQuery('Zürich', 'zurich')).toBe(true)
+  expect(matchesSearch('Šipka', 'sipka')).toBe(true)
+  expect(matchesSearch('Čačak', 'cacak')).toBe(true)
+  expect(matchesSearch('Ćuprija', 'cuprija')).toBe(true)
+  expect(matchesSearch('Kraków', 'krakow')).toBe(true)
+  expect(matchesSearch('Zürich', 'zurich')).toBe(true)
 })
 
-test('the stroked letters fold too, which decomposition alone does not do', () => {
-  // `đ`, `ø` and `ł` are single code points with no combining mark to strip, so NFD
-  // leaves them exactly as they were and a search for "dordje" finds nothing.
-  expect(fold('Đorđe')).toBe('dorde')
-  expect(fold('Łódź')).toBe('lodz')
-  expect(matchesQuery('Đorđević', 'dordevic')).toBe(true)
-  expect(matchesQuery('Nørrebro', 'norrebro')).toBe(true)
+test('the stroked letters lose their stroke, which decomposition alone does not do', () => {
+  // `đ`, `ø` and `ł` are single code points with no combining mark to strip, so NFKD
+  // leaves them exactly as they were and a search for "dordevic" finds nothing.
+  expect(removeAccents('Đorđe')).toBe('Dorde')
+  expect(removeAccents('Łódź')).toBe('Lodz')
+  expect(removeAccents('Nørrebro')).toBe('Norrebro')
+  expect(matchesSearch('Đorđević', 'dordevic')).toBe(true)
+  expect(matchesSearch('Nørrebro', 'norrebro')).toBe(true)
 })
 
-test('a script with no Latin in it survives folding whole', () => {
+test('a letter that is two letters wearing one glyph is spelled out', () => {
+  // The digraphs come free from NFKD's compatibility decomposition; the ligature letters
+  // decompose to nothing and are mapped by hand. Both have to work or a Serbian, Dutch or
+  // Icelandic label is unfindable.
+  expect(removeAccents('Ǆungla')).toBe('DZungla')
+  expect(removeAccents('Ǉubljana')).toBe('LJubljana')
+  expect(removeAccents('Ĳsselmeer')).toBe('IJsselmeer')
+  expect(removeAccents('Þingvellir')).toBe('THingvellir')
+  expect(removeAccents('ﬁreﬂy')).toBe('firefly')
+})
+
+test('the capital sharp s spells out like the lower case one', () => {
+  // `ß` has spelled out to `ss` since this function was written; `ẞ` came through untouched,
+  // so the same word in caps folded differently from the word in lower case.
+  expect(removeAccents('Straße')).toBe('Strasse')
+  expect(removeAccents('Straẞe')).toBe('StraSSe')
+})
+
+test('a letter that is not a decorated letter is left alone', () => {
+  // The IPA and Africanist letters are where the fold has to stop: in the texts they appear
+  // in, `Ɛ` is not a dressed-up `E` — it is the content, and folding it destroys the word.
+  expect(removeAccents('Ɔ Ɛ Ʃ Ʒ ǃ')).toBe('Ɔ Ɛ Ʃ Ʒ ǃ')
+})
+
+test('removing the accents leaves the case where it found it', () => {
+  // The lower-casing belongs to the caller: a slug wants it, a label rendered back to the
+  // reader does not.
+  expect(removeAccents('Đorđe Balašević')).toBe('Dorde Balasevic')
+  expect(removeAccents('CRÈME BRÛLÉE')).toBe('CREME BRULEE')
+})
+
+test('a script with no Latin in it survives the search whole', () => {
   // The reason this is not `slugify`, which is further down the same file and would be the
   // obvious thing to reach for: it is for URLs, so it drops everything outside `[\w0-9-]`
   // and leaves a Cyrillic or CJK label as an empty string — a search box that cannot find
   // Београд on a Serbian site.
-  expect(fold('Београд')).toBe('београд')
-  expect(matchesQuery('Београд', 'бео')).toBe(true)
-  expect(matchesQuery('北京', '北')).toBe(true)
+  expect(removeAccents('Београд')).toBe('Београд')
+  expect(matchesSearch('Београд', 'бео')).toBe(true)
+  expect(matchesSearch('北京', '北')).toBe(true)
 })
 
 test('a ligature is the letters it stands for', () => {
-  expect(matchesQuery('Straße', 'strasse')).toBe(true)
-  expect(matchesQuery('Œuvre', 'oeuvre')).toBe(true)
+  expect(matchesSearch('Straße', 'strasse')).toBe(true)
+  expect(matchesSearch('Œuvre', 'oeuvre')).toBe(true)
 })
 
-test('a diacritic typed in the query is not a reason to miss the word', () => {
-  // Both sides fold, so the reader who does have the layout is not punished for using it.
-  expect(matchesQuery('Cacak', 'čačak')).toBe(true)
+test('a diacritic typed in the search is not a reason to miss the word', () => {
+  // Both sides are folded, so the reader who does have the layout is not punished for
+  // using it.
+  expect(matchesSearch('Cacak', 'čačak')).toBe(true)
 })
