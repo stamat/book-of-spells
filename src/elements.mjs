@@ -145,20 +145,41 @@ export function fits(at, size, limit) {
  * The preferred placement wins ties and wins when neither fits, because a panel with
  * nowhere good to go should at least land where the reader expects it.
  *
+ * `centred` asks for the panel to sit on the trigger's middle - what a tooltip wants, where
+ * an edge-aligned bubble points at nothing. It is a preference and not an instruction: a
+ * trigger near the edge cannot be centred on without the panel hanging off it, so the
+ * answer falls back to the edge that fits. Off by default, because `align` is spent as a
+ * CSS keyword and a caller whose stylesheet answers only `start` and `end` must not be
+ * handed a third value it has no rule for.
+ *
+ * Only the inline axis: which side of the trigger the panel goes on is a separate question,
+ * and this does not change its answer.
+ *
  * @param {DOMRect|object} trigger Rect of the trigger, in viewport coordinates
  * @param {{width: number, height: number}} panel Size of the panel
  * @param {{width: number, height: number}} viewport
  * @param {boolean} rtl Whether the layout runs right to left
+ * @param {boolean} [centred=false] Prefer the trigger's middle over either of its edges
  * @returns {{side: string, align: string}} `side` is `block-end`/`block-start`,
- *   `align` is `start`/`end`
+ *   `align` is `start`/`end`, or `center` when `centred` was asked for and there was room -
+ *   the CSS spelling, since that is where the value is spent
  * @example
  * const viewport = { width: 1000, height: 800 }
  * placeFlyout(button.getBoundingClientRect(), { width: 200, height: 300 }, viewport, false)
  * // => { side: 'block-end', align: 'start' } when there is room below
+ * @example
+ * placeFlyout(rect, { width: 200, height: 300 }, viewport, false, true)
+ * // => { side: 'block-end', align: 'center' } when the middle has room for it
  */
-export function placeFlyout(trigger, panel, viewport, rtl) {
+export function placeFlyout(trigger, panel, viewport, rtl, centred) {
   const below = fits(trigger.bottom, panel.height, viewport.height)
   const above = fits(trigger.top - panel.height, panel.height, viewport.height)
+  const side = below || !above ? 'block-end' : 'block-start'
+
+  // Written from `left` and `right` rather than from `width`, so a caller passing a plain
+  // object needs no field the edge cases here do not already use.
+  const middle = trigger.left + (trigger.right - trigger.left - panel.width) / 2
+  if (centred && fits(middle, panel.width, viewport.width)) return { side, align: 'center' }
 
   // Aligned to the trigger's inline start means its left edge in LTR and its right in
   // RTL, so the sums are written in physical terms and the direction picks the edge.
@@ -166,7 +187,7 @@ export function placeFlyout(trigger, panel, viewport, rtl) {
   const end = rtl ? trigger.left : trigger.right - panel.width
 
   return {
-    side: below || !above ? 'block-end' : 'block-start',
+    side,
     align: fits(start, panel.width, viewport.width) || !fits(end, panel.width, viewport.width)
       ? 'start'
       : 'end'

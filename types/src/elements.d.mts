@@ -97,16 +97,31 @@ export declare function fits(at: number, size: number, limit: number): boolean;
  * The preferred placement wins ties and wins when neither fits, because a panel with
  * nowhere good to go should at least land where the reader expects it.
  *
+ * `centred` asks for the panel to sit on the trigger's middle - what a tooltip wants, where
+ * an edge-aligned bubble points at nothing. It is a preference and not an instruction: a
+ * trigger near the edge cannot be centred on without the panel hanging off it, so the
+ * answer falls back to the edge that fits. Off by default, because `align` is spent as a
+ * CSS keyword and a caller whose stylesheet answers only `start` and `end` must not be
+ * handed a third value it has no rule for.
+ *
+ * Only the inline axis: which side of the trigger the panel goes on is a separate question,
+ * and this does not change its answer.
+ *
  * @param {DOMRect|object} trigger Rect of the trigger, in viewport coordinates
  * @param {{width: number, height: number}} panel Size of the panel
  * @param {{width: number, height: number}} viewport
  * @param {boolean} rtl Whether the layout runs right to left
+ * @param {boolean} [centred=false] Prefer the trigger's middle over either of its edges
  * @returns {{side: string, align: string}} `side` is `block-end`/`block-start`,
- *   `align` is `start`/`end`
+ *   `align` is `start`/`end`, or `center` when `centred` was asked for and there was room -
+ *   the CSS spelling, since that is where the value is spent
  * @example
  * const viewport = { width: 1000, height: 800 }
  * placeFlyout(button.getBoundingClientRect(), { width: 200, height: 300 }, viewport, false)
  * // => { side: 'block-end', align: 'start' } when there is room below
+ * @example
+ * placeFlyout(rect, { width: 200, height: 300 }, viewport, false, true)
+ * // => { side: 'block-end', align: 'center' } when the middle has room for it
  */
 export declare function placeFlyout(trigger: DOMRect | object, panel: {
     width: number;
@@ -114,7 +129,7 @@ export declare function placeFlyout(trigger: DOMRect | object, panel: {
 }, viewport: {
     width: number;
     height: number;
-}, rtl: boolean): {
+}, rtl: boolean, centred?: boolean): {
     side: string;
     align: string;
 };

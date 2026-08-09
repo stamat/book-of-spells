@@ -16,6 +16,26 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Added
+
+- **`placeFlyout(trigger, panel, viewport, rtl, centred)`** takes a fifth argument and can
+  answer `align: 'center'`. A panel aligned to one of its trigger's edges is not pointing at
+  it — a tooltip on a button wider than the bubble ends up beside the words rather than under
+  them — so `centred` asks for the trigger's middle instead.
+
+  It is a preference and not an instruction: a trigger near the viewport edge cannot be
+  centred on without the panel hanging off it, so the answer falls back to whichever edge
+  fits, exactly as before. Only the inline axis is affected — which side of the trigger the
+  panel goes on is a separate question and its answer is unchanged.
+
+  **Existing calls are untouched.** The argument defaults to off, because `align` is spent as
+  a CSS keyword and a caller whose stylesheet answers only `start` and `end` must not be
+  handed a third value it has no rule for. Opt in and that stylesheet needs a `center` case.
+
+  It answers with the CSS spelling, `center`, rather than `centre`: that is where the value
+  is spent, and a keyword translated on the way out is a keyword that gets translated wrong
+  once.
+
 ## [2.0.0] - 2026-08-09
 
 ### Added

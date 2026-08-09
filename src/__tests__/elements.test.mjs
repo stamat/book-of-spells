@@ -138,6 +138,32 @@ describe('placement', () => {
     expect(placeFlyout(rect(900, 20), PANEL, VIEWPORT, true).align).toBe('start')
   })
 
+  // Opt-in, because `align` is spent as a CSS keyword by whoever asked for the placement,
+  // and a caller whose stylesheet only answers `start` and `end` would be handed a value it
+  // has no rule for. Off by default, every existing caller keeps the placement it had.
+  test('a panel is only centred on its trigger when the caller asks for it', () => {
+    expect(placeFlyout(rect(400, 20), PANEL, VIEWPORT, false).align).toBe('start')
+    expect(placeFlyout(rect(400, 20), PANEL, VIEWPORT, false, true).align).toBe('center')
+  })
+
+  // Centring is symmetric, so there is no start edge left for the direction to pick - and it
+  // is only ever about the inline axis, so the block side still flips as it did.
+  test('a centred panel is the same in either direction, and still flips its side', () => {
+    expect(placeFlyout(rect(400, 20), PANEL, VIEWPORT, true, true).align).toBe('center')
+    expect(placeFlyout(rect(400, 760), PANEL, VIEWPORT, false, true)).toEqual({
+      side: 'block-start',
+      align: 'center'
+    })
+  })
+
+  // The ask is a preference and not an instruction: a panel centred on a trigger near the
+  // edge would hang off the viewport, and an edge it can still reach is worth more than
+  // symmetry it cannot.
+  test('a centred panel with no room for it falls back to the edge that fits', () => {
+    expect(placeFlyout(rect(20, 20), PANEL, VIEWPORT, false, true).align).toBe('start')
+    expect(placeFlyout(rect(880, 20), PANEL, VIEWPORT, false, true).align).toBe('end')
+  })
+
   test('a nested panel with room beside it opens beside it, downwards', () => {
     expect(placeSubmenu(rect(20, 20), PANEL, VIEWPORT, false)).toEqual({
       side: 'inline-end',
