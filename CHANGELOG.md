@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-08-09
+
 ### Added
 
 - **`placeFlyout(trigger, panel, viewport, rtl, centred)`** takes a fifth argument and can
