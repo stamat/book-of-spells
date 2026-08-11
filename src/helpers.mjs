@@ -89,9 +89,9 @@ export function clone(o) {
  * equals NaN, 0 equals -0), prototypes are ignored (a class instance equals
  * a plain object with the same own properties), and functions compare by
  * reference only — functions are not data. Handles Date, RegExp, boxed
- * primitives, Map, Set, typed arrays, ArrayBuffer/DataView, symbol keys and
- * cyclic structures. WeakMap/WeakSet contents are unobservable, so two
- * distinct weak collections are never equal.
+ * primitives, Map, Set, typed arrays, ArrayBuffer/SharedArrayBuffer/DataView,
+ * symbol keys and cyclic structures. WeakMap/WeakSet contents are
+ * unobservable, so two distinct weak collections are never equal.
  *
  * Versus the field, probed against fast-deep-equal 3.1.3 (`/es6`), dequal
  * 2.0.3, lodash.isequal 4.5.0 and Node 25 `util.isDeepStrictEqual`. The last
@@ -106,7 +106,7 @@ export function clone(o) {
  * | `NaN` inside a typed array | equal | not equal | not equal | equal | equal |
  * | distinct WeakMaps | never equal | equal | equal | never equal | never equal |
  * | cross-realm twin (iframe, vm) | equal | not equal — realm-bound constructor check | not equal | equal | not equal |
- * | URLs / Errors with different content | not equal — compared by toString | not equal | URL yes, Error missed | not equal | not equal |
+ * | URLs / Errors with different content | not equal — toString plus own props, so an Error's `.code` counts | not equal | URL yes, Error missed | not equal | not equal |
  * | class instance vs same-shape plain object | equal — data is data | not equal — constructor check | not equal | not equal | not equal |
  *
  * The cost of the guarantees is small: the cycle guard only engages past
@@ -209,6 +209,11 @@ function deepEqualCyclic(a, b, depth, seen) {
       case '[object Boolean]':
       case '[object String]':
         return sameValueZero(a.valueOf(), b.valueOf())
+      // a boxed symbol unwraps to its primitive, which equals by reference
+      // only — the same rule unboxed symbols get; toString would call two
+      // distinct symbols with the same description equal
+      case '[object Symbol]':
+        return a.valueOf() === b.valueOf()
       case '[object RegExp]':
         return a.source === b.source && a.flags === b.flags
       // weak collection contents cannot be enumerated — equality cannot be
@@ -218,7 +223,7 @@ function deepEqualCyclic(a, b, depth, seen) {
         return false
     }
 
-    if (tag === '[object ArrayBuffer]' || tag === '[object DataView]') {
+    if (tag === '[object ArrayBuffer]' || tag === '[object SharedArrayBuffer]' || tag === '[object DataView]') {
       a = tag === '[object DataView]' ? new Uint8Array(a.buffer, a.byteOffset, a.byteLength) : new Uint8Array(a)
       b = tag === '[object DataView]' ? new Uint8Array(b.buffer, b.byteOffset, b.byteLength) : new Uint8Array(b)
     }
@@ -239,14 +244,24 @@ function deepEqualCyclic(a, b, depth, seen) {
         seen = tracked
       }
       const isMap = tag === '[object Map]'
-      // Phase one, allocation-free: members found in b by SameValueZero.
-      // Since keys are SameValueZero-unique within each collection, every hit
-      // is a forced pairing — sizes being equal, a miss-free pass proves the
-      // bijection outright. Only the misses go to phase two.
+      // Phase one, allocation-free: members found in b by SameValueZero. A
+      // Set hit is a forced pairing — keys are SameValueZero-unique within
+      // each collection. A Map hit with mismatched values is not: the
+      // matching value may sit under a distinct deep-equal key, so the pair
+      // defers to phase two on both sides. Only object keys defer — a
+      // primitive key deep-equals nothing but its SameValueZero self, so its
+      // value mismatch is final.
       let missed = null
+      let deferred = null
       for (const key of a.keys()) {
         if (b.has(key)) {
-          if (isMap && !deepEqualCyclic(a.get(key), b.get(key), depth + 1, seen)) return false
+          if (isMap && !deepEqualCyclic(a.get(key), b.get(key), depth + 1, seen)) {
+            if (typeof key !== 'object' || key === null) return false
+            if (missed === null) missed = []
+            missed.push(key)
+            if (deferred === null) deferred = []
+            deferred.push(key)
+          }
         } else {
           if (missed === null) missed = []
           missed.push(key)
@@ -263,6 +278,12 @@ function deepEqualCyclic(a, b, depth, seen) {
       for (const key of b.keys()) {
         if (!a.has(key)) unused.push(key)
       }
+      // deferred keys exist in both maps by SameValueZero, so the !a.has
+      // filter above excluded them from b's leftovers — they re-enter here
+      // or phase two could never re-pair them
+      if (deferred !== null) {
+        for (let i = 0; i < deferred.length; i++) unused.push(deferred[i])
+      }
       outer: for (let i = 0; i < missed.length; i++) {
         for (let j = 0; j < unused.length; j++) {
           if (unused[j] === undefined) continue
@@ -278,11 +299,14 @@ function deepEqualCyclic(a, b, depth, seen) {
 
     // Host objects that stringify themselves — URL, Error and kin — carry
     // their data in toString, not in own enumerable properties; the walk
-    // below would call any two of them equal. Exotic tags only: a plain
+    // below alone would call any two of them equal. toString gates first,
+    // then the walk still runs, because an Error's data can outgrow its
+    // string form — .code assigned on a Node error is an own enumerable
+    // property toString never shows. Exotic tags only: a plain
     // [object Object] never reaches here, so a class instance with a custom
     // toString still equals its plain-object twin structurally.
     if (tag !== '[object Object]' && typeof a.toString === 'function' && a.toString !== objTag) {
-      return a.toString() === b.toString()
+      if (a.toString() !== b.toString()) return false
     }
   }
 

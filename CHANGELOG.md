@@ -16,6 +16,33 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Fixed
+
+- **`deepEqual`** called any two `SharedArrayBuffer`s equal, regardless of
+  contents: the tag never joined `ArrayBuffer`'s byte compare, so both sides
+  fell through to a walk of their zero own properties. The bytes are
+  observable through a `Uint8Array` view and now they are compared, exactly
+  as `ArrayBuffer`'s already were.
+
+- **`deepEqual`** returned false on Maps that are structurally equal. A value
+  mismatch on a SameValueZero-shared key was treated as final, but the
+  matching value can sit under a distinct deep-equal key:
+  `Map{X→1, {x:1}→2}` against `Map{X→2, {x:1}→1}` — X shared, every key the
+  same shape — has a valid pairing and got `false`. The mismatch now defers
+  to the pairwise phase. Object keys only: a primitive key deep-equals
+  nothing but its SameValueZero self, so its value mismatch stays final and
+  the common primitive-keyed path keeps its early exit.
+
+- **`deepEqual`** let `toString` speak alone for self-stringifying hosts, so
+  two Errors differing only in an assigned `.code` — the shape every Node
+  error ships — compared equal, because the string form never shows it.
+  `toString` still gates, and the own-property walk now runs behind it.
+
+- **`deepEqual`** called two boxed symbols with the same description equal:
+  `Object(Symbol('a'))` twice stringifies to `Symbol(a)` twice. Boxed
+  symbols now unwrap and equal by reference only — the rule their
+  primitives always had.
+
 ## [2.1.0] - 2026-08-09
 
 ### Added
@@ -209,11 +236,11 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   inside a bucket. What changed since 2013 is the hash — values fold to a
   32-bit FNV-1a during one walk of the live data, so no canonical string and
   no CRC table. Measured on 11,351 real GitHub event objects with 10% seeded
-  duplicates (Node 25, 2026-08): the fold dedupes in ~91ms, hashing a
+  duplicates (Node 25, 2026-08): the fold dedupes in ~140ms, hashing a
   canonical string instead takes ~274ms, a table-driven JS CRC32 over that
   string ~369ms, and pairwise `deepEqual` 7.3s. On a generated mixed-shape
-  corpus it holds near-linear to a million: 3.1s for 1.1M documents, against
-  11.4s for the canonical-string key — and the folk `JSON.stringify`-as-key
+  corpus it holds near-linear to a million: 2.7s for 1.1M documents, against
+  20.1s for the canonical-string key — and the folk `JSON.stringify`-as-key
   dedup both misses ~99% of key-order-shuffled duplicates and still loses on
   time past half a million. The hash stays deliberately
   coarse where deepEqual is subtle — Sets and Maps fold by size, Errors by

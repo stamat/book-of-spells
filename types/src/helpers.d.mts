@@ -49,9 +49,9 @@ export declare function clone(o: object): any;
  * equals NaN, 0 equals -0), prototypes are ignored (a class instance equals
  * a plain object with the same own properties), and functions compare by
  * reference only — functions are not data. Handles Date, RegExp, boxed
- * primitives, Map, Set, typed arrays, ArrayBuffer/DataView, symbol keys and
- * cyclic structures. WeakMap/WeakSet contents are unobservable, so two
- * distinct weak collections are never equal.
+ * primitives, Map, Set, typed arrays, ArrayBuffer/SharedArrayBuffer/DataView,
+ * symbol keys and cyclic structures. WeakMap/WeakSet contents are
+ * unobservable, so two distinct weak collections are never equal.
  *
  * Versus the field, probed against fast-deep-equal 3.1.3 (`/es6`), dequal
  * 2.0.3, lodash.isequal 4.5.0 and Node 25 `util.isDeepStrictEqual`. The last
@@ -66,7 +66,7 @@ export declare function clone(o: object): any;
  * | `NaN` inside a typed array | equal | not equal | not equal | equal | equal |
  * | distinct WeakMaps | never equal | equal | equal | never equal | never equal |
  * | cross-realm twin (iframe, vm) | equal | not equal — realm-bound constructor check | not equal | equal | not equal |
- * | URLs / Errors with different content | not equal — compared by toString | not equal | URL yes, Error missed | not equal | not equal |
+ * | URLs / Errors with different content | not equal — toString plus own props, so an Error's `.code` counts | not equal | URL yes, Error missed | not equal | not equal |
  * | class instance vs same-shape plain object | equal — data is data | not equal — constructor check | not equal | not equal | not equal |
  *
  * The cost of the guarantees is small: the cycle guard only engages past

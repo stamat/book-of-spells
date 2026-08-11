@@ -532,17 +532,19 @@ test('random and generateUUID fall back when crypto lacks methods', () => {
 
 // deepEqual — structural (data) equality.
 // Covered: primitives under SameValueZero (NaN equals itself, 0 equals -0),
-// property-order independence, nesting, Date, RegExp, boxed primitives,
-// Map/Set regardless of insertion order (NaN keys included), typed arrays
-// and ArrayBuffer, symbol keys, cyclic structures, Date/Array subclasses,
-// transparent Proxies, and cross-realm values via node:vm — dispatch never
-// touches realm-bound constructors.
+// property-order independence, nesting, Date, RegExp, boxed primitives
+// (boxed symbols unwrap and equal by reference, like their primitives),
+// Map/Set regardless of insertion order (NaN keys included, and a Map value
+// mismatch on a shared key re-pairs through a distinct deep-equal key),
+// typed arrays, ArrayBuffer and SharedArrayBuffer, symbol keys, cyclic
+// structures, Date/Array subclasses, transparent Proxies, and cross-realm
+// values via node:vm — dispatch never touches realm-bound constructors.
 // Deliberately not: prototype identity (data equality ignores class), sparse
 // array holes (read as undefined — JSON has no holes), WeakMap/WeakSet
 // contents (unobservable, so never equal), Promise (no special case — own
 // enumerable properties only). Host objects with a custom toString (URL,
-// Error and kin) compare by that string form instead of their empty own
-// properties.
+// Error and kin) compare by that string form gating an own-property walk,
+// so an Error's assigned .code counts too.
 
 test('deepEqual: primitives compare by value, never by coercion', () => {
   expect(deepEqual(1, 1)).toBe(true)
@@ -618,6 +620,20 @@ test('deepEqual: maps equal regardless of insertion order, keys matched deeply',
   expect(deepEqual(new Map([[1, 'a']]), new Map([[1, 'a'], [2, 'b']]))).toBe(false)
 })
 
+test('deepEqual: a Map value mismatch on a shared key is not a verdict — a distinct deep-equal key may carry the matching value', () => {
+  const shared = { x: 1 }
+  expect(deepEqual(
+    new Map([[shared, 1], [{ x: 1 }, 2]]),
+    new Map([[shared, 2], [{ x: 1 }, 1]])
+  )).toBe(true)
+  expect(deepEqual(
+    new Map([[shared, 1], [{ x: 1 }, 2]]),
+    new Map([[shared, 2], [{ x: 1 }, 3]])
+  )).toBe(false)
+  // primitive keys cannot re-pair — their value mismatch stays final
+  expect(deepEqual(new Map([[1, 'a']]), new Map([[1, 'b']]))).toBe(false)
+})
+
 test('deepEqual: sets equal regardless of order, members matched deeply', () => {
   expect(deepEqual(new Set([1, 2, 3]), new Set([3, 2, 1]))).toBe(true)
   expect(deepEqual(new Set([{ x: 1 }]), new Set([{ x: 1 }]))).toBe(true)
@@ -634,6 +650,16 @@ test('deepEqual: typed arrays compare element by element, NaN included', () => {
 test('deepEqual: array buffers compare by byte', () => {
   expect(deepEqual(new Uint8Array([1, 2]).buffer, new Uint8Array([1, 2]).buffer)).toBe(true)
   expect(deepEqual(new Uint8Array([1, 2]).buffer, new Uint8Array([1, 3]).buffer)).toBe(false)
+})
+
+test('deepEqual: shared array buffers compare by byte, not as two empty objects', () => {
+  const make = (byte) => {
+    const sab = new SharedArrayBuffer(4)
+    new Uint8Array(sab)[0] = byte
+    return sab
+  }
+  expect(deepEqual(make(1), make(1))).toBe(true)
+  expect(deepEqual(make(1), make(99))).toBe(false)
 })
 
 test('deepEqual: symbol keys count toward equality', () => {
@@ -682,6 +708,22 @@ test('deepEqual: URLs compare by href, not by their empty own properties', () =>
 test('deepEqual: errors compare by their message, not by empty own properties', () => {
   expect(deepEqual(new Error('a'), new Error('a'))).toBe(true)
   expect(deepEqual(new Error('a'), new Error('b'))).toBe(false)
+})
+
+test('deepEqual: an error carries data beyond its message — an assigned .code counts', () => {
+  const make = (code) => {
+    const e = new Error('x')
+    e.code = code
+    return e
+  }
+  expect(deepEqual(make('ENOENT'), make('ENOENT'))).toBe(true)
+  expect(deepEqual(make('ENOENT'), make('EACCES'))).toBe(false)
+})
+
+test('deepEqual: boxing a symbol does not make two distinct symbols equal', () => {
+  const s = Symbol('a')
+  expect(deepEqual(Object(s), Object(s))).toBe(true)
+  expect(deepEqual(Object(Symbol('a')), Object(Symbol('a')))).toBe(false)
 })
 
 test('deepEqual: NaN works as a Map key', () => {
