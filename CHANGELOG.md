@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-08-11
+
 ### Fixed
 
 - **`deepEqual`** called any two `SharedArrayBuffer`s equal, regardless of
