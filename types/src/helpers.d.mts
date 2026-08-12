@@ -25,21 +25,64 @@ export declare function shallowMerge(target: object, source: object): object;
  */
 export declare function deepMerge(target: object, source: object): object;
 /**
- * Deep clone function that's mindful of nested arrays and objects
+ * Deep clone for data. The copy shares no mutable structure with the
+ * original, the object graph survives — a value referenced twice is one
+ * object in the copy too, and a cycle terminates — and prototypes are kept,
+ * so a class instance clones into an instance of its class rather than a
+ * plain object.
  *
- * @param {object} o The object to clone
- * @returns object The cloned object
+ * The pair to {@link deepEqual}: whatever deepEqual reads as data, clone
+ * reproduces, so `deepEqual(clone(x), x)` holds. Handles plain and
+ * null-prototype objects, class instances, arrays including holes and
+ * subclasses, Date, RegExp with its lastIndex, Map, Set, Error with its
+ * non-enumerable message and stack, boxed primitives, ArrayBuffer, DataView
+ * and typed arrays — views over one buffer clone into views over one buffer.
+ *
+ * **Anything it does not recognise is shared by reference, not copied** — a
+ * function, a DOM node, a Promise, a WeakMap, a SharedArrayBuffer, a host
+ * object. That is the difference worth having: `structuredClone` raises
+ * DataCloneError on all of them, so it cannot touch an options object
+ * carrying a callback or an element reference, which is most of the objects
+ * a page actually holds. Reproducing a value it cannot inspect would be the
+ * broken half-copy, so it shares instead — and never throws.
+ *
+ * | Input | here | structuredClone | JSON round-trip |
+ * |---|---|---|---|
+ * | `{ onDone: fn }` | fn shared by reference | DataCloneError | key dropped |
+ * | DOM node, Promise, WeakMap | shared by reference | DataCloneError | `{}` |
+ * | class instance | still an instance | plain object, prototype lost | plain object |
+ * | Date | Date | Date | ISO string |
+ * | Map, Set, typed array | cloned | cloned | `{}` |
+ * | RangeError with an assigned `.code` | RangeError, `.code` kept | RangeError, `.code` dropped | plain object, message lost |
+ * | cycle | terminates | terminates | TypeError |
+ * | repeated reference | one object in the copy | one object in the copy | two objects |
+ * | `undefined` value | kept | kept | dropped |
+ * | symbol key | kept | dropped | dropped |
+ * | non-enumerable property | dropped (Error's message and stack excepted) | dropped | dropped |
+ * | enumerable accessor | read once, copied as data | read once, copied as data | read once, copied as data |
+ *
+ * Where `structuredClone` does apply — pure data, no functions or nodes —
+ * prefer it: it is native, and cloning is its whole job.
+ *
+ * @template T
+ * @param {T} o The value to clone
+ * @returns {T} The cloned value; primitives, functions and symbols come back as themselves
  * @example
- * const obj = { foo: 'bar' }
- * const clone = clone(obj)
- * clone.foo = 'baz'
- * console.log(obj.foo) // 'bar'
- * console.log(clone.foo) // 'baz'
- * console.log(obj === clone) // false
- * console.log(JSON.stringify(obj) === JSON.stringify(clone)) // true
- * @todo Check if faster than assign. This function is pretty old...
+ * const obj = { foo: 'bar', when: new Date(0), tags: new Set(['a']) }
+ * const copy = clone(obj)
+ * copy.foo = 'baz'
+ * console.log(obj.foo, copy.foo) // 'bar' 'baz'
+ * console.log(copy.when instanceof Date, copy.tags.has('a')) // true true
+ * @example
+ * const options = { el: document.body, onDone: () => {} }
+ * clone(options).onDone === options.onDone // => true, shared, not cloned
+ * structuredClone(options) // => throws DataCloneError
+ * @example
+ * const cyclic = { name: 'root' }
+ * cyclic.self = cyclic
+ * clone(cyclic).self === clone(cyclic) // => false, but each copy's .self is itself
  */
-export declare function clone(o: object): any;
+export declare function clone<T>(o: T): T;
 /**
  * Deep structural equality for data. Two values are equal when they hold the
  * same data, regardless of reference identity, property order or prototype.

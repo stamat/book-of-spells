@@ -57,6 +57,39 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   `npm run teardown` removes them. The library's own manifest stays dependency-free and a
   checkout that never runs setup never downloads a rival.
 
+### Fixed
+
+- **[`clone`](https://stamat.info/book-of-spells/global.html#clone) destroyed every value
+  that was not a plain object or an array, and said nothing.** `clone(new Date())` returned
+  `{}`. So did a `Map`, a `Set`, a `RegExp`; a `Uint8Array` came back as
+  `{"0":1,"1":2,"2":3}`; a cycle overflowed the stack. It walked `Object.keys` of anything
+  `typeof 'object'`, and a `Date` has none — the wrong answer that looks right, which is the
+  bug this library exists not to ship.
+
+  It now reproduces what [`deepEqual`](https://stamat.info/book-of-spells/global.html#deepEqual)
+  reads as data, so `deepEqual(clone(x), x)` holds: plain and null-prototype objects, class
+  instances, arrays with their holes, `Date`, `RegExp` with its `lastIndex`, `Map`, `Set`,
+  `Error` with its non-enumerable `message` and `stack`, boxed primitives, `ArrayBuffer`,
+  `DataView` and typed arrays — views over one buffer clone into views over one buffer.
+  Cycles terminate, and a value referenced twice stays one object in the copy.
+
+  **If you clone pure data — no functions, no DOM nodes — reach for `structuredClone`
+  instead.** It is native, it has been Baseline since March 2022, and cloning is its whole
+  job. What it cannot do is the reason this one still exists: it raises `DataCloneError` on
+  a function, a DOM node, a `Promise`, a `WeakMap`, which is most of the objects a page
+  actually holds. `clone` shares those by reference rather than half-copying them, so it
+  never throws.
+
+### Changed
+
+- **[`clone`](https://stamat.info/book-of-spells/global.html#clone) keeps prototypes.** A
+  class instance clones into an instance of its class, methods and all — where it used to
+  flatten to a plain object, and where `structuredClone` still does. The constructor is not
+  re-run, so anything held in a closure or a private field does not come along.
+
+  One smaller shift alongside it: an own enumerable **symbol key** is copied where it used
+  to be dropped — `structuredClone` still drops those.
+
 ## [2.1.1] - 2026-08-11
 
 ### Fixed

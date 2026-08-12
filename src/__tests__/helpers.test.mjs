@@ -92,7 +92,22 @@ test('deepMerge', () => {
   })
 })
 
-test('clone', () => {
+// clone — deep copy of data, paired with deepEqual: whatever deepEqual reads
+// as data, clone reproduces, so deepEqual(clone(x), x) holds.
+// Covered: plain and null-prototype objects, class instances (prototype
+// kept), arrays including holes and subclasses, Date, RegExp with lastIndex,
+// Map, Set, Error with its non-enumerable message and stack, boxed
+// primitives, ArrayBuffer, DataView, typed arrays sharing one buffer, symbol
+// keys, cycles and repeated references (the graph shape survives).
+// Deliberately not: anything clone does not recognise — functions, DOM
+// nodes, Promise, WeakMap/WeakSet, SharedArrayBuffer — which is shared by
+// reference rather than half-copied, so clone never throws where
+// structuredClone raises DataCloneError. Also not: non-enumerable properties
+// (dropped, Error's message and stack the one exception), accessors (read
+// once and copied as data, as structuredClone reads them), and own
+// properties hung on a boxed primitive.
+
+test('clone: a nested structure is copied all the way down, sharing nothing', () => {
   const testA = clone(a)
   const testB = clone(b)
 
@@ -100,6 +115,204 @@ test('clone', () => {
   expect(testB === b).toBe(false)
   expect(testA).toEqual(a)
   expect(testB).toEqual(b)
+  expect(testA.baz === a.baz).toBe(false)
+  expect(testA.baz[0].c === a.baz[0].c).toBe(false)
+})
+
+test('clone: primitives, including symbols, come back as themselves', () => {
+  const sym = Symbol('s')
+  expect(clone(1)).toBe(1)
+  expect(clone('a')).toBe('a')
+  expect(clone(null)).toBe(null)
+  expect(clone(undefined)).toBe(undefined)
+  expect(clone(NaN)).toBe(NaN)
+  expect(clone(sym)).toBe(sym)
+  expect(clone(10n)).toBe(10n)
+})
+
+test('clone: a Date keeps its instant instead of collapsing to an empty object', () => {
+  const d = new Date('2020-01-01T00:00:00.000Z')
+  const c = clone(d)
+  expect(c).toBeInstanceOf(Date)
+  expect(c === d).toBe(false)
+  expect(c.getTime()).toBe(d.getTime())
+  expect(clone(new Date(NaN)).getTime()).toBe(NaN)
+})
+
+test('clone: a RegExp keeps its source, flags and lastIndex', () => {
+  const r = /ab+c/gi
+  r.lastIndex = 3
+  const c = clone(r)
+  expect(c === r).toBe(false)
+  expect(c.source).toBe('ab+c')
+  expect(c.flags).toBe('gi')
+  expect(c.lastIndex).toBe(3)
+})
+
+test('clone: a Map and a Set copy their members, not just their shell', () => {
+  const key = { id: 1 }
+  const m = new Map([[key, { v: 1 }], ['x', [1, 2]]])
+  const c = clone(m)
+  expect(c).toBeInstanceOf(Map)
+  expect(c.size).toBe(2)
+  expect(deepEqual(c, m)).toBe(true)
+  expect(c.get('x') === m.get('x')).toBe(false)
+  // the key is data too — cloned, so the original key no longer indexes it
+  expect(c.has(key)).toBe(false)
+
+  const s = new Set([{ v: 1 }, 2])
+  const cs = clone(s)
+  expect(cs).toBeInstanceOf(Set)
+  expect(deepEqual(cs, s)).toBe(true)
+  expect([...cs][0] === [...s][0]).toBe(false)
+})
+
+test('clone: an Error keeps its type, message and stack', () => {
+  const e = new TypeError('bad input')
+  e.code = 'ERR_BAD'
+  const c = clone(e)
+  expect(c).toBeInstanceOf(TypeError)
+  expect(c === e).toBe(false)
+  expect(c.message).toBe('bad input')
+  expect(c.stack).toBe(e.stack)
+  expect(c.code).toBe('ERR_BAD')
+  // message and stack stay non-enumerable, or the clone would carry two
+  // keys the original never showed
+  expect(Object.keys(c)).toEqual(['code'])
+})
+
+test('clone: typed arrays copy their bytes, and views over one buffer stay views over one buffer', () => {
+  const t = new Uint8Array([1, 2, 3])
+  const c = clone(t)
+  expect(c).toBeInstanceOf(Uint8Array)
+  expect(c.buffer === t.buffer).toBe(false)
+  expect([...c]).toEqual([1, 2, 3])
+  c[0] = 9
+  expect(t[0]).toBe(1)
+
+  const buf = new ArrayBuffer(8)
+  const pair = { a: new Uint8Array(buf), b: new Uint16Array(buf) }
+  const cp = clone(pair)
+  expect(cp.a.buffer === cp.b.buffer).toBe(true)
+  expect(cp.a.buffer === buf).toBe(false)
+
+  const dv = new DataView(buf, 2, 4)
+  const cdv = clone(dv)
+  expect(cdv).toBeInstanceOf(DataView)
+  expect(cdv.byteOffset).toBe(2)
+  expect(cdv.byteLength).toBe(4)
+
+  const ab = new ArrayBuffer(4)
+  new Uint8Array(ab)[0] = 7
+  const cab = clone(ab)
+  expect(cab === ab).toBe(false)
+  expect(new Uint8Array(cab)[0]).toBe(7)
+})
+
+test('clone: boxed primitives keep their value', () => {
+  const n = clone(new Number(5))
+  expect(typeof n).toBe('object')
+  expect(n.valueOf()).toBe(5)
+  expect(clone(new String('ab')).valueOf()).toBe('ab')
+  expect(clone(new Boolean(true)).valueOf()).toBe(true)
+})
+
+test('clone: a class instance stays an instance of its class, methods and all', () => {
+  class Point {
+    constructor(x) { this.x = x }
+    double() { return this.x * 2 }
+  }
+  const c = clone(new Point(3))
+  expect(c).toBeInstanceOf(Point)
+  expect(c.double()).toBe(6)
+
+  class List extends Array {}
+  const l = List.from([1, 2])
+  const cl = clone(l)
+  expect(cl).toBeInstanceOf(List)
+  expect([...cl]).toEqual([1, 2])
+})
+
+test('clone: a null-prototype object does not gain Object.prototype', () => {
+  const o = Object.create(null)
+  o.a = 1
+  const c = clone(o)
+  expect(Object.getPrototypeOf(c)).toBe(null)
+  expect(c.a).toBe(1)
+})
+
+test('clone: array holes stay holes and extra properties on an array survive', () => {
+  const arr = [1, , 3]
+  arr.note = 'x'
+  const c = clone(arr)
+  expect(c.length).toBe(3)
+  expect(1 in c).toBe(false)
+  expect(c.note).toBe('x')
+})
+
+test('clone: own enumerable symbol keys are copied, inherited and non-enumerable ones are not', () => {
+  const sym = Symbol('k')
+  const hidden = Symbol('h')
+  const o = { [sym]: { deep: 1 } }
+  Object.defineProperty(o, hidden, { value: 1, enumerable: false })
+  Object.defineProperty(o, 'quiet', { value: 1, enumerable: false })
+  const c = clone(o)
+  expect(c[sym]).toEqual({ deep: 1 })
+  expect(c[sym] === o[sym]).toBe(false)
+  expect(hidden in c).toBe(false)
+  expect('quiet' in c).toBe(false)
+})
+
+test('clone: a cycle terminates, and a repeated reference stays one object in the copy', () => {
+  const cyclic = { name: 'root' }
+  cyclic.self = cyclic
+  cyclic.list = [cyclic]
+  const c = clone(cyclic)
+  expect(c === cyclic).toBe(false)
+  expect(c.self).toBe(c)
+  expect(c.list[0]).toBe(c)
+
+  const shared = { v: 1 }
+  const graph = clone({ a: shared, b: shared })
+  expect(graph.a).toBe(graph.b)
+  expect(graph.a === shared).toBe(false)
+})
+
+test('clone: what it cannot copy is shared by reference, never a throw and never a broken half-copy', () => {
+  const fn = () => 1
+  const promise = Promise.resolve(1)
+  const weak = new WeakMap()
+  const node = document.createElement('div')
+  const o = { fn, promise, weak, node, data: [1] }
+
+  const c = clone(o)
+  expect(c.fn).toBe(fn)
+  expect(c.promise).toBe(promise)
+  expect(c.weak).toBe(weak)
+  expect(c.node).toBe(node)
+  expect(c.data === o.data).toBe(false)
+  // the case that makes clone worth having: structuredClone cannot do this
+  expect(() => structuredClone(o)).toThrow()
+})
+
+test('clone: whatever deepEqual reads as data, clone reproduces', () => {
+  const sym = Symbol('s')
+  const buf = new ArrayBuffer(4)
+  const value = {
+    n: 1, s: 'x', nan: NaN, nil: null, un: undefined,
+    d: new Date(5), r: /x/g,
+    m: new Map([[{ k: 1 }, [1, 2]]]),
+    set: new Set([{ v: 1 }]),
+    arr: [1, [2, [3]]],
+    typed: new Uint8Array(buf),
+    view: new DataView(buf),
+    boxed: new Number(3),
+    err: new RangeError('nope'),
+    [sym]: 'symbol value'
+  }
+  value.self = value
+
+  expect(deepEqual(clone(value), value)).toBe(true)
 })
 
 test('isObject', () => {

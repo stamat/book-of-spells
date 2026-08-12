@@ -48,36 +48,211 @@ export function deepMerge(target, source) {
 }
 
 /**
- * Deep clone function that's mindful of nested arrays and objects
- * 
- * @param {object} o The object to clone
- * @returns object The cloned object
+ * Deep clone for data. The copy shares no mutable structure with the
+ * original, the object graph survives — a value referenced twice is one
+ * object in the copy too, and a cycle terminates — and prototypes are kept,
+ * so a class instance clones into an instance of its class rather than a
+ * plain object.
+ *
+ * The pair to {@link deepEqual}: whatever deepEqual reads as data, clone
+ * reproduces, so `deepEqual(clone(x), x)` holds. Handles plain and
+ * null-prototype objects, class instances, arrays including holes and
+ * subclasses, Date, RegExp with its lastIndex, Map, Set, Error with its
+ * non-enumerable message and stack, boxed primitives, ArrayBuffer, DataView
+ * and typed arrays — views over one buffer clone into views over one buffer.
+ *
+ * **Anything it does not recognise is shared by reference, not copied** — a
+ * function, a DOM node, a Promise, a WeakMap, a SharedArrayBuffer, a host
+ * object. That is the difference worth having: `structuredClone` raises
+ * DataCloneError on all of them, so it cannot touch an options object
+ * carrying a callback or an element reference, which is most of the objects
+ * a page actually holds. Reproducing a value it cannot inspect would be the
+ * broken half-copy, so it shares instead — and never throws.
+ *
+ * | Input | here | structuredClone | JSON round-trip |
+ * |---|---|---|---|
+ * | `{ onDone: fn }` | fn shared by reference | DataCloneError | key dropped |
+ * | DOM node, Promise, WeakMap | shared by reference | DataCloneError | `{}` |
+ * | class instance | still an instance | plain object, prototype lost | plain object |
+ * | Date | Date | Date | ISO string |
+ * | Map, Set, typed array | cloned | cloned | `{}` |
+ * | RangeError with an assigned `.code` | RangeError, `.code` kept | RangeError, `.code` dropped | plain object, message lost |
+ * | cycle | terminates | terminates | TypeError |
+ * | repeated reference | one object in the copy | one object in the copy | two objects |
+ * | `undefined` value | kept | kept | dropped |
+ * | symbol key | kept | dropped | dropped |
+ * | non-enumerable property | dropped (Error's message and stack excepted) | dropped | dropped |
+ * | enumerable accessor | read once, copied as data | read once, copied as data | read once, copied as data |
+ *
+ * Where `structuredClone` does apply — pure data, no functions or nodes —
+ * prefer it: it is native, and cloning is its whole job.
+ *
+ * @template T
+ * @param {T} o The value to clone
+ * @returns {T} The cloned value; primitives, functions and symbols come back as themselves
  * @example
- * const obj = { foo: 'bar' }
- * const clone = clone(obj)
- * clone.foo = 'baz'
- * console.log(obj.foo) // 'bar'
- * console.log(clone.foo) // 'baz'
- * console.log(obj === clone) // false
- * console.log(JSON.stringify(obj) === JSON.stringify(clone)) // true
- * @todo Check if faster than assign. This function is pretty old...
- */ 
+ * const obj = { foo: 'bar', when: new Date(0), tags: new Set(['a']) }
+ * const copy = clone(obj)
+ * copy.foo = 'baz'
+ * console.log(obj.foo, copy.foo) // 'bar' 'baz'
+ * console.log(copy.when instanceof Date, copy.tags.has('a')) // true true
+ * @example
+ * const options = { el: document.body, onDone: () => {} }
+ * clone(options).onDone === options.onDone // => true, shared, not cloned
+ * structuredClone(options) // => throws DataCloneError
+ * @example
+ * const cyclic = { name: 'root' }
+ * cyclic.self = cyclic
+ * clone(cyclic).self === clone(cyclic) // => false, but each copy's .self is itself
+ */
 export function clone(o) {
-  let res = null
-  if (isArray(o)) {
-    res = []
-    for (const item of o) {
-      res.push(clone(item))
-    }
-  } else if (isObject(o)) {
-    res = {}
-    for (const key of Object.keys(o)) {
-      res[key] = clone(o[key])
-    }
-  } else {
-    res = o
+  if (o === null || typeof o !== 'object') return o
+  return cloneCyclic(o, new WeakMap())
+}
+
+// Non-enumerable on an Error, so the own-property walk below never sees them.
+// Carried with their descriptor rather than assigned, or the copy would show
+// keys the original hides — and deepEqual, which walks own enumerable
+// properties, would then call the two unequal.
+const ERROR_PROPERTIES = ['message', 'stack', 'cause']
+
+// Date, Map, Array and kin need their internal slot, which only their own
+// constructor can create — so a subclass instance is built through the base
+// and then re-pointed at the original's prototype. Object.create cannot make
+// a real one.
+function retarget(res, o) {
+  const proto = getProto(o)
+  if (getProto(res) !== proto) Object.setPrototypeOf(res, proto)
+  return res
+}
+
+// Own enumerable string and symbol keys, matching what deepEqual compares and
+// what structuredClone carries. Absent keys are never visited, which is how
+// an array's holes stay holes.
+function cloneOwn(o, res, seen) {
+  const keys = Object.keys(o)
+  for (let i = 0; i < keys.length; i++) {
+    res[keys[i]] = cloneCyclic(o[keys[i]], seen)
+  }
+  const symbols = getSymbols(o)
+  for (let i = 0; i < symbols.length; i++) {
+    if (objPropEnumerable.call(o, symbols[i])) res[symbols[i]] = cloneCyclic(o[symbols[i]], seen)
   }
   return res
+}
+
+function cloneCyclic(o, seen) {
+  if (o === null || typeof o !== 'object') return o
+
+  // Every clone is registered before its contents are filled in, so a
+  // reference back into an unfinished object resolves to the copy. This runs
+  // from depth zero, unlike deepEqual's guard: sharing is observable at the
+  // top level, where a cycle is not.
+  const seenClone = seen.get(o)
+  if (seenClone !== undefined) return seenClone
+
+  if (Array.isArray(o)) {
+    const res = new Array(o.length)
+    seen.set(o, res)
+    return cloneOwn(o, retarget(res, o), seen)
+  }
+
+  const proto = getProto(o)
+  if (proto === objProto || proto === null) {
+    const res = proto === null ? Object.create(null) : {}
+    seen.set(o, res)
+    return cloneOwn(o, res, seen)
+  }
+
+  const tag = objTag.call(o)
+  let res = null
+
+  switch (tag) {
+    // A class instance. The prototype carries the methods so it is kept, but
+    // the constructor is not re-run — anything it set in a closure or a
+    // private field is not an own property and does not come along.
+    case '[object Object]':
+      res = Object.create(proto)
+      seen.set(o, res)
+      return cloneOwn(o, res, seen)
+    case '[object Map]':
+      res = new Map()
+      seen.set(o, res)
+      retarget(res, o)
+      for (const [key, value] of o) res.set(cloneCyclic(key, seen), cloneCyclic(value, seen))
+      return cloneOwn(o, res, seen)
+    case '[object Set]':
+      res = new Set()
+      seen.set(o, res)
+      retarget(res, o)
+      for (const value of o) res.add(cloneCyclic(value, seen))
+      return cloneOwn(o, res, seen)
+    // Built through Error and re-pointed rather than Object.create'd: the
+    // [[ErrorData]] slot is what makes Object.prototype.toString answer
+    // [object Error], and only a constructor can create it. A prototype-only
+    // copy reads back as a plain object to anything dispatching on the tag,
+    // deepEqual included.
+    case '[object Error]':
+      res = retarget(new Error(), o)
+      seen.set(o, res)
+      for (let i = 0; i < ERROR_PROPERTIES.length; i++) {
+        const property = ERROR_PROPERTIES[i]
+        const descriptor = getOwnDescriptor(o, property)
+        if (descriptor === undefined) continue
+        // V8 hangs .stack off the instance as an accessor over an internal
+        // slot; copied as an accessor it would read the clone's missing slot
+        // and answer undefined, so it is read here and written as data —
+        // which is the shape structuredClone produces as well.
+        Object.defineProperty(res, property, {
+          value: cloneCyclic(o[property], seen),
+          writable: true,
+          enumerable: descriptor.enumerable,
+          configurable: true
+        })
+      }
+      return cloneOwn(o, res, seen)
+    case '[object Date]':
+      res = new Date(o.getTime())
+      break
+    case '[object RegExp]':
+      res = new RegExp(o.source, o.flags)
+      res.lastIndex = o.lastIndex
+      break
+    case '[object ArrayBuffer]':
+      res = o.slice(0)
+      break
+    case '[object DataView]':
+      // No own-key walk on this or a typed array: their indices are own
+      // enumerable properties, and re-assigning every byte through the
+      // property path after the bytes are already copied is pure waste.
+      seen.set(o, res = new DataView(cloneCyclic(o.buffer, seen), o.byteOffset, o.byteLength))
+      return retarget(res, o)
+    // A boxed primitive's own indices are read-only — a String object's
+    // characters — so the walk would throw in strict mode. Its value is all
+    // the data it has.
+    case '[object Number]':
+    case '[object String]':
+    case '[object Boolean]':
+    case '[object Symbol]':
+      seen.set(o, res = Object(o.valueOf()))
+      return retarget(res, o)
+    default: {
+      // A typed array. The constructor comes from the tag rather than from
+      // o.constructor, which is a writable property any caller can point at
+      // something else; retarget restores a subclass prototype after.
+      const ctor = ArrayBuffer.isView(o) ? globalThis[tag.slice(8, -1)] : null
+      // Everything unrecognised — DOM node, Promise, WeakMap,
+      // SharedArrayBuffer, host object — is shared by reference. It is
+      // returned unregistered, which costs nothing: identity is preserved by
+      // being the same object.
+      if (typeof ctor !== 'function') return o
+      seen.set(o, res = new ctor(cloneCyclic(o.buffer, seen), o.byteOffset, o.length))
+      return retarget(res, o)
+    }
+  }
+
+  seen.set(o, res)
+  return cloneOwn(o, retarget(res, o), seen)
 }
 
 /**
@@ -170,6 +345,7 @@ const objTag = Object.prototype.toString
 const objProto = Object.prototype
 const getProto = Object.getPrototypeOf
 const getSymbols = Object.getOwnPropertySymbols
+const getOwnDescriptor = Object.getOwnPropertyDescriptor
 
 function deepEqualCyclic(a, b, depth, seen) {
   if (a === b || (a !== a && b !== b)) return true
