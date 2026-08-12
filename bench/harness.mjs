@@ -1,9 +1,10 @@
-// The bench convention, mirroring src/__tests__: every bench/*.bench.mjs is a
-// self-contained node script run by script/bench, and every contender's
-// output is asserted correct before its timing is reported — a bench that
-// times wrong code measures nothing. This file is the whole harness; if a
-// second repo ever wants it, that is the moment it becomes a package, not
-// before.
+// The bench convention, mirroring src/__tests__: every
+// bench/<function>/*.bench.mjs is a node script run by script/bench, and every
+// contender's output is asserted correct before its timing is reported — a
+// bench that times wrong code measures nothing. Timing and formatting are
+// shared from here; a corpus, a fixture or a rival dependency belongs to the
+// one directory that benches it. This file is the whole harness; if a second
+// repo ever wants it, that is the moment it becomes a package, not before.
 
 // Median of `runs` single executions, in milliseconds. Single runs, not an
 // ops-loop: these benches process corpora large enough that one pass is

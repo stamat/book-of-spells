@@ -1,3 +1,6 @@
 #!/bin/bash
 
-for f in bench/*.bench.mjs; do node "$f" "$@"; done
+# Every bench lives in bench/<function>/. A bench needing rivals installed
+# skips itself with a message when they are not — run `npm run setup` in that
+# directory first, and `npm run teardown` when done.
+for f in bench/*/*.bench.mjs; do node "$f" "$@"; done

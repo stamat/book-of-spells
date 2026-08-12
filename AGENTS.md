@@ -7,7 +7,7 @@ grouped by subject. Some run anywhere, some touch the DOM.
 
 ```bash
 script/test      # jest
-script/bench     # benchmarks; `--full` for the big sizes
+script/bench     # every bench/<function>/; `--full` for the big sizes
 script/build     # regenerates the docs and the type declarations
 script/types     # type declarations only
 ```
@@ -20,8 +20,20 @@ script/types     # type declarations only
 - `index.mjs` re-exports them; a new module is added there, and to `files` in
   `package.json` if it lives outside `src/`.
 - Tests live in `src/__tests__/`.
-- Benchmarks live in `bench/*.bench.mjs` — runnable node scripts, not shipped.
-  Every contender's output is asserted correct before its timing is reported.
+- Benchmarks live in `bench/<function>/*.bench.mjs` — runnable node scripts,
+  not shipped. Every contender's output is asserted correct before its timing
+  is reported. `bench/harness.mjs` is shared; anything else a bench needs lives
+  in its own directory.
+- The library is dependency-free and stays that way. A bench racing
+  third-party rivals declares them in its own directory's `package.json`, never
+  in the root: `npm run setup` there installs them at pinned versions and
+  downloads any real corpus, `npm run bench` runs that directory,
+  `npm run teardown` removes both. A bench whose rivals are absent prints the
+  setup line and skips, so `script/bench` on a fresh checkout still runs
+  everything else.
+- Benches run on generated data by default — seeded, no `Math.random`, so a
+  published number can be rerun by a stranger. `--corpus <file>` swaps in real
+  data for realism, and downloaded corpora are gitignored, never committed.
 - `types/` and `docs/` are **generated** — `docs/` is gitignored, `types/` ships
   in the package.
 

@@ -25,8 +25,8 @@
 import { createHash } from 'node:crypto'
 import { crc32 as zlibCrc32 } from 'node:zlib'
 import { readFileSync } from 'node:fs'
-import { deepEqual } from '../src/helpers.mjs'
-import { time, fmt, table } from './harness.mjs'
+import { deepEqual } from '../../src/helpers.mjs'
+import { time, fmt, table } from '../harness.mjs'
 
 // ---------- deterministic corpus (mulberry32, seed 42) ----------
 function mulberry32(seed) {

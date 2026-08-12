@@ -1,2 +1,4 @@
 node_modules
 docs
+bench/*/package-lock.json
+bench/*/*.ndjson

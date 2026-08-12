@@ -446,7 +446,14 @@ function foldValue(h, v, depth) {
  * folds to a 32-bit FNV-1a hash in a single walk, values collide into
  * buckets, and deepEqual runs only within a bucket: linear in practice. The
  * hash is free to be coarse — a shared bucket costs one comparison, while
- * correctness comes from deepEqual alone. The bucket-then-verify idea is
+ * correctness comes from deepEqual alone.
+ *
+ * One shape defeats that. Sets and Maps fold on their size alone, so a pile of
+ * equal-size ones shares a single bucket and the in-bucket comparisons are the
+ * O(N²) scan again: 4,000 same-size Sets take 4.9 s here against 36 ms for a
+ * hash that walks the members. Correct, and slow — reach for a member-hashing
+ * key instead. Dates, RegExps and plain documents fold on their contents and
+ * are unaffected. The bucket-then-verify idea is
  * HashCache (2013,
  * https://stamat.wordpress.com/2013/07/03/javascript-quickly-find-very-large-objects-in-a-large-array/)
  * with the CRC32-over-canonical-string hash replaced by a fold over the live

@@ -41,7 +41,10 @@ misbehave in one of the two.
 - **Put it in the right module.** `dom`, `elements`, `parsers`, `helpers`,
   `regex`, `cookies`, `localstorage`, `animations`, `browser`, `entities` — a
   new subject module also goes into `index.mjs`.
-- **No dependencies.** That is the whole point of the package.
+- **No dependencies.** That is the whole point of the package. The one place a
+  third-party package may appear is a benchmark that races one — declared in
+  that bench directory's own `package.json`, installed by its `setup` script
+  and removed by its `teardown`, never in the root manifest.
 - **Add a changelog entry** under `## [Unreleased]` in
   [CHANGELOG.md](CHANGELOG.md) — that file explains the format.
 

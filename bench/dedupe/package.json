@@ -1,0 +1,17 @@
+{
+  "name": "bench-dedupe",
+  "description": "Benchmarks for dedupe(). Not published, not part of the library — this manifest exists so the rivals and the real corpus land here and nowhere near the root.",
+  "private": true,
+  "scripts": {
+    "setup": "npm install --no-audit --no-fund && npm run corpus",
+    "corpus": "curl -fsSL https://data.gharchive.org/2015-01-01-15.json.gz | gunzip > gharchive-2015-01-01-15.ndjson",
+    "bench": "sh -c 'for f in *.bench.mjs; do node \"$f\" \"$@\"; done' --",
+    "teardown": "rm -rf node_modules package-lock.json *.ndjson"
+  },
+  "devDependencies": {
+    "es-toolkit": "1.50.0",
+    "lodash": "4.18.1",
+    "object-hash": "3.0.0",
+    "ramda": "0.32.0"
+  }
+}

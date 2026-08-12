@@ -27,8 +27,8 @@
 // phase one a real document — the published numbers used plotly/datasets'
 // geojson-counties-fips.json, 3.2 MB of US county polygons.
 import { readFileSync } from 'node:fs'
-import { deepEqual, dedupe } from '../src/helpers.mjs'
-import { table } from './harness.mjs'
+import { deepEqual, dedupe } from '../../src/helpers.mjs'
+import { table } from '../harness.mjs'
 
 function mulberry32(seed) {
   let a = seed >>> 0

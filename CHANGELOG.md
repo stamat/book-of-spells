@@ -16,6 +16,47 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Added
+
+- **`bench/dedupe/ecosystem.bench.mjs`** — [`dedupe`](https://stamat.info/book-of-spells/global.html#dedupe)
+  against what people install for this job instead: lodash and es-toolkit
+  `uniqWith(isEqual)`, ramda `uniq`, and object-hash used as a Map key. Same corpus and
+  same correctness oracle as the scale bench, so the two tables read side by side, and
+  every contender's output is asserted against the oracle before its time is reported.
+
+  That table existed before as one session's hand-measured numbers, reproducible by
+  nobody, myself included. With the rivals absent it prints the setup line and skips,
+  so it never fails a run that did not ask for it.
+
+- **`ecosystem.bench.mjs --collections`** — the corpus [`dedupe`](https://stamat.info/book-of-spells/global.html#dedupe)
+  is worst at, and now the one number that says how much: Sets and Maps fold on `size`
+  alone, so 4,000 equal-size Sets share one bucket and the in-bucket comparisons are the
+  quadratic scan again — 4.9 s, against 36 ms for object-hash, which walks the members.
+  Maps, 1.7 s against 51 ms. Dates are the control and fold on their value: 1 ms against
+  13 ms, `dedupe` ahead as usual. Every contender still agrees with the oracle; this is a
+  speed loss, never a wrong answer, and the JSDoc says so now rather than promising
+  "linear in practice" flatly.
+
+- **`--corpus <file>` on the dedupe benches**, taking a JSON array or NDJSON in place of
+  the generated pile, so the numbers can be checked against data nobody designed for
+  them. `npm run setup` downloads one hour of [GH Archive](https://www.gharchive.org/)
+  events for it — the same 11,351 GitHub events the 2.0.0 numbers used, back as something
+  you can rerun rather than a sentence claiming I did. Real events carry no duplicates at
+  all, which is the fold's worst case: every document pays for a hash and none of them
+  saves a comparison.
+
+### Changed
+
+- **Benchmarks are per function now** — `bench/<function>/*.bench.mjs` instead of a flat
+  `bench/`, `bench/harness.mjs` still shared, everything else a bench needs sitting next
+  to it. `script/bench` walks the directories, so running them is unchanged.
+
+  The move buys the one thing a flat directory could not: a bench can carry its own
+  `package.json`, which is where a race against third-party rivals belongs. `npm run setup`
+  there installs them at pinned versions, `npm run bench` runs that directory,
+  `npm run teardown` removes them. The library's own manifest stays dependency-free and a
+  checkout that never runs setup never downloads a rival.
+
 ## [2.1.1] - 2026-08-11
 
 ### Fixed
