@@ -18,6 +18,46 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ### Added
 
+- **`bench/clone/capability.bench.mjs`** — what eight implementations actually copy, which
+  no speed table shows: the cheapest clone of all is the one that drops what it does not
+  understand. [`clone`](https://stamat.info/book-of-spells/global.html#clone) against
+  `structuredClone`, a JSON round-trip, rfdc in both its tiers, lodash and es-toolkit
+  `cloneDeep`, and ramda `clone`, over 18 copies that are either faithful or not.
+
+  The table on `clone`'s JSDoc existed first as one session's hand-probing, checkable by
+  nobody, myself included. This is that table with a command under it. `clone` scores 17 of
+  18, and the row it loses is honest: 20,000 levels of nesting is a `RangeError` in seven of
+  the eight, this library included. A JSON round-trip is the only column that survives it,
+  having lost thirteen rows to get there. A second table reports where libraries
+  legitimately disagree — a function shared or refused, a class instance kept or flattened,
+  a frozen object thawed by all eight alike — and scores none of them.
+
+  It needs no child processes, unlike its `deepEqual` counterpart: the dangerous inputs here
+  are a cycle and deep nesting, and a walk that survives neither exhausts the stack and
+  throws, which is catchable in the process it happens in.
+
+- **`bench/clone/ecosystem.bench.mjs`** — the speed half, over plain objects, arrays,
+  numbers and strings only, because those are the shapes all eight copy alike and a fair
+  race needs a common denominator.
+
+  It overturned a sentence already written above it. The JSDoc said to prefer
+  `structuredClone` where it applies because it is native — which reads as "and therefore
+  faster". It is not: a structured clone is a serialise and a deserialise rather than a
+  walk, and it runs 1.5–5× behind on objects, 775k ops/s against 4.0M on a flat eight-key
+  object. The advice stands and its reason changed. Reach for it because it ships with the
+  platform, not because it is quick.
+
+  It also found the shape `clone` is worst at, which no amount of re-reading the code was
+  going to surface: **an array of 10,000 numbers, where es-toolkit does 14k ops/s against
+  3k here and `structuredClone` 6k.** A long flat run of primitives is exactly what a
+  per-key walk loses at, and the JSDoc says so now rather than quoting only the object
+  shapes, where rfdc leads by 1.1–2.9× and this one is second.
+
+  A second table runs the shapes they disagree on, marking `unsound` rather than timing a
+  lost copy, and every cell there has to pass both structural equality and a
+  no-shared-references walk — a "clone" that returns its argument is structurally equal to
+  it and is not a clone.
+
 - **`bench/dedupe/ecosystem.bench.mjs`** — [`dedupe`](https://stamat.info/book-of-spells/global.html#dedupe)
   against what people install for this job instead: lodash and es-toolkit
   `uniqWith(isEqual)`, ramda `uniq`, and object-hash used as a Map key. Same corpus and

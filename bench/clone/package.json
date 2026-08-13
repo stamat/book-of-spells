@@ -1,0 +1,16 @@
+{
+  "name": "bench-clone",
+  "description": "Benchmarks for clone(). Not published, not part of the library — this manifest exists so the rivals land here and nowhere near the root.",
+  "private": true,
+  "scripts": {
+    "setup": "npm install --no-audit --no-fund",
+    "bench": "sh -c 'for f in *.bench.mjs; do node \"$f\" \"$@\"; done' --",
+    "teardown": "rm -rf node_modules package-lock.json"
+  },
+  "devDependencies": {
+    "es-toolkit": "1.50.0",
+    "lodash": "4.18.1",
+    "ramda": "0.32.0",
+    "rfdc": "1.4.1"
+  }
+}

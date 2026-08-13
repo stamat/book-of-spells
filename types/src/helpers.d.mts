@@ -46,23 +46,53 @@ export declare function deepMerge(target: object, source: object): object;
  * a page actually holds. Reproducing a value it cannot inspect would be the
  * broken half-copy, so it shares instead — and never throws.
  *
- * | Input | here | structuredClone | JSON round-trip |
- * |---|---|---|---|
- * | `{ onDone: fn }` | fn shared by reference | DataCloneError | key dropped |
- * | DOM node, Promise, WeakMap | shared by reference | DataCloneError | `{}` |
- * | class instance | still an instance | plain object, prototype lost | plain object |
- * | Date | Date | Date | ISO string |
- * | Map, Set, typed array | cloned | cloned | `{}` |
- * | RangeError with an assigned `.code` | RangeError, `.code` kept | RangeError, `.code` dropped | plain object, message lost |
- * | cycle | terminates | terminates | TypeError |
- * | repeated reference | one object in the copy | one object in the copy | two objects |
- * | `undefined` value | kept | kept | dropped |
- * | symbol key | kept | dropped | dropped |
- * | non-enumerable property | dropped (Error's message and stack excepted) | dropped | dropped |
- * | enumerable accessor | read once, copied as data | read once, copied as data | read once, copied as data |
+ * Versus the field, from `bench/clone` against `structuredClone`, rfdc 1.4.1,
+ * lodash 4.18.1, es-toolkit 1.50.0 and a JSON round-trip. rfdc is shown with
+ * its defaults, which is what `rfdc()` gives you; `{circles: true}` buys it
+ * the cycle row for 1–13%. The last four rows are semantics choices, not
+ * defects in the others; the rest are data the copy either kept or lost:
  *
- * Where `structuredClone` does apply — pure data, no functions or nodes —
- * prefer it: it is native, and cloning is its whole job.
+ * | Input | here | structuredClone | rfdc | lodash | es-toolkit | JSON |
+ * |---|---|---|---|---|---|---|
+ * | Date, Map, Set | cloned | cloned | cloned | cloned | cloned | `{}`, or an ISO string |
+ * | RegExp | cloned | cloned | `{}` | cloned | cloned | `{}` |
+ * | typed array, ArrayBuffer, DataView | cloned | cloned | `{}` | cloned | cloned | `{}` |
+ * | two views over one buffer | one buffer | one buffer | lost | two buffers | two buffers | lost |
+ * | cycle | terminates | terminates | stack overflow | terminates | terminates | TypeError |
+ * | repeated reference | one object | one object | two objects | one object | one object | two objects |
+ * | Error with an assigned `.code` | all of it | `.code` dropped | `.code` only | whole Error is `{}` | all of it | `.code` only |
+ * | `undefined` value | kept | kept | kept | kept | kept | dropped |
+ * | nesting 20,000 deep | RangeError | RangeError | RangeError | RangeError | RangeError | survives |
+ * | function, Promise, WeakMap | shared | DataCloneError | function shared, rest lost | shared | shared | dropped |
+ * | class instance | an instance | plain object | plain object | an instance | an instance | plain object |
+ * | null-prototype object | kept null | gains `Object.prototype` | gains it | gains it | kept null | gains it |
+ * | symbol key | kept | dropped | dropped | kept | kept | dropped |
+ *
+ * It recurses, so depth is bounded by the stack — 200 levels is nothing,
+ * 20,000 throws. A JSON round-trip is the only column that survives that,
+ * being a loop in C++, and it loses thirteen of the eighteen scored rows to
+ * be there.
+ *
+ * The cost, on a flat eight-key object: rfdc 7.2M ops/s, this 4.0M,
+ * es-toolkit 2.4M, lodash 2.0M, ramda 1.8M, a JSON round-trip 1.7M,
+ * `structuredClone` 775k. rfdc leads the object shapes by 1.1–2.9×, and that
+ * lead is what its defaults buy — the six rows above where the copy comes
+ * back missing the data. If you clone plain acyclic JSON in a hot loop, use
+ * rfdc; if you want the copy to still be the value you cloned, use this.
+ *
+ * Shape decides it, though, and this is not uniformly ahead. On an array of
+ * 10,000 numbers es-toolkit does 14k ops/s against 3k here, with
+ * `structuredClone` at 6k: a long flat run of primitives is what a per-key
+ * walk is worst at and a specialised array path is best at. If that is your
+ * data, this is the wrong function for it.
+ *
+ * Where `structuredClone` applies — pure data, no functions or nodes — it is
+ * still the one to reach for if you are not already importing this: it ships
+ * with the platform and costs you nothing. What it is not is reliably faster.
+ * A structured clone is a serialise and a deserialise rather than a walk, so
+ * it runs 1.5–5× behind on objects and roughly 2× ahead on that flat number
+ * array, on top of dropping prototypes, symbol keys and an Error's own
+ * properties.
  *
  * @template T
  * @param {T} o The value to clone
