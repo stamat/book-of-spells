@@ -1032,6 +1032,33 @@ test('dedupe: sets with the same members in a different insertion order are one 
   expect(dedupe([new Set([1, 2]), new Set([2, 1]), new Set([1, 3])])).toHaveLength(2)
 })
 
+// The fold hashes Set members and Map entries commutatively, so insertion
+// order cannot reach the hash. These are the ways that choice could split a
+// pair deepEqual calls equal — and a split is a duplicate landing in a fresh
+// bucket and surviving, the one thing the fold is never allowed to do.
+test('dedupe: sets of deep-equal but distinct members collapse, built in either order', () => {
+  const a = new Set([{ id: 1 }, { id: 2 }])
+  const b = new Set([{ id: 2 }, { id: 1 }])
+  expect(dedupe([a, b])).toHaveLength(1)
+})
+
+test('dedupe: a set holding two members equal to each other is not the set holding one', () => {
+  const twins = () => new Set([{ id: 1 }, { id: 1 }])
+  expect(dedupe([twins(), twins()])).toHaveLength(1)
+  expect(dedupe([twins(), new Set([{ id: 1 }])])).toHaveLength(2)
+})
+
+test('dedupe: maps whose equal keys pair up crosswise are still one value', () => {
+  const a = new Map([[{ k: 1 }, 'x'], [{ k: 1 }, 'y']])
+  const b = new Map([[{ k: 1 }, 'y'], [{ k: 1 }, 'x']])
+  expect(deepEqual(a, b)).toBe(true)
+  expect(dedupe([a, b])).toHaveLength(1)
+})
+
+test('dedupe: a map with its key and value swapped is a different value', () => {
+  expect(dedupe([new Map([['a', 'b']]), new Map([['b', 'a']])])).toHaveLength(2)
+})
+
 test('dedupe: a class instance and its plain twin are one value — data is data', () => {
   class Point { constructor () { this.x = 1 } }
   expect(dedupe([new Point(), { x: 1 }])).toHaveLength(1)

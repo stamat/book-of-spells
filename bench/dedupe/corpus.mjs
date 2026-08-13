@@ -84,13 +84,13 @@ export function makeCorpus(uniques, dupRate = 0.1) {
   return input
 }
 
-// The corpus that is hostile to the fold specifically: values whose hash is
-// their size or their tag, so every one of them lands in the same bucket and
-// the in-bucket deepEqual scan is the whole algorithm again, quadratic. Sets
-// and Maps fold on `size` — members fold no further, because deepEqual matches
-// them in any order and an order-sensitive fold would split equal collections.
-// Dates are here as the control: they fold on their timestamp, so they should
-// behave like ordinary values and the row exists to prove it.
+// The corpus that used to be hostile to the fold, kept as the guard against
+// it coming back. Sets and Maps of equal size once folded on `size` alone, so
+// every one of them landed in a single bucket and the in-bucket deepEqual scan
+// became the whole algorithm again, quadratic: 4,000 Sets took 5.0 s against
+// object-hash's 36 ms, which is what put members into the fold. Dates are the
+// control — they always folded on their timestamp, and the row exists to show
+// the difference between a value the hash can see into and one it cannot.
 export function makeCollectionCorpus(uniques, kind, dupRate = 0.1) {
   const members = (i, n) => Array.from({ length: n }, (_, j) => WORDS[(i + j) % WORDS.length] + (i * n + j))
   const make = {

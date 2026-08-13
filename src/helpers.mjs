@@ -589,11 +589,32 @@ function foldValue(h, v, depth) {
           return Math.imul(h ^ (v.valueOf() ? 4 : 5), 16777619)
         case '[object RegExp]':
           return foldString(foldString(h, v.source), v.flags)
-        // members fold no further: deepEqual matches them in any order, and
-        // an order-sensitive fold would split equal collections
-        case '[object Set]':
-        case '[object Map]':
-          return foldNumber(h, v.size)
+        // Members fold commutatively — each hashed from the seed, the results
+        // summed — because deepEqual matches Set members and Map entries in
+        // any order, and an order-sensitive fold would split two equal
+        // collections. Deep-equal members fold identically, so equal
+        // collections reach the same sum. Every member is folded and never a
+        // prefix: a prefix follows iteration order, which is order-sensitive
+        // again. Summed, not XORed — a Set may hold two distinct members that
+        // are deepEqual, and XOR would cancel that pair into the hash of a Set
+        // without either.
+        case '[object Set]': {
+          h = foldNumber(h, v.size)
+          let sum = 0
+          for (const m of v) sum = (sum + foldValue(FNV_SEED, m, depth + 1)) >>> 0
+          return foldNumber(h, sum)
+        }
+        case '[object Map]': {
+          h = foldNumber(h, v.size)
+          let sum = 0
+          // The key is mixed into the value asymmetrically, so Map{a → b} and
+          // Map{b → a} do not reach the same entry hash.
+          for (const [k, val] of v) {
+            const pair = (Math.imul(foldValue(FNV_SEED, k, depth + 1), 0x9E3779B1) ^ foldValue(FNV_SEED, val, depth + 1)) >>> 0
+            sum = (sum + pair) >>> 0
+          }
+          return foldNumber(h, sum)
+        }
       }
       if (ArrayBuffer.isView(v)) return foldNumber(h, v.byteLength)
       // URL, Error, ArrayBuffer and other exotic hosts fold by tag alone —
@@ -624,12 +645,11 @@ function foldValue(h, v, depth) {
  * hash is free to be coarse — a shared bucket costs one comparison, while
  * correctness comes from deepEqual alone.
  *
- * One shape defeats that. Sets and Maps fold on their size alone, so a pile of
- * equal-size ones shares a single bucket and the in-bucket comparisons are the
- * O(N²) scan again: 4,000 same-size Sets take 4.9 s here against 36 ms for a
- * hash that walks the members. Correct, and slow — reach for a member-hashing
- * key instead. Dates, RegExps and plain documents fold on their contents and
- * are unaffected. The bucket-then-verify idea is
+ * Sets and Maps fold their members too, commutatively, so insertion order
+ * never reaches the hash and equal collections still land in one bucket. The
+ * bill is a walk per member on every collection: a pile of large Sets costs
+ * more to fold than a pile of small documents, and a single pair of them is a
+ * job for {@link deepEqual} rather than for this. The bucket-then-verify idea is
  * HashCache (2013,
  * https://stamat.wordpress.com/2013/07/03/javascript-quickly-find-very-large-objects-in-a-large-array/)
  * with the CRC32-over-canonical-string hash replaced by a fold over the live

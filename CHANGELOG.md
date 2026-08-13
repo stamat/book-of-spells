@@ -28,14 +28,11 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   nobody, myself included. With the rivals absent it prints the setup line and skips,
   so it never fails a run that did not ask for it.
 
-- **`ecosystem.bench.mjs --collections`** — the corpus [`dedupe`](https://stamat.info/book-of-spells/global.html#dedupe)
-  is worst at, and now the one number that says how much: Sets and Maps fold on `size`
-  alone, so 4,000 equal-size Sets share one bucket and the in-bucket comparisons are the
-  quadratic scan again — 4.9 s, against 36 ms for object-hash, which walks the members.
-  Maps, 1.7 s against 51 ms. Dates are the control and fold on their value: 1 ms against
-  13 ms, `dedupe` ahead as usual. Every contender still agrees with the oracle; this is a
-  speed loss, never a wrong answer, and the JSDoc says so now rather than promising
-  "linear in practice" flatly.
+- **`ecosystem.bench.mjs --collections`** — Sets and Maps of equal size, plus Dates as the
+  control, which is the corpus that found the fold flaw fixed below and now guards it. The
+  run existed to lose: the docs claimed a rival won this shape, and a claim with no number
+  under it is an argument, not a measurement. It had one within a minute — 5.0 s against
+  object-hash's 36 ms — and the fold changed the same day.
 
 - **`--corpus <file>` on the dedupe benches**, taking a JSON array or NDJSON in place of
   the generated pile, so the numbers can be checked against data nobody designed for
@@ -46,6 +43,24 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   saves a comparison.
 
 ### Changed
+
+- **[`dedupe`](https://stamat.info/book-of-spells/global.html#dedupe) separates Sets and
+  Maps now instead of piling them into one bucket.** Their members fold too, commutatively
+  — each hashed from the seed, the results summed — so insertion order still cannot reach
+  the hash and two equal collections still meet in the same bucket.
+
+  Before, a Set or a Map folded on `size` alone, so a pile of equal-size ones shared a
+  single bucket and the in-bucket comparisons became the O(N²) scan the fold exists to
+  delete: **4,000 equal-size Sets took 5.0 s, where object-hash did the same pile in 36 ms.
+  Now 4 ms.** Maps, 1.7 s → 4 ms.
+
+  The bill is a walk per member on every collection, whether or not it saves anything, so
+  a pile of large Sets folds dearer than a pile of small documents — and one pair of them
+  is still a [`deepEqual`](https://stamat.info/book-of-spells/global.html#deepEqual) job,
+  not a `dedupe` one. Values without Sets or Maps in them fold exactly as before.
+
+  Not a correctness change in either direction: the old hash was coarse, never wrong, and
+  `deepEqual` decided every answer then as now.
 
 - **Benchmarks are per function now** — `bench/<function>/*.bench.mjs` instead of a flat
   `bench/`, `bench/harness.mjs` still shared, everything else a bench needs sitting next

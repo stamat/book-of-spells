@@ -23,12 +23,16 @@
 // the pile is 11,351 documents with no duplicates in it at all and the three
 // quadratic rows sit above the cap, so that run is two rows, not five.
 //
-// `--collections` runs the corpus dedupe is worst at instead: Sets and Maps of
-// equal size, which fold to one bucket and collapse it back into the O(N²)
-// scan, with Dates as the control that folds on its value and does not. This
-// is the run that exists to lose — a README or a post claiming a rival wins a
-// shape wants a number under it, not an argument. One size only, 4,000, chosen
-// so the quadratic finishes; the shape of its growth is not measured here.
+// `--collections` runs Sets and Maps of equal size instead, with Dates as the
+// control. It was written to lose — the docs claimed a rival owned this shape,
+// and a claim with no number under it is an argument — and it did: equal-size
+// collections folded on `size` alone, shared one bucket, and the in-bucket
+// scan was the O(N²) back again. The fold reads members now, so this run is
+// the guard on that rather than the confession. One size only, 4,000, picked
+// when the quadratic still had to finish; the growth curve is not measured.
+//
+// Watch the ramda cell: `equals` over 4,000 Maps is an hour, not a minute. It
+// is left in and left running because the row is the finding.
 //
 // Versions are read from the installed packages rather than written into this
 // comment: a version in prose is a version that goes stale silently.

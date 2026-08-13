@@ -147,7 +147,13 @@ export declare function deepEqual(a: any, b: any): boolean;
  * folds to a 32-bit FNV-1a hash in a single walk, values collide into
  * buckets, and deepEqual runs only within a bucket: linear in practice. The
  * hash is free to be coarse — a shared bucket costs one comparison, while
- * correctness comes from deepEqual alone. The bucket-then-verify idea is
+ * correctness comes from deepEqual alone.
+ *
+ * Sets and Maps fold their members too, commutatively, so insertion order
+ * never reaches the hash and equal collections still land in one bucket. The
+ * bill is a walk per member on every collection: a pile of large Sets costs
+ * more to fold than a pile of small documents, and a single pair of them is a
+ * job for {@link deepEqual} rather than for this. The bucket-then-verify idea is
  * HashCache (2013,
  * https://stamat.wordpress.com/2013/07/03/javascript-quickly-find-very-large-objects-in-a-large-array/)
  * with the CRC32-over-canonical-string hash replaced by a fold over the live
