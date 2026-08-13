@@ -115,6 +115,19 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   all, which is the fold's worst case: every document pays for a hash and none of them
   saves a comparison.
 
+- **`bench/results/*.md`, committed** — every bench already printed markdown tables, so the
+  harness now tees each run's stdout into a file rather than leaving it in a scrollback
+  nobody diffs. A number under review is a number that gets checked; one you have to run the
+  bench to see is one you take on faith.
+
+  Each file closes with what the terminal never said: a legend giving the unit, what it
+  measures and whether lower or higher is better, and the node version, CPU and exact
+  command behind the numbers — a timing without the machine that produced it is not a claim
+  anyone can check. Only the units a run actually printed are listed, so a capability bench
+  answering in ✅ and ❌ carries no row about milliseconds. A bench that skipped for missing
+  rivals writes nothing at all, which is what keeps a fresh checkout from blanking a result
+  someone committed from a run that had them.
+
 ### Changed
 
 - **[`dedupe`](https://stamat.info/book-of-spells/global.html#dedupe) separates Sets and
@@ -144,6 +157,20 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   there installs them at pinned versions, `npm run bench` runs that directory,
   `npm run teardown` removes them. The library's own manifest stays dependency-free and a
   checkout that never runs setup never downloads a rival.
+
+- **The harness warms up, and reads what every contender returns.** `time` ran its first
+  pass cold. A median of three hides that by discarding the slowest, and a median of one or
+  two cannot — at `runs` of 1 or 2 the cold pass is the one it picks. It now takes one
+  untimed pass first, which is what `opsPerSec` already did.
+
+  The second half is the one that could have published a lie. Nothing read what a contender
+  returned, and a call whose result is never observed is a call an optimiser may delete
+  outright — a deleted body times as impossibly fast, which reads as a win rather than as
+  the measurement failure it is. Every result now lands in a sink the harness reads
+  afterwards, in a branch that cannot fire.
+
+  Timings in `bench/results/` are the run after both, and are not comparable to numbers
+  quoted from before them.
 
 ### Fixed
 

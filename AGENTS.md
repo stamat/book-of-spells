@@ -34,6 +34,14 @@ script/types     # type declarations only
 - Benches run on generated data by default — seeded, no `Math.random`, so a
   published number can be rerun by a stranger. `--corpus <file>` swaps in real
   data for realism, and downloaded corpora are gitignored, never committed.
+- `bench/results/<subject>-<bench>.md` is **generated and committed**: the
+  harness tees each bench's stdout into it, then appends a legend saying what
+  each unit means and which direction is good, and the node version, CPU and
+  command that produced the numbers. Never hand-edit one — rerun
+  `script/bench`. A bench that skipped for missing rivals writes nothing, so
+  a fresh checkout cannot blank a result somebody committed. A run with
+  `--full` or `--corpus` overwrites the same file, and the footer says so;
+  commit that only if the flagged run is the one worth publishing.
 - A bench comparing what rivals *can answer* rather than how fast, run every
   cell in a child process — `bench/deepEqual/` is the worked example. A rival
   that neither returns nor throws cannot be caught in-process, and one such
