@@ -41,7 +41,8 @@ import {
   generateUUID,
   random,
   deepEqual,
-  dedupe
+  dedupe,
+  DeepSet
 } from '../helpers.mjs'
 
 const a = {
@@ -1080,6 +1081,83 @@ test('dedupe: cyclic structures terminate and equal cycles collapse', () => {
 test('dedupe: twins that differ only in a symbol-keyed value both stay', () => {
   const s = Symbol('s')
   expect(dedupe([{ k: 1, [s]: 1 }, { k: 1, [s]: 2 }])).toHaveLength(2)
+})
+
+// DeepSet — membership by structure, the bucket-then-verify pass dedupe makes
+// internally, kept instead of thrown away.
+// Covered: has() answering for a value never inserted, add() refusing a
+// structural duplicate while keeping the first reference, insertion order and
+// exact values surviving iteration (-0 included, which a native Set would
+// normalise), the constructor taking any iterable or nothing, dedupe agreeing
+// with it value for value, and the two refusals the class documents — a
+// mutated member becoming unfindable, and two DeepSets never being deepEqual.
+// Deliberately not: delete and clear, which do not exist yet; scale, which
+// bench/dedupe/membership.bench.mjs owns; and the fold's own behaviour, which
+// the dedupe cases above already pin, since both call the same one.
+
+test('DeepSet: a value never inserted is found by an equal one, and an unequal one is not', () => {
+  const set = new DeepSet([{ a: 1, b: { c: [1, 2] } }])
+  expect(set.has({ b: { c: [1, 2] }, a: 1 })).toBe(true)
+  expect(set.has({ a: 1, b: { c: [1, 3] } })).toBe(false)
+  expect(set.has({ a: 1 })).toBe(false)
+})
+
+test('DeepSet: adding a structural duplicate changes nothing and keeps the first reference', () => {
+  const first = { a: 1 }
+  const set = new DeepSet([first])
+  expect(set.add({ a: 1 }).size).toBe(1)
+  expect([...set][0]).toBe(first)
+})
+
+test('DeepSet: add returns the set, so calls chain', () => {
+  const set = new DeepSet()
+  expect(set.add({ a: 1 }).add({ a: 2 }).add({ a: 1 }).size).toBe(2)
+})
+
+test('DeepSet: iteration is insertion order, and values come back exactly as given', () => {
+  expect([...new DeepSet([{ a: 3 }, { a: 1 }, { a: 2 }])]).toEqual([{ a: 3 }, { a: 1 }, { a: 2 }])
+  // a native Set would hand back 0 here, which is a value the caller never passed in
+  expect(Object.is([...new DeepSet([-0])][0], -0)).toBe(true)
+})
+
+test('DeepSet: the constructor takes any iterable, or nothing at all', () => {
+  expect(new DeepSet().size).toBe(0)
+  expect(new DeepSet(undefined).size).toBe(0)
+  expect(new DeepSet(null).size).toBe(0)
+  expect([...new DeepSet('aab')]).toEqual(['a', 'b'])
+  expect(new DeepSet(new Set([{ a: 1 }, { a: 1 }])).size).toBe(1)
+})
+
+test('DeepSet: SameValueZero values behave as dedupe already promises', () => {
+  expect(new DeepSet([NaN]).has(NaN)).toBe(true)
+  expect(new DeepSet([undefined]).has(undefined)).toBe(true)
+  expect(new DeepSet([0]).has(-0)).toBe(true)
+  expect(new DeepSet([new Set([1, 2])]).has(new Set([2, 1]))).toBe(true)
+})
+
+test('DeepSet: dedupe is this set spread, value for value', () => {
+  const input = [{ a: 1, b: 2 }, { b: 2, a: 1 }, new Date(5), new Date(5), NaN, NaN, { c: 3 }]
+  expect(dedupe(input)).toEqual([...new DeepSet(input)])
+})
+
+test('DeepSet: a member mutated after it goes in becomes unfindable, by structure and by reference', () => {
+  const value = { a: 1 }
+  const set = new DeepSet([value])
+  value.a = 2
+  expect(set.has({ a: 2 })).toBe(false)
+  expect(set.has(value)).toBe(false)
+  // still held, still iterable — it is the index that no longer routes to it
+  expect(set.size).toBe(1)
+  expect([...set][0]).toBe(value)
+})
+
+test('DeepSet: two of them are never deepEqual, however alike their contents', () => {
+  expect(deepEqual(new DeepSet([1]), new DeepSet([1]))).toBe(false)
+  expect(deepEqual(new DeepSet([1]), new DeepSet([2]))).toBe(false)
+  // the refusal is what stops the empty-looking walk from calling them equal
+  expect(Object.prototype.toString.call(new DeepSet())).toBe('[object DeepSet]')
+  // spread them to ask the question deepEqual declines
+  expect(deepEqual([...new DeepSet([{ a: 1 }])], [...new DeepSet([{ a: 1 }])])).toBe(true)
 })
 
 // Moved here from `<combobox-elemental>`, which is where these were written and where the

@@ -61,7 +61,7 @@ const GENS = [
 // serialization-order different. That shuffle is what separates a sound
 // contender from an unsound one: a raw JSON.stringify key keeps almost all of
 // these as distinct.
-function shuffledClone(v) {
+export function shuffledClone(v) {
   if (v === null || typeof v !== 'object') return v
   if (Array.isArray(v)) return v.map(shuffledClone)
   const keys = Object.keys(v)

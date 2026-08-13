@@ -4,17 +4,17 @@ one pair, 2.9 MB per value
 
 | case | structural walk — deepEqual(a, b) | hash both sides — dedupe([a, b]) |
 |---|---|---|
-| equal pair | 453 ops/s | 153 ops/s |
-| difference in the first key | 10.8M ops/s | 230 ops/s |
+| equal pair | 457 ops/s | 152 ops/s |
+| difference in the first key | 10.7M ops/s | 230 ops/s |
 
 | items | dedupe | pairwise deepEqual | winner |
 |---|---|---|---|
-| 2 | 770k ops/s | 8.5M ops/s | pairwise 11.0× |
-| 8 | 159k ops/s | 502k ops/s | pairwise 3.2× |
-| 16 | 96k ops/s | 124k ops/s | pairwise 1.3× |
-| 32 | 43k ops/s | 29k ops/s | dedupe 1.5× |
-| 128 | 10k ops/s | 2k ops/s | dedupe 5.5× |
-| 1,000 | 1k ops/s | 31 ops/s | dedupe 45.6× |
+| 2 | 463k ops/s | 7.3M ops/s | pairwise 15.7× |
+| 8 | 134k ops/s | 415k ops/s | pairwise 3.1× |
+| 16 | 65k ops/s | 106k ops/s | pairwise 1.6× |
+| 32 | 44k ops/s | 29k ops/s | dedupe 1.5× |
+| 128 | 11k ops/s | 2k ops/s | dedupe 6.1× |
+| 1,000 | 1k ops/s | 27 ops/s | dedupe 38.4× |
 
 ---
 

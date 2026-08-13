@@ -18,6 +18,34 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ### Added
 
+- **[`DeepSet`](https://stamat.info/book-of-spells/DeepSet.html) — a `Set` that decides
+  membership by structure instead of by reference**, so `has` answers the question
+  `new Set()` cannot: is a value like this one already in here?
+  [`deepEqual`](https://stamat.info/book-of-spells/global.html#deepEqual) defines "like",
+  and the fold buckets candidates first, exactly as
+  [`dedupe`](https://stamat.info/book-of-spells/global.html#dedupe) does — a `DeepSet` is
+  that pass kept rather than thrown away. `dedupe(arr)` is now literally
+  `[...new DeepSet(arr)]`, one bucket loop in the library where there were about to be two.
+
+  **Reach for it only when the same unchanging pile is asked about repeatedly.**
+  `arr.some(x => deepEqual(x, value))` wins a single lookup outright and always will: a
+  fold must read the whole value before it can say a word, where `deepEqual` abandons most
+  candidates after a key or two. The index pays back from around thirty queries, and that
+  figure barely moves between a thousand values and a hundred thousand.
+  `bench/dedupe/membership.bench.mjs` is where the number comes from.
+
+  Two limits are documented rather than designed away. **A value must not be mutated while
+  it is in the set** — membership is decided by contents, so changing one strands it in the
+  wrong bucket and it becomes unfindable, by structure and by its own reference. And **two
+  `DeepSet`s are never `deepEqual`**: their members sit in private fields a structural walk
+  cannot reach, so `deepEqual` refuses them by name the way it already refuses a `WeakMap`,
+  rather than walking two objects with no own properties and calling them equal. Compare
+  `[...a]` and `[...b]`.
+
+  No `delete` or `clear` yet. Insertion order is an array — which is what keeps `-0` from
+  being handed back as `0`, as a native `Set` would — so removal would be linear in the size
+  of the set rather than the O(1) the name implies, and nothing has needed it.
+
 - **`bench/clone/capability.bench.mjs`** — what eight implementations actually copy, which
   no speed table shows: the cheapest clone of all is the one that drops what it does not
   understand. [`clone`](https://stamat.info/book-of-spells/global.html#clone) against
@@ -57,6 +85,25 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   lost copy, and every cell there has to pass both structural equality and a
   no-shared-references walk — a "clone" that returns its argument is structurally equal to
   it and is not a clone.
+
+- **`bench/dedupe/membership.bench.mjs`** — "is this document already in that pile?", the
+  question [`dedupe`](https://stamat.info/book-of-spells/global.html#dedupe) does not
+  answer. It is the bench that decided
+  [`DeepSet`](https://stamat.info/book-of-spells/DeepSet.html) should exist, and it now
+  guards the one number that class's documentation quotes:
+  `arr.some(x => deepEqual(x, probe))` against `DeepSet` against a `JSON.stringify` key
+  set.
+
+  **The index pays from about 30 lookups, and that number barely moves between a thousand
+  documents and a hundred thousand** — build and scan both scale with the pile, so their
+  ratio does not. Against a probe that is absent it pays from about 13. One lookup is a
+  scan every time: hashing must read the whole document, where `deepEqual` leaves most
+  candidates after a key or two.
+
+  The `JSON.stringify` row is the honest one. It is the fastest thing here against a
+  document that is genuinely absent, and it is `unsound` against a document that is
+  present with its keys in a different order — which is the case anyone reaches for it to
+  handle.
 
 - **`bench/deepEqual/capability.bench.mjs`** — what seven rival implementations can
   actually answer, which no speed table shows: skipping a shape is faster than reading

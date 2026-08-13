@@ -198,6 +198,79 @@ export declare function deepEqual(a: any, b: any): boolean;
  */
 export declare function dedupe(arr: any[]): any[];
 /**
+ * A Set that decides membership by structure rather than by reference, so
+ * `has` answers the question `new Set()` cannot: is a value like this one
+ * already in here? {@link deepEqual} defines "like", exactly as it does for
+ * {@link dedupe}, and the two share one bucket-then-verify pass — a DeepSet is
+ * that pass kept instead of thrown away.
+ *
+ * Reach for it when the same unchanging pile is asked about repeatedly.
+ * `arr.some(x => deepEqual(x, value))` beats it outright for a single lookup:
+ * a fold has to read the whole value before it can say a word, where deepEqual
+ * abandons most candidates after a key or two. Building the index only pays
+ * back across queries, from around thirty of them, and that figure barely
+ * moves between a thousand values and a hundred thousand — build and scan both
+ * scale with the pile, so their ratio does not.
+ * `bench/dedupe/membership.bench.mjs` regenerates it.
+ *
+ * **A value must not be mutated while it is in here.** Membership is decided
+ * by contents, so changing a value changes the bucket it should live in while
+ * it sits in the old one, and it becomes unfindable — by `has`, and by its own
+ * reference. `new Set()` has no such rule, because reference identity survives
+ * mutation and structure does not. Add copies if the originals move.
+ *
+ * Insertion order is preserved and the first occurrence of every distinct
+ * value is the one kept, so `[...new DeepSet(arr)]` is `dedupe(arr)`. Values
+ * are held as given, `-0` included — the platform's `Set` normalises that to
+ * `0` and this does not, which is why an array backs the order rather than a
+ * `Set`.
+ *
+ * Two DeepSets are never {@link deepEqual} to each other: their members live in
+ * private fields a structural walk cannot reach, and refusing is better than
+ * the wrong answer that walk would otherwise give. Compare `[...a]` and
+ * `[...b]`.
+ *
+ * No `delete` or `clear`: insertion order is an array, so removal would be
+ * linear in the size of the set rather than the O(1) the name implies, and
+ * nothing has needed it yet. Build, then query.
+ *
+ * @example
+ * const seen = new DeepSet([{ a: 1 }, { b: 2 }])
+ * seen.has({ a: 1 })          // => true — a different object, same structure
+ * seen.has({ a: 2 })          // => false
+ * seen.add({ b: 2 }).size     // => 2 — already present, not added again
+ * [...new DeepSet([{ a: 1 }, { a: 1 }])]  // => [{ a: 1 }]
+ */
+export declare class DeepSet {
+    #private;
+    /**
+     * @param {Iterable} [values] Values to add, in order; duplicates are dropped
+     */
+    constructor(values?: Iterable<any>);
+    /**
+     * @returns {number} How many structurally distinct values are held
+     */
+    get size(): number;
+    /**
+     * @param {*} value The value to look for
+     * @returns {boolean} True when a structurally equal value is already held
+     */
+    has(value: any): boolean;
+    /**
+     * Adds a value unless one structurally equal to it is already held, in which
+     * case the one already here stays and this call changes nothing.
+     *
+     * @param {*} value The value to add
+     * @returns {DeepSet} This set, so calls chain
+     */
+    add(value: any): DeepSet;
+    /**
+     * @returns {Iterator} The held values, in the order they were added
+     */
+    [Symbol.iterator](): Iterator<any, any, any>;
+    get [Symbol.toStringTag](): string;
+}
+/**
  * Check if an object is empty
  *
  * @param {object} o The object to check

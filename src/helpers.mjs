@@ -427,6 +427,14 @@ function deepEqualCyclic(a, b, depth, seen) {
       case '[object WeakMap]':
       case '[object WeakSet]':
         return false
+      // A DeepSet keeps its members in private fields, which this walk cannot
+      // reach: without this line two DeepSets holding different values read as
+      // two objects with no own properties and compare equal, which is the
+      // silent wrong answer. Refusing is the conservative half of the same
+      // rule the weak collections get — compare [...a] and [...b] to ask the
+      // question this declines to answer.
+      case '[object DeepSet]':
+        return false
     }
 
     if (tag === '[object ArrayBuffer]' || tag === '[object SharedArrayBuffer]' || tag === '[object DataView]') {
@@ -693,30 +701,127 @@ function foldValue(h, v, depth) {
  * dedupe([new Set([1, 2]), new Set([2, 1])]) // => [new Set([1, 2])]
  */
 export function dedupe(arr) {
-  const buckets = new Map()
-  const out = []
-  for (let i = 0; i < arr.length; i++) {
-    const item = arr[i]
-    const key = foldValue(FNV_SEED, item, 0) >>> 0
-    const bucket = buckets.get(key)
-    if (bucket === undefined) {
-      buckets.set(key, [item])
-      out.push(item)
-      continue
-    }
-    let seen = false
-    for (let j = 0; j < bucket.length; j++) {
-      if (deepEqual(bucket[j], item)) {
-        seen = true
-        break
-      }
-    }
-    if (!seen) {
-      bucket.push(item)
-      out.push(item)
-    }
+  const set = new DeepSet()
+  for (let i = 0; i < arr.length; i++) set.add(arr[i])
+  return [...set]
+}
+
+/**
+ * A Set that decides membership by structure rather than by reference, so
+ * `has` answers the question `new Set()` cannot: is a value like this one
+ * already in here? {@link deepEqual} defines "like", exactly as it does for
+ * {@link dedupe}, and the two share one bucket-then-verify pass — a DeepSet is
+ * that pass kept instead of thrown away.
+ *
+ * Reach for it when the same unchanging pile is asked about repeatedly.
+ * `arr.some(x => deepEqual(x, value))` beats it outright for a single lookup:
+ * a fold has to read the whole value before it can say a word, where deepEqual
+ * abandons most candidates after a key or two. Building the index only pays
+ * back across queries, from around thirty of them, and that figure barely
+ * moves between a thousand values and a hundred thousand — build and scan both
+ * scale with the pile, so their ratio does not.
+ * `bench/dedupe/membership.bench.mjs` regenerates it.
+ *
+ * **A value must not be mutated while it is in here.** Membership is decided
+ * by contents, so changing a value changes the bucket it should live in while
+ * it sits in the old one, and it becomes unfindable — by `has`, and by its own
+ * reference. `new Set()` has no such rule, because reference identity survives
+ * mutation and structure does not. Add copies if the originals move.
+ *
+ * Insertion order is preserved and the first occurrence of every distinct
+ * value is the one kept, so `[...new DeepSet(arr)]` is `dedupe(arr)`. Values
+ * are held as given, `-0` included — the platform's `Set` normalises that to
+ * `0` and this does not, which is why an array backs the order rather than a
+ * `Set`.
+ *
+ * Two DeepSets are never {@link deepEqual} to each other: their members live in
+ * private fields a structural walk cannot reach, and refusing is better than
+ * the wrong answer that walk would otherwise give. Compare `[...a]` and
+ * `[...b]`.
+ *
+ * No `delete` or `clear`: insertion order is an array, so removal would be
+ * linear in the size of the set rather than the O(1) the name implies, and
+ * nothing has needed it yet. Build, then query.
+ *
+ * @example
+ * const seen = new DeepSet([{ a: 1 }, { b: 2 }])
+ * seen.has({ a: 1 })          // => true — a different object, same structure
+ * seen.has({ a: 2 })          // => false
+ * seen.add({ b: 2 }).size     // => 2 — already present, not added again
+ * [...new DeepSet([{ a: 1 }, { a: 1 }])]  // => [{ a: 1 }]
+ */
+export class DeepSet {
+  // hash → the values that folded to it, usually one. deepEqual settles a
+  // shared bucket; the hash never decides anything on its own.
+  #buckets = new Map()
+  // Insertion order, and the only place a value is held exactly as given.
+  // Deliberately not a Set: that would normalise -0 to 0 and hand back a value
+  // the caller never passed in.
+  #values = []
+
+  /**
+   * @param {Iterable} [values] Values to add, in order; duplicates are dropped
+   */
+  constructor(values) {
+    if (values === undefined || values === null) return
+    for (const value of values) this.add(value)
   }
-  return out
+
+  /**
+   * @returns {number} How many structurally distinct values are held
+   */
+  get size() {
+    return this.#values.length
+  }
+
+  /**
+   * @param {*} value The value to look for
+   * @returns {boolean} True when a structurally equal value is already held
+   */
+  has(value) {
+    const bucket = this.#buckets.get(foldValue(FNV_SEED, value, 0) >>> 0)
+    if (bucket === undefined) return false
+    for (let i = 0; i < bucket.length; i++) {
+      if (deepEqual(bucket[i], value)) return true
+    }
+    return false
+  }
+
+  /**
+   * Adds a value unless one structurally equal to it is already held, in which
+   * case the one already here stays and this call changes nothing.
+   *
+   * @param {*} value The value to add
+   * @returns {DeepSet} This set, so calls chain
+   */
+  add(value) {
+    const key = foldValue(FNV_SEED, value, 0) >>> 0
+    const bucket = this.#buckets.get(key)
+    if (bucket === undefined) {
+      this.#buckets.set(key, [value])
+      this.#values.push(value)
+      return this
+    }
+    for (let i = 0; i < bucket.length; i++) {
+      if (deepEqual(bucket[i], value)) return this
+    }
+    bucket.push(value)
+    this.#values.push(value)
+    return this
+  }
+
+  /**
+   * @returns {Iterator} The held values, in the order they were added
+   */
+  [Symbol.iterator]() {
+    return this.#values[Symbol.iterator]()
+  }
+
+  // Gives instances the [object DeepSet] tag, which is what lets deepEqual
+  // refuse them by name rather than walking them and finding nothing.
+  get [Symbol.toStringTag]() {
+    return 'DeepSet'
+  }
 }
 
 /**

@@ -2,8 +2,8 @@
 
 | input | uniques | dedupe | HashCache 2013 | canon-key | json-key (unsound) | pairwise deepEqual |
 |---|---|---|---|---|---|---|
-| 2,189 | 2,000 | 4 ms | 11 ms | 5 ms | 2 ms +187 kept dups | 144 ms |
-| 110,201 | 100,000 | 219 ms | 533 ms | 497 ms | 113 ms +10,060 kept dups | — |
+| 2,189 | 2,000 | 4 ms | 20 ms | 6 ms | 2 ms +187 kept dups | 147 ms |
+| 110,201 | 100,000 | 181 ms | 584 ms | 459 ms | 111 ms +10,060 kept dups | — |
 
 ---
 
