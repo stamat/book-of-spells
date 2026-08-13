@@ -58,6 +58,39 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   no-shared-references walk — a "clone" that returns its argument is structurally equal to
   it and is not a clone.
 
+- **`bench/deepEqual/capability.bench.mjs`** — what seven rival implementations can
+  actually answer, which no speed table shows: skipping a shape is faster than reading
+  it, so timing alone rewards whoever does the least.
+  [`deepEqual`](https://stamat.info/book-of-spells/global.html#deepEqual) against
+  fast-deep-equal in both its tiers, deep-eql, lodash, es-toolkit, ramda, and node's
+  `util.isDeepStrictEqual`, over 29 pairs that are objectively equal or objectively not.
+
+  It scores 28 of 29, tied with deep-eql and `isDeepStrictEqual` and not alone at the
+  top. The one it loses, everyone loses: 20,000 levels of nesting is a `RangeError` in
+  all eight. A second table reports the rows where libraries legitimately disagree —
+  class instance against its plain twin, `-0` against `0`, a sparse hole against an
+  explicit `undefined` — and scores none of them, because those are positions rather
+  than defects.
+
+  Every cell runs in a child process, which is not caution: fast-deep-equal's es6 build
+  neither returns nor throws on a pair of equal `DataView`s. A hang cannot be caught in
+  the process it happens in, so the boundary is what turns "the suite never finished"
+  into a row naming the cell.
+
+- **`bench/deepEqual/ecosystem.bench.mjs`** — the speed half, over plain objects,
+  arrays, numbers and strings only, because those are the shapes all eight answer alike
+  and a fair race needs a common denominator. Four scenarios rather than one number:
+  `deepEqual` is roughly 7× faster than fast-deep-equal when the difference sits in the
+  first key and loses to it on a fully-walked equal pair, and quoting either half alone
+  misleads.
+
+  A second table runs the shapes they disagree on, marking `unsound` instead of timing
+  a wrong answer — and it gates on an equal *and* an unequal pair, because
+  fast-deep-equal walks a Set's own enumerable properties, finds none, and calls every
+  pair of Sets equal. On an equal pair alone that reads as a correct answer arriving ten
+  times faster than anyone else's. It is not fast at Sets; it does not look at them.
+  Node's `isDeepStrictEqual` genuinely wins the 10,000-byte `Uint8Array` row by ~20×.
+
 - **`bench/dedupe/ecosystem.bench.mjs`** — [`dedupe`](https://stamat.info/book-of-spells/global.html#dedupe)
   against what people install for this job instead: lodash and es-toolkit
   `uniqWith(isEqual)`, ramda `uniq`, and object-hash used as a Map key. Same corpus and

@@ -28,7 +28,7 @@
 // geojson-counties-fips.json, 3.2 MB of US county polygons.
 import { readFileSync } from 'node:fs'
 import { deepEqual, dedupe } from '../../src/helpers.mjs'
-import { table } from '../harness.mjs'
+import { table, opsPerSec, rate } from '../harness.mjs'
 
 function mulberry32(seed) {
   let a = seed >>> 0
@@ -78,24 +78,6 @@ earlyDiff[Object.keys(earlyDiff)[0]] = '__different__'
 
 if (!deepEqual(a, equal)) throw new Error('equal pair is not equal — bench is measuring the wrong thing')
 if (deepEqual(a, earlyDiff)) throw new Error('early-diff pair compares equal — bench is measuring the wrong thing')
-
-// Timed loop rather than harness.time(): these ops span nanoseconds (early
-// exit) to milliseconds (full walk), and a fixed run count cannot serve both.
-function opsPerSec(fn, budgetMs = 1000) {
-  fn()
-  let n = 0
-  const t0 = performance.now()
-  let elapsed = 0
-  while ((elapsed = performance.now() - t0) < budgetMs) {
-    fn()
-    n++
-  }
-  return (n / elapsed) * 1000
-}
-
-const rate = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M ops/s'
-  : n >= 1e3 ? Math.round(n / 1e3) + 'k ops/s'
-  : Math.round(n) + ' ops/s'
 
 const bytes = JSON.stringify(source).length
 console.log(`one pair, ${(bytes / 1e6).toFixed(1)} MB per value\n`)

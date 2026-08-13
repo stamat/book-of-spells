@@ -23,6 +23,29 @@ export function fmt(ms) {
   return ms >= 1000 ? (ms / 1000).toFixed(1) + ' s' : ms.toFixed(0) + ' ms'
 }
 
+// Throughput under a wall-clock budget, for benches whose operations span
+// nanoseconds (an early exit on the first key) to milliseconds (a full walk of
+// megabytes). A fixed iteration count cannot serve both ends of that range:
+// enough runs to time the fast case is hours of the slow one. One untimed call
+// first, so a cold JIT is not charged to the measurement.
+export function opsPerSec(fn, budgetMs = 1000) {
+  fn()
+  let n = 0
+  const t0 = performance.now()
+  let elapsed = 0
+  while ((elapsed = performance.now() - t0) < budgetMs) {
+    fn()
+    n++
+  }
+  return (n / elapsed) * 1000
+}
+
+export function rate(n) {
+  return n >= 1e6 ? (n / 1e6).toFixed(1) + 'M ops/s'
+    : n >= 1e3 ? Math.round(n / 1e3) + 'k ops/s'
+    : Math.round(n) + ' ops/s'
+}
+
 // GitHub-flavored markdown table to stdout — paste-ready for a changelog or
 // an issue, because a number that stays in a terminal scrollback is a number
 // nobody checks twice.

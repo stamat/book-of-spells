@@ -34,6 +34,10 @@ script/types     # type declarations only
 - Benches run on generated data by default — seeded, no `Math.random`, so a
   published number can be rerun by a stranger. `--corpus <file>` swaps in real
   data for realism, and downloaded corpora are gitignored, never committed.
+- A bench comparing what rivals *can answer* rather than how fast, run every
+  cell in a child process — `bench/deepEqual/` is the worked example. A rival
+  that neither returns nor throws cannot be caught in-process, and one such
+  cell would hang the whole suite instead of being reported as a row.
 - `types/` and `docs/` are **generated** — `docs/` is gitignored, `types/` ships
   in the package.
 
