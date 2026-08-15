@@ -42,9 +42,14 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   rather than walking two objects with no own properties and calling them equal. Compare
   `[...a]` and `[...b]`.
 
-  No `delete` or `clear` yet. Insertion order is an array — which is what keeps `-0` from
-  being handed back as `0`, as a native `Set` would — so removal would be linear in the size
-  of the set rather than the O(1) the name implies, and nothing has needed it.
+  `delete` and `clear` are both there, and they do not cost the same. `clear` drops the
+  index and the insertion order whole, for nothing. `delete` is linear in the size of the
+  set where a native `Set` is O(1): insertion order is an array — which is what keeps `-0`
+  from being handed back as `0`, as a native `Set` would — so the value has to be found in
+  it and spliced out. Occasional removal is fine; dropping many at once is cheaper as a
+  rebuild from a filtered iteration. Both take structure, not references, so
+  `seen.delete({ a: 1 })` removes an equal object the caller never held. A member mutated
+  while it is in the set cannot be deleted, for the same reason `has` stops finding it.
 
 - **`bench/clone/capability.bench.mjs`** — what eight implementations actually copy, which
   no speed table shows: the cheapest clone of all is the one that drops what it does not

@@ -1089,11 +1089,13 @@ test('dedupe: twins that differ only in a symbol-keyed value both stay', () => {
 // structural duplicate while keeping the first reference, insertion order and
 // exact values surviving iteration (-0 included, which a native Set would
 // normalise), the constructor taking any iterable or nothing, dedupe agreeing
-// with it value for value, and the two refusals the class documents — a
-// mutated member becoming unfindable, and two DeepSets never being deepEqual.
-// Deliberately not: delete and clear, which do not exist yet; scale, which
-// bench/dedupe/membership.bench.mjs owns; and the fold's own behaviour, which
-// the dedupe cases above already pin, since both call the same one.
+// with it value for value, delete and clear taking values back out, and the
+// two refusals the class documents — a mutated member becoming unfindable, and
+// two DeepSets never being deepEqual.
+// Deliberately not: scale, which bench/dedupe/membership.bench.mjs owns;
+// delete's cost, which is a documented O(n) and not a behaviour a test can
+// pin; and the fold's own behaviour, which the dedupe cases above already pin,
+// since both call the same one.
 
 test('DeepSet: a value never inserted is found by an equal one, and an unequal one is not', () => {
   const set = new DeepSet([{ a: 1, b: { c: [1, 2] } }])
@@ -1138,6 +1140,57 @@ test('DeepSet: SameValueZero values behave as dedupe already promises', () => {
 test('DeepSet: dedupe is this set spread, value for value', () => {
   const input = [{ a: 1, b: 2 }, { b: 2, a: 1 }, new Date(5), new Date(5), NaN, NaN, { c: 3 }]
   expect(dedupe(input)).toEqual([...new DeepSet(input)])
+})
+
+test('DeepSet: delete takes a value out by structure, and says whether it took one', () => {
+  const set = new DeepSet([{ a: 1 }, { b: 2 }])
+  expect(set.delete({ a: 1 })).toBe(true)
+  expect(set.has({ a: 1 })).toBe(false)
+  expect(set.size).toBe(1)
+  expect(set.delete({ a: 1 })).toBe(false)
+  expect(set.delete({ nothing: 'like this was ever in here' })).toBe(false)
+  expect(set.size).toBe(1)
+})
+
+test('DeepSet: what survives a delete keeps its order, and a re-add goes to the back', () => {
+  const set = new DeepSet([{ a: 1 }, { a: 2 }, { a: 3 }])
+  set.delete({ a: 1 })
+  expect([...set]).toEqual([{ a: 2 }, { a: 3 }])
+  set.add({ a: 1 })
+  expect([...set]).toEqual([{ a: 2 }, { a: 3 }, { a: 1 }])
+})
+
+test('DeepSet: deleting a NaN removes the NaN and not whatever sits at the end', () => {
+  // indexOf never finds a NaN, and the -1 it answers with would splice the last
+  // value out instead — the bug this test exists to keep out
+  const set = new DeepSet([NaN, { a: 1 }])
+  expect(set.delete(NaN)).toBe(true)
+  expect([...set]).toEqual([{ a: 1 }])
+})
+
+test('DeepSet: delete matches -0 against 0, exactly as has and add already do', () => {
+  const set = new DeepSet([-0])
+  expect(set.delete(0)).toBe(true)
+  expect(set.size).toBe(0)
+})
+
+test('DeepSet: a member mutated after it goes in cannot be deleted either', () => {
+  const value = { a: 1 }
+  const set = new DeepSet([value])
+  value.a = 2
+  expect(set.delete(value)).toBe(false)
+  expect(set.size).toBe(1)
+})
+
+test('DeepSet: clear empties it and leaves it usable', () => {
+  const set = new DeepSet([{ a: 1 }, { b: 2 }])
+  expect(set.clear()).toBeUndefined()
+  expect(set.size).toBe(0)
+  expect([...set]).toEqual([])
+  expect(set.has({ a: 1 })).toBe(false)
+  // the index went with the values, so this is a first occurrence again
+  expect(set.add({ a: 1 }).size).toBe(1)
+  expect(set.has({ a: 1 })).toBe(true)
 })
 
 test('DeepSet: a member mutated after it goes in becomes unfindable, by structure and by reference', () => {

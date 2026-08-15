@@ -724,9 +724,10 @@ export function dedupe(arr) {
  *
  * **A value must not be mutated while it is in here.** Membership is decided
  * by contents, so changing a value changes the bucket it should live in while
- * it sits in the old one, and it becomes unfindable — by `has`, and by its own
- * reference. `new Set()` has no such rule, because reference identity survives
- * mutation and structure does not. Add copies if the originals move.
+ * it sits in the old one, and it becomes unfindable — by `has`, by `delete`,
+ * and by its own reference. `new Set()` has no such rule, because reference
+ * identity survives mutation and structure does not. Add copies if the
+ * originals move.
  *
  * Insertion order is preserved and the first occurrence of every distinct
  * value is the one kept, so `[...new DeepSet(arr)]` is `dedupe(arr)`. Values
@@ -739,15 +740,19 @@ export function dedupe(arr) {
  * the wrong answer that walk would otherwise give. Compare `[...a]` and
  * `[...b]`.
  *
- * No `delete` or `clear`: insertion order is an array, so removal would be
- * linear in the size of the set rather than the O(1) the name implies, and
- * nothing has needed it yet. Build, then query.
+ * `delete` is the one method that costs more here than on a native `Set`:
+ * insertion order is an array, so the value has to be found in it and spliced
+ * out, which is linear in the size of the set against the O(1) the name
+ * implies. Occasional removal is fine; dropping many values at once is cheaper
+ * as a rebuild from a filtered iteration. `clear` pays nothing — it drops both
+ * halves whole.
  *
  * @example
  * const seen = new DeepSet([{ a: 1 }, { b: 2 }])
  * seen.has({ a: 1 })          // => true — a different object, same structure
  * seen.has({ a: 2 })          // => false
  * seen.add({ b: 2 }).size     // => 2 — already present, not added again
+ * seen.delete({ a: 1 })       // => true — again, structure and not reference
  * [...new DeepSet([{ a: 1 }, { a: 1 }])]  // => [{ a: 1 }]
  */
 export class DeepSet {
@@ -808,6 +813,51 @@ export class DeepSet {
     bucket.push(value)
     this.#values.push(value)
     return this
+  }
+
+  /**
+   * Removes the held value structurally equal to the one given, if there is
+   * one. Linear in the size of the set — see the note on the class.
+   *
+   * @param {*} value The value to remove
+   * @returns {boolean} True when a value was removed, false when none matched
+   * @example
+   * const seen = new DeepSet([{ a: 1 }])
+   * seen.delete({ a: 1 })  // => true — a different object, same structure
+   * seen.delete({ a: 1 })  // => false — nothing left to match
+   */
+  delete(value) {
+    const key = foldValue(FNV_SEED, value, 0) >>> 0
+    const bucket = this.#buckets.get(key)
+    if (bucket === undefined) return false
+    for (let i = 0; i < bucket.length; i++) {
+      if (!deepEqual(bucket[i], value)) continue
+      const held = bucket[i]
+      bucket.splice(i, 1)
+      // An emptied bucket has to go with it, or a set churning values keeps a
+      // key per hash it has ever seen and grows without bound.
+      if (bucket.length === 0) this.#buckets.delete(key)
+      // Object.is, not indexOf: a held NaN is never found by indexOf, and the
+      // -1 it returns would splice the last value out instead.
+      const at = this.#values.findIndex((v) => Object.is(v, held))
+      if (at !== -1) this.#values.splice(at, 1)
+      return true
+    }
+    return false
+  }
+
+  /**
+   * Removes every value, leaving the set reusable.
+   *
+   * @returns {void}
+   * @example
+   * const seen = new DeepSet([{ a: 1 }])
+   * seen.clear()
+   * seen.size  // => 0
+   */
+  clear() {
+    this.#buckets.clear()
+    this.#values.length = 0
   }
 
   /**
