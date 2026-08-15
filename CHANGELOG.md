@@ -182,6 +182,14 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ### Changed
 
+- **[`clone`](https://stamat.info/book-of-spells/global.html#clone) keeps prototypes.** A
+  class instance clones into an instance of its class, methods and all — where it used to
+  flatten to a plain object, and where `structuredClone` still does. The constructor is not
+  re-run, so anything held in a closure or a private field does not come along.
+
+  One smaller shift alongside it: an own enumerable **symbol key** is copied where it used
+  to be dropped — `structuredClone` still drops those.
+
 - **[`dedupe`](https://stamat.info/book-of-spells/global.html#dedupe) separates Sets and
   Maps now instead of piling them into one bucket.** Their members fold too, commutatively
   — each hashed from the seed, the results summed — so insertion order still cannot reach
@@ -246,16 +254,6 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   a function, a DOM node, a `Promise`, a `WeakMap`, which is most of the objects a page
   actually holds. `clone` shares those by reference rather than half-copying them, so it
   never throws.
-
-### Changed
-
-- **[`clone`](https://stamat.info/book-of-spells/global.html#clone) keeps prototypes.** A
-  class instance clones into an instance of its class, methods and all — where it used to
-  flatten to a plain object, and where `structuredClone` still does. The constructor is not
-  re-run, so anything held in a closure or a private field does not come along.
-
-  One smaller shift alongside it: an own enumerable **symbol key** is copied where it used
-  to be dropped — `structuredClone` still drops those.
 
 ## [2.1.1] - 2026-08-11
 
