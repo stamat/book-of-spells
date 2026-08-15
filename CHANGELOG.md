@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-08-15
+
 ### Added
 
 - **[`DeepSet`](https://stamat.info/book-of-spells/DeepSet.html) — a `Set` that decides
