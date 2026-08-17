@@ -16,6 +16,33 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Added
+
+- **`announcer` — a live region, and the one way of putting something in it that a screen
+  reader actually reads.** Two things go wrong with live regions and both are silent, which
+  is why this is a helper rather than four lines at each call site. A region only announces
+  text that arrives in one **already in the document**, so creating the element and filling
+  it in the same breath announces nothing at all; and a region announces a *change*, so
+  setting the same sentence twice is silent — the second copy, the second failed save, the
+  second press of a toggle. Clearing first and setting in a later task is what makes the
+  second one a change.
+
+  `announcer(host, { className, role, delay })` returns `{ node, say, clear, destroy }`.
+  Called when there is nothing to say, so the region exists before the first message; `say`
+  is the clear-then-set; `destroy` drops a message still in the air when the element goes. A
+  region already under the same class is adopted rather than a second one added, so calling
+  it twice is safe.
+
+  `delay` defaults to `0` — the next task, enough for two mutations to be recorded where one
+  would otherwise be. It is an option rather than a constant because ARIA calls live region
+  behaviour a strong suggestion that browsers, assistive technologies and users may override,
+  so a page whose pairing needs longer can say so without patching this. The number has not
+  been measured against NVDA, JAWS or VoiceOver and is not presented as tuned.
+
+  Extracted rather than invented: three elements in
+  [book-of-elementals](https://github.com/stamat/book-of-elementals) had written it out
+  byte-for-byte.
+
 ## [2.2.0] - 2026-08-15
 
 ### Added

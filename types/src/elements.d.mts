@@ -160,3 +160,52 @@ export declare function placeSubmenu(item: DOMRect | object, panel: {
     side: string;
     align: string;
 };
+/**
+ * A live region, and the one way of putting something in it that a screen reader reads.
+ *
+ * Two things go wrong with live regions, both silently, which is what makes them worth a
+ * helper rather than four lines at each call site.
+ *
+ * **A region announces text that arrives in one already in the document.** Creating the
+ * element and filling it in the same breath announces nothing at all - there was no live
+ * region in the accessibility tree yet for the change to happen in. So this is called when
+ * there is nothing to say, and the saying comes later.
+ *
+ * **A region announces a *change*.** Setting the same sentence twice is not one, so the
+ * second copy, the second failed save and the second press of a toggle are all silent.
+ * Clearing first and setting in a later task is what makes the second one a change.
+ *
+ * `delay` is how much later. `0` - the next task - is enough for two mutations to be recorded
+ * where one would otherwise be, and is what this has always used. It is an option rather than
+ * a constant because live region behaviour is, in ARIA's own words, a strong suggestion that
+ * may be overridden by the browser, the assistive technology or the user: a page that finds
+ * its own pairing needs longer can say so without patching this. The number has not been
+ * measured against NVDA, JAWS or VoiceOver, and is not presented as tuned.
+ *
+ * The node is a `<span>` the caller names, because where it sits and how it is hidden are the
+ * caller's business. Hide it by clipping - `display: none` and `visibility: hidden` both take
+ * it out of the accessibility tree, and a region nothing can read is the whole point undone.
+ *
+ * @param {Element} host Element the region is appended to. One already there under the same
+ *   class is adopted rather than a second one added, so calling this twice is safe.
+ * @param {object} [options]
+ * @param {string} [options.className=live-region] The class the node carries, and how it is found again
+ * @param {string} [options.role=status] `status` waits for a gap in what is being read, `alert` interrupts. Answering something the reader just did is `status` - they are not being interrupted with the result of their own action
+ * @param {number} [options.delay=0] Milliseconds between clearing the region and setting it
+ * @returns {{node: Element, say: (message: string) => void, clear: () => void, destroy: () => void}}
+ *   `say` announces, `clear` empties at once, `destroy` drops a message still in the air
+ * @example
+ * const status = announcer(el, { className: 'copy-status' })
+ * status.say('Copied') // and again later, and it is read again
+ * status.destroy() // when the element goes
+ */
+export declare function announcer(host: Element, options?: {
+    className?: string;
+    role?: string;
+    delay?: number;
+}): {
+    node: Element;
+    say: (message: string) => void;
+    clear: () => void;
+    destroy: () => void;
+};

@@ -1,4 +1,5 @@
-import { define, ElementBase, nextIndex, stepIndex, typeAheadIndex, fits, placeFlyout, placeSubmenu } from '../elements.mjs'
+import { jest } from '@jest/globals'
+import { announcer, define, ElementBase, nextIndex, stepIndex, typeAheadIndex, fits, placeFlyout, placeSubmenu } from '../elements.mjs'
 
 describe('define', () => {
   test('registers once, and a second call is a no-op', () => {
@@ -181,5 +182,92 @@ describe('placement', () => {
   test('a nested panel in RTL prefers the left and flips to the right', () => {
     expect(placeSubmenu(rect(500, 20), PANEL, VIEWPORT, true).side).toBe('inline-end')
     expect(placeSubmenu(rect(20, 20), PANEL, VIEWPORT, true).side).toBe('inline-start')
+  })
+})
+
+describe('announcer', () => {
+  beforeEach(() => { jest.useFakeTimers() })
+  afterEach(() => { jest.useRealTimers() })
+
+  const host = () => document.body.appendChild(document.createElement('div'))
+
+  test('the region is in the document, and empty, before there is anything to say', () => {
+    // The whole reason this is called at upgrade rather than at the moment there is a
+    // message: a region created and filled in one breath announces nothing at all.
+    const region = announcer(host())
+    expect(region.node.isConnected).toBe(true)
+    expect(region.node.getAttribute('role')).toBe('status')
+    expect(region.node.textContent).toBe('')
+  })
+
+  test('what it says lands in the region, a task later', () => {
+    const region = announcer(host())
+    region.say('Copied')
+    expect(region.node.textContent).toBe('')
+    jest.advanceTimersByTime(0)
+    expect(region.node.textContent).toBe('Copied')
+  })
+
+  test('the same sentence twice is two announcements, not one silence', () => {
+    // A live region announces a change, so the second copy, the second failed save and the
+    // second press of a toggle are all silent without the clear in between.
+    const region = announcer(host())
+    const seen = []
+    region.say('Copied')
+    jest.advanceTimersByTime(0)
+    seen.push(region.node.textContent)
+    region.say('Copied')
+    seen.push(region.node.textContent)
+    jest.advanceTimersByTime(0)
+    seen.push(region.node.textContent)
+    expect(seen).toEqual(['Copied', '', 'Copied'])
+  })
+
+  test('nothing to say empties the region rather than announcing an empty string', () => {
+    const region = announcer(host())
+    region.say('Copied')
+    jest.advanceTimersByTime(0)
+    region.say('')
+    expect(region.node.textContent).toBe('')
+    jest.advanceTimersByTime(50)
+    expect(region.node.textContent).toBe('')
+  })
+
+  test('a second call adopts the region already there instead of adding another', () => {
+    // Called from a lifecycle callback that can run more than once - a page moving the
+    // element, a framework re-attaching it - and two live regions saying the same thing is
+    // the sentence read twice.
+    const parent = host()
+    const first = announcer(parent, { className: 'x-status' })
+    const second = announcer(parent, { className: 'x-status' })
+    expect(second.node).toBe(first.node)
+    expect(parent.querySelectorAll('.x-status')).toHaveLength(1)
+  })
+
+  test('the class, the role and the delay are the callers to make', () => {
+    const region = announcer(host(), { className: 'loud', role: 'alert', delay: 200 })
+    expect(region.node.className).toBe('loud')
+    expect(region.node.getAttribute('role')).toBe('alert')
+    region.say('Gone wrong')
+    jest.advanceTimersByTime(199)
+    expect(region.node.textContent).toBe('')
+    jest.advanceTimersByTime(1)
+    expect(region.node.textContent).toBe('Gone wrong')
+  })
+
+  test('a message still in the air when the element goes is a message nobody is waiting for', () => {
+    const region = announcer(host(), { delay: 100 })
+    region.say('too late')
+    region.destroy()
+    jest.advanceTimersByTime(500)
+    expect(region.node.textContent).toBe('')
+  })
+
+  test('clearing takes the region back to empty at once', () => {
+    const region = announcer(host())
+    region.say('Copied')
+    jest.advanceTimersByTime(0)
+    region.clear()
+    expect(region.node.textContent).toBe('')
   })
 })
