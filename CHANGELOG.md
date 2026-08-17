@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-08-17
+
 ### Added
 
 - **`announcer` — a live region, and the one way of putting something in it that a screen
