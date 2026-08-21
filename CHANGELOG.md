@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-08-21
+
 ### Added
 
 - **`scrollSpy` — which section the reader is actually in.** Give it the headings and it calls
