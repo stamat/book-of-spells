@@ -16,6 +16,13 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Fixed
+
+- `announcer`'s return type is a documented `Announcer` typedef rather than an inline record
+  written in TypeScript syntax, which JSDoc could not parse - the docs build failed on it, and
+  the emitted declaration had `say` as a bare `Function`. Editors now see
+  `(message: string) => void` again.
+
 ## [2.3.0] - 2026-08-17
 
 ### Added

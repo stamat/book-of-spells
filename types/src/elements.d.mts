@@ -160,6 +160,42 @@ export declare function placeSubmenu(item: DOMRect | object, panel: {
     side: string;
     align: string;
 };
+export type AnnouncerSay = (message: string) => void;
+export type AnnouncerAction = () => void;
+export type Announcer = {
+    /**
+     * The live region itself
+     */
+    node: Element;
+    /**
+     * Announces, and announces again for a repeated message
+     */
+    say: AnnouncerSay;
+    /**
+     * Empties the region at once
+     */
+    clear: AnnouncerAction;
+    /**
+     * Drops a message still in the air and removes the node
+     */
+    destroy: AnnouncerAction;
+};
+/**
+ * @callback AnnouncerSay
+ * @param {string} message What is read out
+ * @returns {void}
+ */
+/**
+ * @callback AnnouncerAction
+ * @returns {void}
+ */
+/**
+ * @typedef {object} Announcer
+ * @property {Element} node The live region itself
+ * @property {AnnouncerSay} say Announces, and announces again for a repeated message
+ * @property {AnnouncerAction} clear Empties the region at once
+ * @property {AnnouncerAction} destroy Drops a message still in the air and removes the node
+ */
 /**
  * A live region, and the one way of putting something in it that a screen reader reads.
  *
@@ -192,8 +228,7 @@ export declare function placeSubmenu(item: DOMRect | object, panel: {
  * @param {string} [options.className=live-region] The class the node carries, and how it is found again
  * @param {string} [options.role=status] `status` waits for a gap in what is being read, `alert` interrupts. Answering something the reader just did is `status` - they are not being interrupted with the result of their own action
  * @param {number} [options.delay=0] Milliseconds between clearing the region and setting it
- * @returns {{node: Element, say: (message: string) => void, clear: () => void, destroy: () => void}}
- *   `say` announces, `clear` empties at once, `destroy` drops a message still in the air
+ * @returns {Announcer}
  * @example
  * const status = announcer(el, { className: 'copy-status' })
  * status.say('Copied') // and again later, and it is read again
@@ -203,9 +238,4 @@ export declare function announcer(host: Element, options?: {
     className?: string;
     role?: string;
     delay?: number;
-}): {
-    node: Element;
-    say: (message: string) => void;
-    clear: () => void;
-    destroy: () => void;
-};
+}): Announcer;
