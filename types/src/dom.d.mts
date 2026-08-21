@@ -564,9 +564,10 @@ export declare function getHorizontalScrollState(element: HTMLElement, threshold
  * `position: sticky` fails silently: no error, no warning, an element that simply never moves.
  * The usual cause is an ancestor with `overflow: hidden`, `scroll`, `auto` or `overlay`, which
  * becomes the scrollport the element sticks inside — and when that ancestor does not itself
- * scroll, there is nowhere for the element to go. DevTools does not flag it either: its `scroll`
- * badge marks only `overflow: scroll` and `auto` with content actually overflowing, which is
- * neither of the two cases that break stickiness. This reads the ancestors and names the culprit.
+ * scroll, there is nowhere for the element to go. No DevTools reports it: neither engine's
+ * inactive-CSS pass has a rule for sticky, since the declaration is valid and applied, and their
+ * `scroll` badges mark containers that really do scroll — where the one that breaks stickiness is
+ * a box that never scrolls at all. This reads the ancestors and names the culprit.
  *
  * Each finding carries a `code`, the `element` it is about, the `culprit` element to look at,
  * the `problem` in one sentence and a `fix`. The codes are `not-sticky`, `no-inset` (every inset

@@ -41,8 +41,9 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   sticks inside — and when that ancestor never scrolls, the element can never move. Call it with
   a selector, an element, or nothing at all to sweep the page, and each finding names the culprit
   element, the problem and the fix: `overflow-y: clip` clips the same and creates no scrollport.
-  DevTools will not tell you this; its `scroll` badge marks only `overflow: scroll` and `auto`
-  with content actually overflowing, which is neither of the cases that break stickiness. Also
+  No DevTools will tell you: neither engine's inactive-CSS pass has a rule for sticky — both only
+  grey out `top`/`left` on a `static` box — and the `scroll` badges mark containers that really do
+  scroll, while the one that breaks stickiness is a box that never scrolls at all. Also
   reported: insets all left at `auto`, a containing block with no room to travel, and an ancestor
   the element legitimately sticks inside rather than to the viewport. What it cannot see is
   `contain` and `content-visibility` on an ancestor, and `html`/`body` overflow, whose value
