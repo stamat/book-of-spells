@@ -275,3 +275,98 @@ export function hashChange(callback, single) {
     onHashChange(callback)
   })
 }
+
+/**
+ * Reports when the user has stopped interacting with the page, and when they come back.
+ *
+ * Idle means no interaction for `timeout` milliseconds — the callback gets `false` when that
+ * runs out and `true` the moment anything happens again. Only the changes are reported: a
+ * reader scrolling steadily for a minute is one `true` at the end of their pause, not one per
+ * event. The page starts out counted as active, and that is not reported, since it is the
+ * state every caller already has when it makes the call.
+ *
+ * There is a native `IdleDetector`, but it is Chromium-only, needs the `idle-detection`
+ * permission, and answers a different question — whether the machine is idle or its screen
+ * locked, not whether anyone is reading this page.
+ *
+ * What the clock says outranks what the timer says. A timer set for the idle deadline can run
+ * late: a long task blocks it, a background tab has its timers clamped to a second, and a tab
+ * Chrome has frozen may not run it for a minute. Waking late is therefore treated as proof the
+ * user is idle rather than as a reason to doubt it, waking early re-arms for the remainder, and
+ * returning to a hidden tab checks the deadline immediately in case nothing ran while it was
+ * away. The clock is `performance.now()` — the wall clock jumps on an NTP correction or a
+ * daylight-saving change, and would take the deadline with it.
+ *
+ * Listeners are registered on the capturing phase, so a widget that stops its own events from
+ * propagating does not read as the user having left the page.
+ *
+ * @param {function} callback Called with `false` when the user goes idle and `true` when they return
+ * @param {object} [options]
+ * @param {number} [options.timeout=60000] Milliseconds of no interaction that count as idle
+ * @param {string|Array<string>} [options.events] Events that count as interaction, replacing the defaults — `pointerdown`, `pointermove`, `keydown`, `wheel`, `scroll` and `touchstart`
+ * @returns {object|null} `{ destroy }`, or `null` when there is no callback or no DOM
+ * @example
+ * const activity = userActivity((active) => {
+ *  if (!active) video.pause()
+ * }, { timeout: 30000 })
+ *
+ * activity.destroy() // stop listening
+ */
+export function userActivity(callback, options = {}) {
+  if (!isFunction(callback) || typeof document === 'undefined') return null
+
+  const timeout = options.timeout || 60000
+  const events = options.events ? [].concat(options.events) : ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll', 'touchstart']
+
+  let last = performance.now()
+  let idle = false
+  let timer = null
+
+  const arm = function(delay) {
+    timer = setTimeout(check, delay)
+  }
+
+  const check = function() {
+    const idleFor = performance.now() - last
+    if (idleFor < timeout) {
+      arm(timeout - idleFor)
+      return
+    }
+
+    timer = null
+    idle = true
+    callback(false)
+  }
+
+  // An event costs a clock read and an assignment, so there is nothing here worth throttling,
+  // and no timer to reset: the deadline extends itself the next time it comes due.
+  const onActivity = function() {
+    last = performance.now()
+    if (!idle) return
+
+    // Armed before the callback, never after: a callback that destroys the observer would
+    // otherwise have a fresh timer set behind it, on listeners that are already gone.
+    idle = false
+    arm(timeout)
+    callback(true)
+  }
+
+  const onVisibility = function() {
+    if (document.visibilityState !== 'visible' || idle) return
+    clearTimeout(timer)
+    check()
+  }
+
+  for (const event of events) document.addEventListener(event, onActivity, { capture: true, passive: true })
+  document.addEventListener('visibilitychange', onVisibility)
+  arm(timeout)
+
+  return {
+    destroy: function() {
+      for (const event of events) document.removeEventListener(event, onActivity, { capture: true })
+      document.removeEventListener('visibilitychange', onVisibility)
+      clearTimeout(timer)
+      timer = null
+    }
+  }
+}

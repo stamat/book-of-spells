@@ -16,6 +16,25 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Added
+
+- **`userActivity` — whether anyone is still reading.** Calls back with `false` once `timeout`
+  milliseconds pass with no interaction, and `true` the moment the user comes back, so a video
+  can pause itself, a poll can stop polling, or a session can end where it should. Only the
+  changes are reported: a reader scrolling steadily gets one `true` at the end of their pause,
+  not one per event, and the page starting out active is not reported at all, being the state
+  every caller already has. The native `IdleDetector` is no substitute — Chromium-only,
+  gated behind the `idle-detection` permission, and answering whether the machine is idle or
+  its screen locked rather than whether this page is being read. The deadline is checked
+  against the clock rather than trusted to the timer that woke it: a timer clamped by a
+  background tab, frozen outright, or held up by a long task wakes late, and waking late is
+  taken as proof the user is idle instead of a reason to doubt it — a tab returning from hidden
+  checks its deadline on `visibilitychange` for the same reason, since nothing may have run
+  while it was away. That clock is `performance.now()`, so an NTP correction or a
+  daylight-saving change cannot take the deadline with it. Listeners sit on the capturing
+  phase, so a widget that stops its own events from propagating does not read as the user
+  having left the page, and `destroy()` removes every one of them.
+
 ## [2.4.0] - 2026-08-21
 
 ### Added
