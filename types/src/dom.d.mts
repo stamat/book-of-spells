@@ -559,6 +559,41 @@ export declare function getVerticalScrollState(element: HTMLElement, threshold?:
  */
 export declare function getHorizontalScrollState(element: HTMLElement, threshold?: number): object;
 /**
+ * Reports why a sticky element cannot stick.
+ *
+ * `position: sticky` fails silently: no error, no warning, an element that simply never moves.
+ * The usual cause is an ancestor with `overflow: hidden`, `scroll`, `auto` or `overlay`, which
+ * becomes the scrollport the element sticks inside — and when that ancestor does not itself
+ * scroll, there is nowhere for the element to go. DevTools does not flag it either: its `scroll`
+ * badge marks only `overflow: scroll` and `auto` with content actually overflowing, which is
+ * neither of the two cases that break stickiness. This reads the ancestors and names the culprit.
+ *
+ * Each finding carries a `code`, the `element` it is about, the `culprit` element to look at,
+ * the `problem` in one sentence and a `fix`. The codes are `not-sticky`, `no-inset` (every inset
+ * is `auto`, so there is no threshold to stick at), `no-room` (the containing block is no larger
+ * than the element), `dead-scrollport` (an ancestor is the scrollport and never scrolls) and
+ * `nested-scrollport` (the element sticks inside an ancestor rather than to the viewport, which
+ * may well be what you meant).
+ *
+ * An empty array means nothing here can see a reason, never that the element sticks. Three things
+ * it cannot see: `contain: paint`, `contain: layout` and `content-visibility` on an ancestor;
+ * `html` and `body` overflow, skipped because a non-visible value there propagates to the viewport
+ * and reporting it would fire on the most ordinary markup there is; and a containing block that is
+ * not the element's parent, since `no-room` measures the parent.
+ *
+ * @param {string|HTMLElement} [target] The element to diagnose, or a selector for it. Left out, every sticky element on the page is diagnosed
+ * @returns {Array<object>} One finding per problem found, `[]` when none were
+ * @example
+ * // In the console: every sticky element on the page, and what is wrong with each
+ * console.table(whyNotSticky())
+ * @example
+ * whyNotSticky('#sidebar')
+ * // => [{ code: 'dead-scrollport', element: aside#sidebar, culprit: div.wrap,
+ * //       problem: 'this ancestor is the scrollport (`overflowY: hidden`) and never scrolls...',
+ * //       fix: '`overflowY: clip` clips the same and creates no scrollport' }]
+ */
+export declare function whyNotSticky(target?: string | HTMLElement): Array<object>;
+/**
  * Reports which section the reader is currently in, and calls back when that changes.
  *
  * The current section is the last one whose top edge has passed the reading line — `offset`

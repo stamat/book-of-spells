@@ -35,6 +35,20 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   phase, so a widget that stops its own events from propagating does not read as the user
   having left the page, and `destroy()` removes every one of them.
 
+- **`whyNotSticky` — why a sticky element is not sticking.** `position: sticky` fails silently:
+  no error, no warning, an element that simply never moves. The usual cause is an ancestor with
+  `overflow: hidden`, `scroll`, `auto` or `overlay`, which makes it the scrollport the element
+  sticks inside — and when that ancestor never scrolls, the element can never move. Call it with
+  a selector, an element, or nothing at all to sweep the page, and each finding names the culprit
+  element, the problem and the fix: `overflow-y: clip` clips the same and creates no scrollport.
+  DevTools will not tell you this; its `scroll` badge marks only `overflow: scroll` and `auto`
+  with content actually overflowing, which is neither of the cases that break stickiness. Also
+  reported: insets all left at `auto`, a containing block with no room to travel, and an ancestor
+  the element legitimately sticks inside rather than to the viewport. What it cannot see is
+  `contain` and `content-visibility` on an ancestor, and `html`/`body` overflow, whose value
+  propagates to the viewport — so an empty result means nothing was visible from here, never that
+  the element sticks.
+
 ## [2.4.0] - 2026-08-21
 
 ### Added

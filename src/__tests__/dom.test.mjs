@@ -22,7 +22,8 @@ import {
   isVisible,
   readOptions,
   scrollSpy,
-  swipe
+  swipe,
+  whyNotSticky
 } from '../dom.mjs'
 
 document.body.innerHTML = `
@@ -710,5 +711,109 @@ describe('scrollSpy', () => {
     expect(scrollSpy([], () => {})).toBe(null)
     expect(scrollSpy('.nothing-here', () => {})).toBe(null)
     expect(scrollSpy(layout([0], 4000), null)).toBe(null)
+  })
+})
+
+
+// whyNotSticky, over a faked layout: jsdom lays nothing out, so every rectangle and every
+// overflowing height is stubbed by hand, and every style is set inline because jsdom resolves
+// those and not much else. That covers the rules, not the layout — whether a real engine agrees
+// a box has room to travel was checked against headless Chrome once, and is not checked here.
+// Also uncovered: `contain` and `content-visibility` ancestors, and html/body overflow
+// propagation, neither of which the function models.
+// Overflow is declared as `overflow-y` throughout because jsdom neither expands the `overflow`
+// shorthand into the longhands nor fills it from them, while a browser resolves both — so a
+// fixture written as `overflow: hidden` would read back as no overflow at all and pass for the
+// wrong reason.
+describe('whyNotSticky', () => {
+  const codes = (target) => whyNotSticky(target).map((finding) => finding.code)
+
+  const box = (element, size) => {
+    element.getBoundingClientRect = () => ({ height: size, width: size })
+    return element
+  }
+
+  // isScrollVisible reads offsetHeight against scrollHeight, neither of which jsdom computes.
+  const scrollport = (element, scrolls) => {
+    Object.defineProperty(element, 'offsetHeight', { value: 100, configurable: true })
+    Object.defineProperty(element, 'scrollHeight', { value: scrolls ? 300 : 100, configurable: true })
+    return element
+  }
+
+  const layout = (html, parentHeight = 500) => {
+    document.body.innerHTML = html
+    box(document.getElementById('sticky'), 50)
+    const parent = document.getElementById('parent')
+    if (parent) box(parent, parentHeight)
+    return parent
+  }
+
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('says nothing about a sticky element that has an inset, room to travel and no scrolling ancestor', () => {
+    layout('<div id="parent"><div id="sticky" style="position: sticky; top: 0"></div></div>')
+    expect(codes('#sticky')).toEqual([])
+  })
+
+  it('reports an element whose insets are all unset as having no threshold to stick at', () => {
+    layout('<div id="parent"><div id="sticky" style="position: sticky"></div></div>')
+    expect(codes('#sticky')).toEqual(['no-inset'])
+  })
+
+  it('names the ancestor whose overflow made it a scrollport that never scrolls', () => {
+    const parent = layout('<div id="parent" style="overflow-y: hidden"><div id="sticky" style="position: sticky; top: 0"></div></div>')
+    scrollport(parent, false)
+    const [finding] = whyNotSticky('#sticky')
+    expect(finding.code).toBe('dead-scrollport')
+    expect(finding.culprit).toBe(parent)
+    expect(finding.fix).toContain('clip')
+  })
+
+  it('reports a scrolling ancestor as the scrollport the element sticks inside, not as a fault', () => {
+    const parent = layout('<div id="parent" style="overflow-y: auto"><div id="sticky" style="position: sticky; top: 0"></div></div>')
+    scrollport(parent, true)
+    expect(codes('#sticky')).toEqual(['nested-scrollport'])
+  })
+
+  it('reports a parent no taller than the element as leaving nowhere to travel', () => {
+    layout('<div id="parent"><div id="sticky" style="position: sticky; top: 0"></div></div>', 50)
+    expect(codes('#sticky')).toEqual(['no-room'])
+  })
+
+  it('never reports an overflow-x clip ancestor, which clips without becoming a scrollport', () => {
+    const parent = layout('<div id="parent" style="overflow-x: clip"><div id="sticky" style="position: sticky; top: 0"></div></div>')
+    scrollport(parent, false)
+    expect(codes('#sticky')).toEqual([])
+  })
+
+  it('reports an element that was never sticky as such, instead of diagnosing it', () => {
+    layout('<div id="parent"><div id="sticky" style="position: relative; top: 0"></div></div>')
+    expect(codes('#sticky')).toEqual(['not-sticky'])
+  })
+
+  it('blames the nearest scrolling ancestor, an outer scroller being out of reach behind it', () => {
+    document.body.innerHTML = '<div id="outer" style="overflow-y: auto"><div id="parent" style="overflow-y: hidden"><div id="sticky" style="position: sticky; top: 0"></div></div></div>'
+    box(document.getElementById('sticky'), 50)
+    const parent = scrollport(box(document.getElementById('parent'), 500), false)
+    scrollport(document.getElementById('outer'), true)
+    const [finding, ...rest] = whyNotSticky('#sticky')
+    expect(finding.code).toBe('dead-scrollport')
+    expect(finding.culprit).toBe(parent)
+    expect(rest).toEqual([])
+  })
+
+  it('diagnoses every sticky element on the page when called with no target, and ignores the rest', () => {
+    document.body.innerHTML = '<div id="parent"><div id="sticky" style="position: sticky"></div><div id="other" style="position: sticky"></div><div id="static"></div></div>'
+    box(document.getElementById('sticky'), 50)
+    box(document.getElementById('other'), 50)
+    box(document.getElementById('parent'), 500)
+    expect(whyNotSticky().map((finding) => finding.element.id)).toEqual(['sticky', 'other'])
+  })
+
+  it('returns nothing for a target that matches no element', () => {
+    layout('<div id="parent"><div id="sticky" style="position: sticky; top: 0"></div></div>')
+    expect(whyNotSticky('#nothing-here')).toEqual([])
   })
 })

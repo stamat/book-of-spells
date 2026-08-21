@@ -1293,6 +1293,140 @@ export function getHorizontalScrollState(element, threshold = 0) {
   }
 }
 
+// The overflow values that create a scrolling mechanism, which is what a sticky element sticks
+// inside. `clip` is absent by design: it clips without becoming a scrollport, which is what makes
+// it the fix for a broken sticky rather than another cause of one.
+const SCROLLPORT_OVERFLOW = new Set(['hidden', 'scroll', 'auto', 'overlay'])
+
+const STICKY_AXES = [
+  { insets: ['top', 'bottom'], overflow: 'overflowY', size: 'height' },
+  { insets: ['left', 'right'], overflow: 'overflowX', size: 'width' }
+]
+
+function stickyFindings(element) {
+  const style = getComputedStyle(element)
+
+  if (!style.position.endsWith('sticky')) {
+    return [{
+      code: 'not-sticky',
+      element: element,
+      culprit: element,
+      problem: 'position is `' + style.position + '`',
+      fix: 'set `position: sticky`'
+    }]
+  }
+
+  const findings = []
+  // An unset inset computes to `auto` in a browser and to an empty string in jsdom, so both
+  // have to count as unset or the check passes for the wrong reason under test.
+  const axes = STICKY_AXES.filter(function (axis) {
+    return axis.insets.some(function (side) { return style[side] && style[side] !== 'auto' })
+  })
+
+  if (!axes.length) {
+    findings.push({
+      code: 'no-inset',
+      element: element,
+      culprit: element,
+      problem: 'every inset is `auto`, so there is no threshold to stick at',
+      fix: 'set `top`, `bottom`, `left` or `right`'
+    })
+  }
+
+  const parent = element.parentElement
+  for (const axis of parent ? axes : []) {
+    const room = parent.getBoundingClientRect()[axis.size] - element.getBoundingClientRect()[axis.size]
+    if (room > 0) continue
+    findings.push({
+      code: 'no-room',
+      element: element,
+      culprit: parent,
+      problem: 'the containing block is no larger than the element, leaving ' + Math.round(room) + 'px to travel',
+      fix: 'give the parent room — `align-self: flex-start` on a stretched flex item, or a taller wrapper'
+    })
+  }
+
+  // Only the nearest scrolling ancestor matters: it is the scrollport, and anything above it is
+  // out of reach. `html` and `body` are skipped because a non-visible overflow on either
+  // propagates to the viewport, leaving the body itself treated as visible.
+  for (let node = element.parentElement; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
+    const ancestorStyle = getComputedStyle(node)
+    const axis = STICKY_AXES.find(function (candidate) {
+      return SCROLLPORT_OVERFLOW.has(ancestorStyle[candidate.overflow])
+    })
+    if (!axis) continue
+
+    const declaration = '`' + axis.overflow + ': ' + ancestorStyle[axis.overflow] + '`'
+    findings.push(isScrollVisible(node) ? {
+      code: 'nested-scrollport',
+      element: element,
+      culprit: node,
+      problem: 'sticks inside this ancestor’s scrollport (' + declaration + ') rather than to the viewport',
+      fix: 'intended? then nothing to fix. Otherwise move the element out of this ancestor'
+    } : {
+      code: 'dead-scrollport',
+      element: element,
+      culprit: node,
+      problem: 'this ancestor is the scrollport (' + declaration + ') and never scrolls, so the element can never move',
+      fix: '`' + axis.overflow + ': clip` clips the same and creates no scrollport'
+    })
+    break
+  }
+
+  return findings
+}
+
+/**
+ * Reports why a sticky element cannot stick.
+ *
+ * `position: sticky` fails silently: no error, no warning, an element that simply never moves.
+ * The usual cause is an ancestor with `overflow: hidden`, `scroll`, `auto` or `overlay`, which
+ * becomes the scrollport the element sticks inside — and when that ancestor does not itself
+ * scroll, there is nowhere for the element to go. DevTools does not flag it either: its `scroll`
+ * badge marks only `overflow: scroll` and `auto` with content actually overflowing, which is
+ * neither of the two cases that break stickiness. This reads the ancestors and names the culprit.
+ *
+ * Each finding carries a `code`, the `element` it is about, the `culprit` element to look at,
+ * the `problem` in one sentence and a `fix`. The codes are `not-sticky`, `no-inset` (every inset
+ * is `auto`, so there is no threshold to stick at), `no-room` (the containing block is no larger
+ * than the element), `dead-scrollport` (an ancestor is the scrollport and never scrolls) and
+ * `nested-scrollport` (the element sticks inside an ancestor rather than to the viewport, which
+ * may well be what you meant).
+ *
+ * An empty array means nothing here can see a reason, never that the element sticks. Three things
+ * it cannot see: `contain: paint`, `contain: layout` and `content-visibility` on an ancestor;
+ * `html` and `body` overflow, skipped because a non-visible value there propagates to the viewport
+ * and reporting it would fire on the most ordinary markup there is; and a containing block that is
+ * not the element's parent, since `no-room` measures the parent.
+ *
+ * @param {string|HTMLElement} [target] The element to diagnose, or a selector for it. Left out, every sticky element on the page is diagnosed
+ * @returns {Array<object>} One finding per problem found, `[]` when none were
+ * @example
+ * // In the console: every sticky element on the page, and what is wrong with each
+ * console.table(whyNotSticky())
+ * @example
+ * whyNotSticky('#sidebar')
+ * // => [{ code: 'dead-scrollport', element: aside#sidebar, culprit: div.wrap,
+ * //       problem: 'this ancestor is the scrollport (`overflowY: hidden`) and never scrolls...',
+ * //       fix: '`overflowY: clip` clips the same and creates no scrollport' }]
+ */
+export function whyNotSticky(target) {
+  if (typeof document === 'undefined') return []
+
+  let elements = []
+  if (target === undefined) {
+    elements = Array.from(document.querySelectorAll('*')).filter(function (element) {
+      return getComputedStyle(element).position.endsWith('sticky')
+    })
+  } else if (typeof target === 'string') {
+    elements = Array.from(document.querySelectorAll(target))
+  } else if (target instanceof HTMLElement) {
+    elements = [target]
+  }
+
+  return elements.flatMap(stickyFindings)
+}
+
 /**
  * Reports which section the reader is currently in, and calls back when that changes.
  *
