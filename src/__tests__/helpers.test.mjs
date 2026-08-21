@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals'
 import userAgents from './data/user-agents.json' with { type: 'json' }
 import slugifyData from './data/slugify.json' with { type: 'json' }
 import {
@@ -42,7 +43,8 @@ import {
   random,
   deepEqual,
   dedupe,
-  DeepSet
+  DeepSet,
+  waitFor
 } from '../helpers.mjs'
 
 const a = {
@@ -1305,4 +1307,141 @@ test('a diacritic typed in the search is not a reason to miss the word', () => {
   // Both sides are folded, so the reader who does have the layout is not punished for
   // using it.
   expect(matchesSearch('Cacak', 'čačak')).toBe(true)
+})
+
+// waitFor: the polling loop, its deadline, and the two ways out of it — abort and a throwing
+// condition. Deliberately not covered: that the interval is honoured to the millisecond by a
+// real timer, which is the platform's promise and not this function's.
+describe('waitFor', () => {
+  let clock = 0
+  let nowSpy = null
+
+  // Time and timers move together; the deadline is read off the clock, so a test that moved
+  // only one would be testing a platform that does not exist.
+  const advance = async (ms) => {
+    clock += ms
+    await jest.advanceTimersByTimeAsync(ms)
+  }
+
+  beforeEach(() => {
+    jest.useFakeTimers()
+    clock = 0
+    nowSpy = jest.spyOn(performance, 'now').mockImplementation(() => clock)
+  })
+
+  afterEach(() => {
+    nowSpy.mockRestore()
+    jest.useRealTimers()
+  })
+
+  test('a condition already true is answered without waiting for a tick', async () => {
+    await expect(waitFor(() => 'ready')).resolves.toBe('ready')
+  })
+
+  test('the wait ends with whatever the condition returned, not merely with true', async () => {
+    let dataLayer = null
+    const waiting = waitFor(() => dataLayer)
+
+    await advance(100)
+    dataLayer = ['loaded']
+    await advance(100)
+
+    await expect(waiting).resolves.toBe(dataLayer)
+  })
+
+  test('the condition is asked again on every interval until it agrees', async () => {
+    let calls = 0
+    const waiting = waitFor(() => (++calls >= 3 ? 'here' : null), { interval: 50 })
+
+    await advance(100)
+
+    await expect(waiting).resolves.toBe('here')
+    expect(calls).toBe(3)
+  })
+
+  test('a promise the condition returns is waited on before it counts as an answer', async () => {
+    let ready = false
+    const waiting = waitFor(async () => ready)
+
+    await advance(100)
+    ready = true
+    await advance(100)
+
+    await expect(waiting).resolves.toBe(true)
+  })
+
+  test('a condition that never comes true gives up at the deadline instead of polling forever', async () => {
+    let calls = 0
+    const waiting = waitFor(() => { calls++; return false }, { timeout: 500 })
+    const rejected = expect(waiting).rejects.toMatchObject({ name: 'TimeoutError' })
+
+    await advance(500)
+    await rejected
+
+    const callsAtDeadline = calls
+    await advance(5000)
+    expect(calls).toBe(callsAtDeadline)
+  })
+
+  test('a condition true at the deadline still counts, the last sleep landing on it', async () => {
+    // 250ms with a 100ms interval: the third sleep is cut to 50ms so the deadline itself is
+    // looked at, rather than overshot and reported as a timeout.
+    const waiting = waitFor(() => (clock >= 250 ? 'late' : null), { interval: 100, timeout: 250 })
+
+    await advance(100)
+    await advance(100)
+    await advance(50)
+
+    await expect(waiting).resolves.toBe('late')
+  })
+
+  test('a timeout of zero waits for as long as it takes', async () => {
+    let ready = false
+    const waiting = waitFor(() => ready, { timeout: 0 })
+
+    await advance(60000)
+    ready = 'eventually'
+    await advance(100)
+
+    await expect(waiting).resolves.toBe('eventually')
+  })
+
+  test('an abort ends the wait and leaves no timer polling behind it', async () => {
+    let calls = 0
+    const controller = new AbortController()
+    const waiting = waitFor(() => { calls++; return false }, { signal: controller.signal, timeout: 0 })
+    const rejected = expect(waiting).rejects.toMatchObject({ name: 'AbortError' })
+
+    await advance(100)
+    controller.abort()
+    await rejected
+
+    const callsAtAbort = calls
+    await advance(5000)
+    expect(calls).toBe(callsAtAbort)
+  })
+
+  test('a signal already aborted never asks the condition at all', async () => {
+    let calls = 0
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(waitFor(() => { calls++; return true }, { signal: controller.signal }))
+      .rejects.toMatchObject({ name: 'AbortError' })
+    expect(calls).toBe(0)
+  })
+
+  test('a condition that throws fails loud rather than being retried', async () => {
+    let calls = 0
+    const waiting = waitFor(() => { calls++; throw new Error('the widget exploded') })
+    const rejected = expect(waiting).rejects.toThrow('the widget exploded')
+
+    await rejected
+    await advance(5000)
+    expect(calls).toBe(1)
+  })
+
+  test('something that is not a function is a caller bug, reported as one', async () => {
+    await expect(waitFor('.widget')).rejects.toThrow(TypeError)
+  })
 })

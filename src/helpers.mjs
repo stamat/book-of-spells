@@ -1688,3 +1688,102 @@ export function getObjectValueByPath(obj, path) {
   if (typeof path === 'string') path = path.split('.');
   return path.reduce((acc, part) => acc !== null && acc !== undefined ? acc[part] : undefined, obj);
 }
+
+/**
+ * Waits for a condition to become truthy, polling it until it does.
+ *
+ * For an element appearing in the DOM reach for `on` instead — a MutationObserver reacts where
+ * polling only notices on its next tick. This is for what an observer cannot see: a third-party
+ * script defining its global, a widget flipping a flag, a value settling somewhere unwatchable.
+ *
+ * The deadline is measured against the clock rather than counted in ticks, and the last sleep is
+ * cut short to land on it: a background tab clamps `setTimeout` to a second or more, and a caller
+ * who asked for two seconds means two seconds either way — including one last look at the moment
+ * they run out.
+ *
+ * @param {Function} condition Called immediately and then on every tick. May return a promise. Truthy ends the wait
+ * @param {object} [options]
+ * @param {number} [options.interval=100] Milliseconds between checks
+ * @param {number} [options.timeout=10000] Milliseconds before giving up. `0` or `Infinity` waits forever, which leaks a timer if the condition never comes
+ * @param {AbortSignal} [options.signal] Aborting rejects the promise and stops the polling
+ * @returns {Promise<*>} Resolves with whatever the condition returned. Rejects with a `TimeoutError` at the deadline, with the signal's reason when aborted, or with whatever the condition threw
+ * @see on
+ * @example
+ * const dataLayer = await waitFor(() => window.dataLayer)
+ *
+ * @example
+ * // Give up rather than poll a widget that is never coming
+ * try {
+ *   await waitFor(() => window.Intercom, { timeout: 2000 })
+ * } catch {
+ *   renderContactFormInstead()
+ * }
+ *
+ * @example
+ * // Stop waiting when the thing that wanted the answer is gone
+ * const controller = new AbortController()
+ * waitFor(() => player.ready, { signal: controller.signal })
+ * onUnmount(() => controller.abort())
+ */
+export function waitFor(condition, options = {}) {
+  if (!isFunction(condition)) return Promise.reject(new TypeError('waitFor: condition must be a function'))
+
+  const interval = options.interval || 100
+  const timeout = options.timeout === undefined ? 10000 : options.timeout
+  const signal = options.signal
+  const deadline = timeout && timeout !== Infinity ? performance.now() + timeout : Infinity
+
+  return new Promise((resolve, reject) => {
+    let timer = null
+
+    const onAbort = function() {
+      stop()
+      reject(signal.reason)
+    }
+
+    const stop = function() {
+      if (timer !== null) clearTimeout(timer)
+      timer = null
+      if (signal) signal.removeEventListener('abort', onAbort)
+    }
+
+    const check = async function() {
+      let value
+
+      try {
+        value = await condition()
+      } catch (error) {
+        stop()
+        reject(error)
+        return
+      }
+
+      // An abort landing while an async condition was in flight has already rejected and cleared
+      // the timer. Scheduling another one here would poll on past the abort, forever.
+      if (signal && signal.aborted) return
+
+      if (value) {
+        stop()
+        resolve(value)
+        return
+      }
+
+      const remaining = deadline - performance.now()
+
+      if (remaining <= 0) {
+        stop()
+        reject(new DOMException(`waitFor timed out after ${timeout}ms`, 'TimeoutError'))
+        return
+      }
+
+      timer = setTimeout(check, Math.min(interval, remaining))
+    }
+
+    if (signal) {
+      if (signal.aborted) return reject(signal.reason)
+      signal.addEventListener('abort', onAbort, { once: true })
+    }
+
+    check()
+  })
+}

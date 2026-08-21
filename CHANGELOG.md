@@ -49,6 +49,24 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   propagates to the viewport — so an empty result means nothing was visible from here, never that
   the element sticks.
 
+- **`waitFor` — for the value that arrives without telling anyone.** A third-party script that
+  defines its global whenever it finishes, a widget that flips a flag, a player that becomes
+  ready: no event, no callback, nothing to listen to. The usual answer is a `setInterval` and a
+  `clearInterval` somebody forgets, so this is that loop with the forgetting designed out. Give it
+  a condition, get a promise back, and it resolves with whatever the condition returned — not a
+  bare `true`, so `await waitFor(() => window.dataLayer)` hands you the thing you were waiting
+  for. This is not the function for an element appearing in the DOM; `on` is,
+  because a MutationObserver reacts where polling only notices on its next tick.
+  It waits ten seconds by default rather than forever, an unbounded poll being a timer nobody
+  ever clears — `timeout: 0` waits as long as it takes and takes that leak back on. The deadline is
+  measured against `performance.now()` and the last sleep is cut short to land on it exactly, so
+  a background tab clamping `setTimeout` to a second cannot turn a two-second wait into a
+  three-second one, and a condition that comes true on the deadline is still caught rather than
+  overshot and reported as a timeout. An `AbortSignal` stops it where the caller went away, an
+  async condition is awaited before it counts, and a condition that throws rejects rather than
+  being retried — a broken check is a bug, not a reason to keep asking. What it cannot do is beat
+  an observer: the answer is never fresher than the last `interval`, and 100ms is the default.
+
 ## [2.4.0] - 2026-08-21
 
 ### Added
