@@ -16,6 +16,26 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Added
+
+- **`scrollSpy` — which section the reader is actually in.** Give it the headings and it calls
+  back with the current one whenever that changes, so a table of contents can mark its place.
+  The current section is the last one whose top has passed the reading line, `offset` pixels
+  below the top of the viewport — not the topmost one on screen, which is a different section
+  as soon as a heading scrolls out of sight. `offset` takes a number or a function read every
+  frame, so a header that collapses mid-scroll keeps the line where the reader's eyes are. Two cases the usual `IntersectionObserver`
+  scrollspy gets wrong are handled: a final section shorter than the screen becomes current at
+  the foot of the page rather than never, and scrolling between two headings that share one
+  screen changes nothing in an observer's eyes but moves this one. Above the first section it
+  reports `null`, leaving that decision where it belongs. Section positions are measured once
+  and cached — a scrolled frame costs one document-height check, not a read per section — and
+  the cache rebuilds on window resize, on the body changing size, on the document changing
+  height — which covers a body pinned to 100% height whose box never grows — and when an
+  `IntersectionObserver` probe sees a section cross a viewport edge with a rectangle that
+  disagrees with the map, which catches shifts that changed no height at all. What none of
+  those can see answers stale until `update()` is called, and that trade is stated in the
+  docs rather than hidden. Follows the window's scroll only.
+
 ### Fixed
 
 - `announcer`'s return type is a documented `Announcer` typedef rather than an inline record

@@ -1292,3 +1292,170 @@ export function getHorizontalScrollState(element, threshold = 0) {
     atEnd: scrollEndThreshold
   }
 }
+
+/**
+ * Reports which section the reader is currently in, and calls back when that changes.
+ *
+ * The current section is the last one whose top edge has passed the reading line — `offset`
+ * pixels below the top of the viewport — which is not the same as the topmost section on
+ * screen: a heading scrolled just out of sight is still the section being read. At the very
+ * bottom of the page the last section wins outright, because a final section shorter than the
+ * screen can never reach the line and would otherwise be unreachable. Above the first section
+ * the callback gets `null`, leaving what the top of the page means to the caller.
+ *
+ * Driven by a rAF-throttled scroll listener rather than an `IntersectionObserver`: an observer
+ * fires only when visibility changes, so scrolling from one heading to the next inside a screen
+ * that already shows both tells it nothing, and it keeps reporting the section before.
+ *
+ * Section positions are measured once and cached, so a scrolled frame costs one layout read —
+ * a document-height check — instead of one per section. The cache rebuilds itself on window
+ * resize, through a `ResizeObserver` on `document.body` whenever the body changes size, and on
+ * any scrolled frame where the document's height moved — which is what catches a body pinned to
+ * 100% height, whose box never resizes while its content grows. An `IntersectionObserver` over
+ * the sections rides along as a staleness probe: its entries carry each section's rectangle for
+ * free, so a shift that changed no height anywhere — two sections trading equal heights, a
+ * transform settling — is caught the moment a moved section crosses a viewport edge. A shift
+ * that neither changes a height nor crosses an edge answers stale until `update()` is called;
+ * each observer degrades alone, so a browser missing one keeps every other trigger.
+ *
+ * Follows the window's scroll only, not a scrolling container's.
+ *
+ * @param {string|Element|Array<Element>|NodeList} elements The sections to watch, or a selector for them
+ * @param {function} callback Called with the current section and its index, or with `null` and `-1`
+ * @param {object} [options]
+ * @param {number|function} [options.offset=0] Pixels below the top of the viewport that count as the reading line — the height of a sticky header, usually. A function is read every frame, so a header that collapses mid-scroll keeps the line honest
+ * @returns {object|null} `{ update, destroy }`, or `null` when there is no callback or nothing to watch
+ * @example
+ * const spy = scrollSpy('.prose h2[id]', (section) => {
+ *  document.querySelectorAll('.toc a').forEach((a) => a.removeAttribute('aria-current'))
+ *  if (section) document.querySelector(`.toc a[href="#${section.id}"]`)?.setAttribute('aria-current', 'location')
+ * }, { offset: 64 })
+ *
+ * spy.update()  // re-measure after a layout change the observers cannot see
+ * spy.destroy() // stop listening
+ */
+export function scrollSpy(elements, callback, options = {}) {
+  if (!isFunction(callback)) return null
+
+  const sections = Array.from(query(elements)).filter((element) => element && isFunction(element.getBoundingClientRect))
+  if (!sections.length) return null
+  // Sorted rather than trusted: the scan below stops at the first section still below the line,
+  // so an array assembled by hand and passed out of order would report a wrong answer quietly.
+  sections.sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1))
+
+  // A function is read every frame rather than once: a collapsing header's height is a
+  // moving target, and caching it would be the staleness bug this function exists to avoid.
+  const offset = isFunction(options.offset) ? options.offset : function() { return options.offset || 0 }
+  let current
+  let pending = false
+  let frame = null
+  let dirty = false
+  let positions = []
+  let maxScroll = 0
+
+  const measure = function() {
+    positions = sections.map((section) => section.getBoundingClientRect().top + window.scrollY)
+    maxScroll = document.documentElement.scrollHeight - window.innerHeight
+    dirty = false
+  }
+
+  const read = function() {
+    if (maxScroll > 0 && window.scrollY >= maxScroll - 1) return sections.length - 1
+
+    // A pixel of slack: a section scrolled exactly to the line reports a fractional top on a
+    // display that is not at 1x, and landing a hair short would leave it uncurrent.
+    const line = window.scrollY + (Number(offset()) || 0) + 1
+    let index = -1
+    for (let i = 0; i < positions.length; i++) {
+      if (positions[i] > line) break
+      index = i
+    }
+    return index
+  }
+
+  const report = function() {
+    const index = read()
+    if (index === current) return
+    current = index
+    callback(index === -1 ? null : sections[index], index)
+  }
+
+  // The latch is its own flag rather than the frame id, and it is raised before the call: a
+  // `requestAnimationFrame` that runs its callback synchronously — a polyfill, a test — would
+  // clear the id and then have it assigned back over the top, and every scroll after the first
+  // would find a frame still pending and do nothing.
+  const schedule = function() {
+    if (pending) return
+    pending = true
+    frame = requestAnimationFrame(function() {
+      pending = false
+      frame = null
+      // One layout read per frame rather than none: a body pinned to 100% height grows its
+      // scrollHeight without resizing its box, so the observer stays silent — and the
+      // document's height is the one number that moves on any vertical growth worth
+      // remeasuring. A shift that changes no height at all still waits for update().
+      if (dirty || document.documentElement.scrollHeight - window.innerHeight !== maxScroll) measure()
+      report()
+    })
+  }
+
+  const onScroll = schedule
+
+  // Rebuilds ride the same frame latch as scrolls: a height animation fires the observer on
+  // every step, and without the latch each notification would remeasure every section.
+  const onLayout = function() {
+    dirty = true
+    schedule()
+  }
+
+  const update = function() {
+    measure()
+    report()
+  }
+
+  let observer = null
+  if (typeof ResizeObserver !== 'undefined') {
+    observer = new ResizeObserver(onLayout)
+    observer.observe(document.body)
+  }
+
+  // The intersection observer is a staleness probe, not the answer: its entries carry each
+  // section's rectangle, computed off the main thread, so a section crossing the viewport
+  // edge with a rectangle that disagrees with the map means the page shifted without a
+  // height change — remeasure. The rectangle is captured a beat before delivery, so a fast
+  // scroll can disagree by the frames in between; that false alarm costs a spare remeasure
+  // at a crossing, never a wrong answer.
+  let probe = null
+  if (typeof IntersectionObserver !== 'undefined') {
+    const indexes = new Map(sections.map((section, i) => [section, i]))
+    probe = new IntersectionObserver(function(entries) {
+      for (const entry of entries) {
+        const at = entry.boundingClientRect.top + window.scrollY
+        if (Math.abs(at - positions[indexes.get(entry.target)]) > 1) {
+          onLayout()
+          return
+        }
+      }
+    }, { threshold: 0 })
+    for (const section of sections) probe.observe(section)
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onLayout, { passive: true })
+  update()
+
+  return {
+    update: update,
+    destroy: function() {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onLayout)
+      if (observer) observer.disconnect()
+      observer = null
+      if (probe) probe.disconnect()
+      probe = null
+      if (frame !== null) cancelAnimationFrame(frame)
+      frame = null
+      pending = false
+    }
+  }
+}

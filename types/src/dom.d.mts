@@ -558,3 +558,47 @@ export declare function getVerticalScrollState(element: HTMLElement, threshold?:
  * console.log(scrollState.atEnd) // => true or false
  */
 export declare function getHorizontalScrollState(element: HTMLElement, threshold?: number): object;
+/**
+ * Reports which section the reader is currently in, and calls back when that changes.
+ *
+ * The current section is the last one whose top edge has passed the reading line — `offset`
+ * pixels below the top of the viewport — which is not the same as the topmost section on
+ * screen: a heading scrolled just out of sight is still the section being read. At the very
+ * bottom of the page the last section wins outright, because a final section shorter than the
+ * screen can never reach the line and would otherwise be unreachable. Above the first section
+ * the callback gets `null`, leaving what the top of the page means to the caller.
+ *
+ * Driven by a rAF-throttled scroll listener rather than an `IntersectionObserver`: an observer
+ * fires only when visibility changes, so scrolling from one heading to the next inside a screen
+ * that already shows both tells it nothing, and it keeps reporting the section before.
+ *
+ * Section positions are measured once and cached, so a scrolled frame costs one layout read —
+ * a document-height check — instead of one per section. The cache rebuilds itself on window
+ * resize, through a `ResizeObserver` on `document.body` whenever the body changes size, and on
+ * any scrolled frame where the document's height moved — which is what catches a body pinned to
+ * 100% height, whose box never resizes while its content grows. An `IntersectionObserver` over
+ * the sections rides along as a staleness probe: its entries carry each section's rectangle for
+ * free, so a shift that changed no height anywhere — two sections trading equal heights, a
+ * transform settling — is caught the moment a moved section crosses a viewport edge. A shift
+ * that neither changes a height nor crosses an edge answers stale until `update()` is called;
+ * each observer degrades alone, so a browser missing one keeps every other trigger.
+ *
+ * Follows the window's scroll only, not a scrolling container's.
+ *
+ * @param {string|Element|Array<Element>|NodeList} elements The sections to watch, or a selector for them
+ * @param {function} callback Called with the current section and its index, or with `null` and `-1`
+ * @param {object} [options]
+ * @param {number|function} [options.offset=0] Pixels below the top of the viewport that count as the reading line — the height of a sticky header, usually. A function is read every frame, so a header that collapses mid-scroll keeps the line honest
+ * @returns {object|null} `{ update, destroy }`, or `null` when there is no callback or nothing to watch
+ * @example
+ * const spy = scrollSpy('.prose h2[id]', (section) => {
+ *  document.querySelectorAll('.toc a').forEach((a) => a.removeAttribute('aria-current'))
+ *  if (section) document.querySelector(`.toc a[href="#${section.id}"]`)?.setAttribute('aria-current', 'location')
+ * }, { offset: 64 })
+ *
+ * spy.update()  // re-measure after a layout change the observers cannot see
+ * spy.destroy() // stop listening
+ */
+export declare function scrollSpy(elements: string | Element | Array<Element> | NodeList, callback: Function, options?: {
+    offset?: number | Function;
+}): object | null;

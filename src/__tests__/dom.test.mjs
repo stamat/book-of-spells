@@ -21,6 +21,7 @@ import {
   delegateEvent,
   isVisible,
   readOptions,
+  scrollSpy,
   swipe
 } from '../dom.mjs'
 
@@ -423,5 +424,291 @@ describe('readOptions', () => {
   test('is a no-op without an element or a schema', () => {
     expect(readOptions(null, { a: 'string' })).toEqual({})
     expect(readOptions(el({}), null)).toEqual({})
+  })
+})
+
+// scrollSpy, over a faked layout: jsdom lays nothing out, so every section's rect and the
+// document's height are stubbed and the scroll position is moved by hand. ResizeObserver and
+// IntersectionObserver are hand-rolled stubs too — jsdom ships neither — so what a real
+// observer fires on, and when it delivers, stays uncovered.
+// Also uncovered: the throttle itself — rAF is replaced with a straight call so a scroll event
+// settles synchronously — and any behaviour inside a scrolling container, which the function
+// does not have.
+describe('scrollSpy', () => {
+  const VIEWPORT = 800
+  let spy = null
+  let rafSpy = null
+  let cancelSpy = null
+
+  // Sections at absolute document offsets, plus a document tall enough to scroll through them.
+  const layout = (tops, docHeight) => {
+    document.body.innerHTML = tops.map((top, i) => `<section id="s${i}"></section>`).join('')
+    const sections = tops.map((top, i) => {
+      const element = document.getElementById(`s${i}`)
+      element.getBoundingClientRect = () => ({ top: top - window.scrollY, height: 0 })
+      return element
+    })
+    Object.defineProperty(document.documentElement, 'scrollHeight', { value: docHeight, configurable: true })
+    return sections
+  }
+
+  const scrollTo = (y) => {
+    window.scrollY = y
+    window.dispatchEvent(new Event('scroll'))
+  }
+
+  beforeEach(() => {
+    window.innerHeight = VIEWPORT
+    Object.defineProperty(window, 'scrollY', { value: 0, writable: true, configurable: true })
+    rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => { cb(); return 1 })
+    cancelSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    if (spy) spy.destroy()
+    spy = null
+    rafSpy.mockRestore()
+    cancelSpy.mockRestore()
+  })
+
+  test('the section being read is the current one, not the topmost one on screen', () => {
+    const sections = layout([0, 1000, 2000], 4000)
+    const seen = []
+    spy = scrollSpy(sections, (section) => seen.push(section && section.id))
+
+    // 1200 puts section 1 above the line and section 2 far below it, while both 1 and 2 would
+    // be inside a viewport twice this tall — the case an isIntersecting test gets wrong.
+    scrollTo(1200)
+    expect(seen[seen.length - 1]).toBe('s1')
+  })
+
+  test('nothing is current above the first section', () => {
+    const sections = layout([500, 1500], 4000)
+    const seen = []
+    spy = scrollSpy(sections, (section, index) => seen.push([section, index]))
+
+    expect(seen[0]).toEqual([null, -1])
+  })
+
+  test('a final section shorter than the screen still becomes current at the foot of the page', () => {
+    // The page bottoms out at 3200, leaving s2's top 100px short of the line for good.
+    const sections = layout([0, 1000, 3300], 4000)
+    const seen = []
+    spy = scrollSpy(sections, (section) => seen.push(section && section.id))
+
+    scrollTo(3200)
+    expect(seen[seen.length - 1]).toBe('s2')
+  })
+
+  test('a page too short to scroll is not reported as read to the end', () => {
+    const sections = layout([0, 400], 600)
+    const seen = []
+    spy = scrollSpy(sections, (section) => seen.push(section && section.id))
+
+    expect(seen).toEqual(['s0'])
+  })
+
+  test('scrolling inside one section does not call back again, and leaving it does', () => {
+    const sections = layout([0, 2000], 5000)
+    const callback = jest.fn()
+    spy = scrollSpy(sections, callback)
+
+    callback.mockClear()
+    scrollTo(100)
+    scrollTo(200)
+    scrollTo(300)
+    expect(callback).not.toHaveBeenCalled()
+
+    // The other half of the same guarantee: a throttle that latched would also make this
+    // silent, and a test that only counts the calls it does not want cannot tell the two apart.
+    scrollTo(2100)
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
+  test('sections handed over out of document order still report in document order', () => {
+    const [first, second, third] = layout([0, 1000, 2000], 4000)
+    const seen = []
+    spy = scrollSpy([third, first, second], (section) => seen.push(section && section.id))
+
+    scrollTo(1200)
+    expect(seen[seen.length - 1]).toBe('s1')
+  })
+
+  test('a destroyed spy stops answering the scroll', () => {
+    const sections = layout([0, 1000], 4000)
+    const callback = jest.fn()
+    spy = scrollSpy(sections, callback)
+
+    spy.destroy()
+    callback.mockClear()
+    scrollTo(1200)
+    expect(callback).not.toHaveBeenCalled()
+    spy = null
+  })
+
+  test('a body pinned to full height still remeasures when the document grows', () => {
+    // height:100% keeps the body's box fixed while content overflows, so ResizeObserver never
+    // fires — the per-frame document-height check is what catches this one.
+    const sections = layout([0, 1000], 4000)
+    const seen = []
+    spy = scrollSpy(sections, (section) => seen.push(section && section.id))
+
+    // An embed loads above s1: the document grows and s1 moves down, but no observer fires.
+    sections[1].getBoundingClientRect = () => ({ top: 2000 - window.scrollY, height: 0 })
+    Object.defineProperty(document.documentElement, 'scrollHeight', { value: 5000, configurable: true })
+    scrollTo(1200)
+    expect(seen[seen.length - 1]).toBe('s0')
+  })
+
+  test('a height-neutral shift is caught when the moved section crosses a viewport edge', () => {
+    // Two sections trade equal heights: no resize, no document growth — only the probe's
+    // free rectangle, disagreeing with the map at a crossing, can notice.
+    let notify = null
+    const disconnected = jest.fn()
+    globalThis.IntersectionObserver = class {
+      constructor(callback) { notify = callback }
+      observe() {}
+      disconnect() { disconnected() }
+    }
+
+    try {
+      const sections = layout([0, 1000], 4000)
+      const seen = []
+      spy = scrollSpy(sections, (section) => seen.push(section && section.id))
+
+      scrollTo(1200)
+      expect(seen[seen.length - 1]).toBe('s1')
+
+      // s1 moves to 2000 while something above shrinks by the same amount; scrolling on
+      // still answers from the stale map — the honest window before the probe fires.
+      sections[1].getBoundingClientRect = () => ({ top: 2000 - window.scrollY, height: 0 })
+      scrollTo(1300)
+      expect(seen[seen.length - 1]).toBe('s1')
+
+      // s1 crosses the viewport edge and the observer delivers its rectangle: 700 viewport
+      // + 1300 scroll = 2000 against a map that says 1000 — drift, remeasure, right answer.
+      notify([{ target: sections[1], boundingClientRect: { top: 2000 - window.scrollY } }])
+      expect(seen[seen.length - 1]).toBe('s0')
+
+      spy.destroy()
+      spy = null
+      expect(disconnected).toHaveBeenCalled()
+    } finally {
+      delete globalThis.IntersectionObserver
+    }
+  })
+
+  test('a probe rectangle that agrees with the map does not remeasure', () => {
+    let notify = null
+    globalThis.IntersectionObserver = class {
+      constructor(callback) { notify = callback }
+      observe() {}
+      disconnect() {}
+    }
+
+    try {
+      const sections = layout([0, 1000], 4000)
+      const measured = jest.fn(sections[1].getBoundingClientRect)
+      sections[1].getBoundingClientRect = measured
+      spy = scrollSpy(sections, () => {})
+
+      measured.mockClear()
+      // An ordinary scroll crossing: the rectangle matches the cached position exactly.
+      notify([{ target: sections[1], boundingClientRect: { top: 1000 - window.scrollY } }])
+      expect(measured).not.toHaveBeenCalled()
+    } finally {
+      delete globalThis.IntersectionObserver
+    }
+  })
+
+  test('positions are cached: a shift the observers cannot see answers stale until update()', () => {
+    // Two sections trade heights without the body changing size — nothing fires, and the spy
+    // answers from the map until it is told to look again. This is the documented trade, not
+    // a bug: the test pins it so a future change to the contract is a loud one.
+    const sections = layout([0, 1000], 4000)
+    const seen = []
+    spy = scrollSpy(sections, (section) => seen.push(section && section.id))
+
+    sections[1].getBoundingClientRect = () => ({ top: 2000 - window.scrollY, height: 0 })
+    scrollTo(1200)
+    expect(seen[seen.length - 1]).toBe('s1')
+
+    spy.update()
+    expect(seen[seen.length - 1]).toBe('s0')
+  })
+
+  test('a window resize remeasures, and the answer moves with the reflowed page', () => {
+    const sections = layout([0, 1000], 4000)
+    const seen = []
+    spy = scrollSpy(sections, (section) => seen.push(section && section.id))
+
+    scrollTo(1200)
+    expect(seen[seen.length - 1]).toBe('s1')
+
+    // The column narrows and s1 reflows further down the page.
+    sections[1].getBoundingClientRect = () => ({ top: 2000 - window.scrollY, height: 0 })
+    window.dispatchEvent(new Event('resize'))
+    expect(seen[seen.length - 1]).toBe('s0')
+  })
+
+  test('the page changing height remeasures through ResizeObserver, and destroy disconnects it', () => {
+    let notify = null
+    const observed = []
+    const disconnected = jest.fn()
+    globalThis.ResizeObserver = class {
+      constructor(callback) { notify = callback }
+      observe(target) { observed.push(target) }
+      disconnect() { disconnected() }
+    }
+
+    try {
+      const sections = layout([0, 1000], 4000)
+      const seen = []
+      spy = scrollSpy(sections, (section) => seen.push(section && section.id))
+      // The observer watches the body, nothing else.
+      expect(observed).toEqual([document.body])
+
+      scrollTo(1200)
+      // An image above s1 loads and pushes it down; the body grows and the observer fires.
+      sections[1].getBoundingClientRect = () => ({ top: 2000 - window.scrollY, height: 0 })
+      notify()
+      expect(seen[seen.length - 1]).toBe('s0')
+
+      spy.destroy()
+      spy = null
+      expect(disconnected).toHaveBeenCalled()
+    } finally {
+      delete globalThis.ResizeObserver
+    }
+  })
+
+  test('a function offset moves the reading line as its answer changes', () => {
+    // A collapsing header: same scroll neighbourhood, different header height, different section.
+    const sections = layout([0, 1000], 4000)
+    let header = 0
+    const seen = []
+    spy = scrollSpy(sections, (section) => seen.push(section && section.id), { offset: () => header })
+
+    scrollTo(990)
+    expect(seen[seen.length - 1]).toBe('s0')
+
+    header = 100
+    scrollTo(992)
+    expect(seen[seen.length - 1]).toBe('s1')
+  })
+
+  test('an offset function returning nonsense reads as zero, not as no section at all', () => {
+    const sections = layout([0, 1000], 4000)
+    const seen = []
+    spy = scrollSpy(sections, (section) => seen.push(section && section.id), { offset: () => undefined })
+
+    scrollTo(1200)
+    expect(seen[seen.length - 1]).toBe('s1')
+  })
+
+  test('nothing to watch and nothing to call back to are both no-ops', () => {
+    expect(scrollSpy([], () => {})).toBe(null)
+    expect(scrollSpy('.nothing-here', () => {})).toBe(null)
+    expect(scrollSpy(layout([0], 4000), null)).toBe(null)
   })
 })
