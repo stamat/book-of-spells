@@ -768,7 +768,8 @@ describe('whyNotSticky', () => {
     const [finding] = whyNotSticky('#sticky')
     expect(finding.code).toBe('dead-scrollport')
     expect(finding.culprit).toBe(parent)
-    expect(finding.fix).toContain('clip')
+    // CSS syntax, not the JS style key: the fix is for pasting into a stylesheet.
+    expect(finding.fix).toContain('overflow-y: clip')
   })
 
   it('an ancestor scrolling only on the other axis is still a dead scrollport, not a nested one', () => {

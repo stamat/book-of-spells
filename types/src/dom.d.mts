@@ -591,8 +591,8 @@ export declare function getHorizontalScrollState(element: HTMLElement, threshold
  * @example
  * whyNotSticky('#sidebar')
  * // => [{ code: 'dead-scrollport', element: aside#sidebar, culprit: div.wrap,
- * //       problem: 'this ancestor is the scrollport (`overflowY: hidden`) and never scrolls...',
- * //       fix: '`overflowY: clip` clips the same and creates no scrollport' }]
+ * //       problem: 'this ancestor is the scrollport (`overflow-y: hidden`) and never scrolls...',
+ * //       fix: '`overflow-y: clip` clips the same and creates no scrollport' }]
  */
 export declare function whyNotSticky(target?: string | HTMLElement): Array<object>;
 /**

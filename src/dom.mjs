@@ -1299,8 +1299,8 @@ export function getHorizontalScrollState(element, threshold = 0) {
 const SCROLLPORT_OVERFLOW = new Set(['hidden', 'scroll', 'auto', 'overlay'])
 
 const STICKY_AXES = [
-  { insets: ['top', 'bottom'], overflow: 'overflowY', size: 'height', scrolls: isVerticalScrollVisible },
-  { insets: ['left', 'right'], overflow: 'overflowX', size: 'width', scrolls: isHorizontalScrollVisible }
+  { insets: ['top', 'bottom'], overflow: 'overflowY', css: 'overflow-y', size: 'height', scrolls: isVerticalScrollVisible },
+  { insets: ['left', 'right'], overflow: 'overflowX', css: 'overflow-x', size: 'width', scrolls: isHorizontalScrollVisible }
 ]
 
 function stickyFindings(element) {
@@ -1369,7 +1369,9 @@ function stickyFindings(element) {
     })
     if (!axis) continue
 
-    const declaration = '`' + axis.overflow + ': ' + ancestorStyle[axis.overflow] + '`'
+    // The property is named in CSS syntax, not as the JS style key: the fix is meant to be
+    // pasted into a stylesheet, where `overflowY: clip` would be silently ignored.
+    const declaration = '`' + axis.css + ': ' + ancestorStyle[axis.overflow] + '`'
     // Judged on the matched axis alone: a live scrollbar on the other axis moves nothing here.
     findings.push(axis.scrolls(node) ? {
       code: 'nested-scrollport',
@@ -1382,7 +1384,7 @@ function stickyFindings(element) {
       element: element,
       culprit: node,
       problem: 'this ancestor is the scrollport (' + declaration + ') and never scrolls, so the element can never move',
-      fix: '`' + axis.overflow + ': clip` clips the same and creates no scrollport'
+      fix: '`' + axis.css + ': clip` clips the same and creates no scrollport'
     })
     break
   }
@@ -1423,8 +1425,8 @@ function stickyFindings(element) {
  * @example
  * whyNotSticky('#sidebar')
  * // => [{ code: 'dead-scrollport', element: aside#sidebar, culprit: div.wrap,
- * //       problem: 'this ancestor is the scrollport (`overflowY: hidden`) and never scrolls...',
- * //       fix: '`overflowY: clip` clips the same and creates no scrollport' }]
+ * //       problem: 'this ancestor is the scrollport (`overflow-y: hidden`) and never scrolls...',
+ * //       fix: '`overflow-y: clip` clips the same and creates no scrollport' }]
  */
 export function whyNotSticky(target) {
   if (typeof document === 'undefined') return []
