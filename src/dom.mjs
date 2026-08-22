@@ -1347,16 +1347,20 @@ function stickyFindings(element) {
   }
 
   const parent = element.parentElement
-  for (const axis of parent ? axes : []) {
-    const room = parent.getBoundingClientRect()[axis.size] - element.getBoundingClientRect()[axis.size]
-    if (room > 0) continue
-    findings.push({
-      code: 'no-room',
-      element: element,
-      culprit: parent,
-      problem: 'the containing block is no larger than the element, leaving ' + Math.round(room) + 'px to travel',
-      fix: 'give the parent room — `align-self: flex-start` on a stretched flex item, or a taller wrapper'
-    })
+  if (parent) {
+    const parentRect = parent.getBoundingClientRect()
+    const rect = element.getBoundingClientRect()
+    for (const axis of axes) {
+      const room = parentRect[axis.size] - rect[axis.size]
+      if (room > 0) continue
+      findings.push({
+        code: 'no-room',
+        element: element,
+        culprit: parent,
+        problem: 'the containing block is no larger than the element, leaving ' + Math.round(room) + 'px to travel',
+        fix: 'give the parent room — `align-self: flex-start` on a stretched flex item, or a taller wrapper'
+      })
+    }
   }
 
   // Only the nearest scrolling ancestor matters: it is the scrollport, and anything above it is
