@@ -40,7 +40,9 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   read as the user having left, and the events only `window` ever receives arrive too — `resize`
   is one of the defaults, the user being the one dragging the window. Answers for this tab alone
   unless `channel` names a `BroadcastChannel`, in which case every tab of the origin using that
-  name agrees: activity in any of them counts in all of them. That is what a session deadline
+  name agrees: activity in any of them counts in all of them — provided they share a `timeout`,
+  since what travels is the activity and never the verdict, each tab judging idle against its
+  own deadline. That is what a session deadline
   wants — three tabs open and work happening in the third should not log the first two out — and
   what a pausing video does not, a user reading elsewhere being exactly when this tab should
   stop playing, so it is a name to opt into rather than a default. What goes out is throttled, a
