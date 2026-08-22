@@ -340,7 +340,8 @@ export function userActivity(callback, options = {}) {
   if (!events.length) return null
 
   let last = performance.now()
-  let idle = false
+  // `timer === null` doubles as the idle flag: armed while the user counts as present, cleared
+  // the moment idle is reported — one fact, not two to keep in step.
   let timer = null
   let lastX = null
   let lastY = null
@@ -369,7 +370,6 @@ export function userActivity(callback, options = {}) {
     }
 
     timer = null
-    idle = true
     callback(false)
   }
 
@@ -392,11 +392,10 @@ export function userActivity(callback, options = {}) {
   // and no timer to reset: the deadline extends itself the next time it comes due.
   const register = function() {
     last = performance.now()
-    if (!idle) return
+    if (timer !== null) return
 
     // Armed before the callback, never after: a callback that destroys the observer would
     // otherwise have a fresh timer set behind it, on listeners that are already gone.
-    idle = false
     arm(timeout)
     callback(true)
   }
@@ -423,7 +422,7 @@ export function userActivity(callback, options = {}) {
   }
 
   const onVisibility = function() {
-    if (document.visibilityState !== 'visible' || idle) return
+    if (document.visibilityState !== 'visible' || timer === null) return
     clearTimeout(timer)
     check()
   }
