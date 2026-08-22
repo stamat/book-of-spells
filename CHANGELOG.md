@@ -55,7 +55,7 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   no error, no warning, an element that simply never moves. The usual cause is an ancestor with
   `overflow: hidden`, `scroll`, `auto` or `overlay`, which makes it the scrollport the element
   sticks inside — and when that ancestor never scrolls, the element can never move. Call it with
-  a selector, an element, or nothing at all to sweep the page, and each finding names the culprit
+  a selector, an element, a list of either, or nothing at all to sweep the page, and each finding names the culprit
   element, the problem and the fix: `overflow-y: clip` clips the same and creates no scrollport.
   No DevTools will tell you: neither engine's inactive-CSS pass has a rule for sticky — both only
   grey out `top`/`left` on a `static` box — and the `scroll` badges mark containers that really do
