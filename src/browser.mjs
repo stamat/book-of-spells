@@ -337,7 +337,7 @@ export function userActivity(callback, options = {}) {
   let lastX = null
   let lastY = null
 
-  const channel = options.channel && typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(options.channel) : null
+  let channel = options.channel && typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(options.channel) : null
   // Bounded against the deadline rather than fixed at a second: a post the throttle skips leaves
   // the other tabs' idea of the last activity that much stale, which is nothing against a minute
   // and most of the answer against a four-second timeout.
@@ -426,7 +426,12 @@ export function userActivity(callback, options = {}) {
     destroy: function() {
       for (const event of events) window.removeEventListener(event, onActivity, { capture: true })
       document.removeEventListener('visibilitychange', onVisibility)
-      if (channel) channel.close()
+      // Nulled as well as closed: a callback that destroys the observer returns into
+      // onActivity, whose broadcast would otherwise post on a closed channel, which throws.
+      if (channel) {
+        channel.close()
+        channel = null
+      }
       clearTimeout(timer)
       timer = null
     }

@@ -267,6 +267,9 @@ describe('userActivity', () => {
       }
 
       postMessage(data) {
+        // The real channel throws on a closed sender; without this a post after destroy
+        // could never surface under test.
+        if (this.closed) throw new DOMException('closed', 'InvalidStateError')
         for (const other of channels.get(this.name)) {
           if (other !== this && !other.closed && other.onmessage) other.onmessage({ data })
         }
@@ -366,6 +369,13 @@ describe('userActivity', () => {
       dispatch('keydown')
       expect(callback).toHaveBeenCalledTimes(1)
       expect(other.heard).toEqual([])
+    })
+
+    test('a callback that destroys the observer on coming back does not crash the broadcast', () => {
+      observer = userActivity((active) => { if (active) observer.destroy() }, { timeout: 1000, channel: 'session' })
+
+      advance(1000)
+      expect(() => dispatch('keydown')).not.toThrow()
     })
 
     test('a browser without the channel still answers for its own tab', () => {
