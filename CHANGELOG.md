@@ -82,8 +82,9 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   a background tab clamping `setTimeout` to a second cannot turn a two-second wait into a
   three-second one, and a condition that comes true on the deadline is still caught rather than
   overshot and reported as a timeout. An `AbortSignal` stops it where the caller went away, an
-  async condition is awaited before it counts, and a condition that throws rejects rather than
-  being retried — a broken check is a bug, not a reason to keep asking. What it cannot do is beat
+  async condition is awaited before it counts — though a promise still pending at the deadline is
+  abandoned, rejecting on time rather than holding the wait open — and a condition that throws
+  rejects rather than being retried — a broken check is a bug, not a reason to keep asking. What it cannot do is beat
   an observer: the answer is never fresher than the last `interval`, and 100ms is the default —
   `interval: 0` asks again every tick, for the caller who knows the wait is short.
 

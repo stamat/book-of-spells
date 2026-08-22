@@ -1407,6 +1407,14 @@ describe('waitFor', () => {
     await expect(waiting).resolves.toBe('late')
   })
 
+  test('a condition still pending at the deadline is timed out, not waited on', async () => {
+    const waiting = waitFor(() => new Promise(() => {}), { timeout: 500 })
+    const rejected = expect(waiting).rejects.toMatchObject({ name: 'TimeoutError' })
+
+    await advance(500)
+    await rejected
+  })
+
   test('a timeout of zero waits for as long as it takes', async () => {
     let ready = false
     const waiting = waitFor(() => ready, { timeout: 0 })

@@ -1699,7 +1699,8 @@ export function getObjectValueByPath(obj, path) {
  * The deadline is measured against the clock rather than counted in ticks, and the last sleep is
  * cut short to land on it: a background tab clamps `setTimeout` to a second or more, and a caller
  * who asked for two seconds means two seconds either way — including one last look at the moment
- * they run out.
+ * they run out. A condition promise still pending when the deadline lands does not hold it open:
+ * the wait rejects on time and the late answer is discarded.
  *
  * @param {Function} condition Called immediately and then on every tick. May return a promise. Truthy ends the wait
  * @param {object} [options]
@@ -1735,6 +1736,7 @@ export function waitFor(condition, options = {}) {
 
   return new Promise((resolve, reject) => {
     let timer = null
+    let guard = null
 
     const onAbort = function() {
       stop()
@@ -1744,11 +1746,23 @@ export function waitFor(condition, options = {}) {
     const stop = function() {
       if (timer !== null) clearTimeout(timer)
       timer = null
+      clearTimeout(guard)
+      guard = null
       if (signal) signal.removeEventListener('abort', onAbort)
+    }
+
+    const timedOut = function() {
+      stop()
+      reject(new DOMException(`waitFor timed out after ${timeout}ms`, 'TimeoutError'))
     }
 
     const check = async function() {
       let value
+
+      // The deadline cannot wait on the condition: a promise that stalls past it — a hung
+      // fetch, a flag that never settles — would otherwise hold the wait open with the timeout
+      // already spent. Armed around the await alone; an answer in time just clears it.
+      if (deadline !== Infinity) guard = setTimeout(timedOut, Math.max(deadline - performance.now(), 0))
 
       try {
         value = await condition()
@@ -1757,6 +1771,9 @@ export function waitFor(condition, options = {}) {
         reject(error)
         return
       }
+
+      clearTimeout(guard)
+      guard = null
 
       // An abort landing while an async condition was in flight has already rejected and cleared
       // the timer. Scheduling another one here would poll on past the abort, forever.
@@ -1771,8 +1788,7 @@ export function waitFor(condition, options = {}) {
       const remaining = deadline - performance.now()
 
       if (remaining <= 0) {
-        stop()
-        reject(new DOMException(`waitFor timed out after ${timeout}ms`, 'TimeoutError'))
+        timedOut()
         return
       }
 

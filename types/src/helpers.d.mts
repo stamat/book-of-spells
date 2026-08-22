@@ -871,7 +871,8 @@ export declare function getObjectValueByPath(obj: object, path: any[] | string):
  * The deadline is measured against the clock rather than counted in ticks, and the last sleep is
  * cut short to land on it: a background tab clamps `setTimeout` to a second or more, and a caller
  * who asked for two seconds means two seconds either way — including one last look at the moment
- * they run out.
+ * they run out. A condition promise still pending when the deadline lands does not hold it open:
+ * the wait rejects on time and the late answer is discarded.
  *
  * @param {Function} condition Called immediately and then on every tick. May return a promise. Truthy ends the wait
  * @param {object} [options]
