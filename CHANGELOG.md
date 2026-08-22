@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-08-22
+
 ### Added
 
 - **`userActivity` — whether anyone is still reading.** Calls back with `false` once `timeout`
