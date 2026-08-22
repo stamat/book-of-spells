@@ -1359,6 +1359,18 @@ describe('waitFor', () => {
     expect(calls).toBe(3)
   })
 
+  test('an interval of zero means every tick, not the hundred-millisecond default', async () => {
+    let calls = 0
+    const waiting = waitFor(() => (++calls >= 5 ? 'now' : null), { interval: 0 })
+
+    // Five milliseconds is four more polls even where the platform clamps a zero delay to a
+    // millisecond — the hundred-millisecond default would not have polled even once.
+    await advance(5)
+
+    await expect(waiting).resolves.toBe('now')
+    expect(calls).toBe(5)
+  })
+
   test('a promise the condition returns is waited on before it counts as an answer', async () => {
     let ready = false
     const waiting = waitFor(async () => ready)

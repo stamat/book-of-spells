@@ -875,7 +875,7 @@ export declare function getObjectValueByPath(obj: object, path: any[] | string):
  *
  * @param {Function} condition Called immediately and then on every tick. May return a promise. Truthy ends the wait
  * @param {object} [options]
- * @param {number} [options.interval=100] Milliseconds between checks
+ * @param {number} [options.interval=100] Milliseconds between checks. `0` checks again every tick
  * @param {number} [options.timeout=10000] Milliseconds before giving up. `0` or `Infinity` waits forever, which leaks a timer if the condition never comes
  * @param {AbortSignal} [options.signal] Aborting rejects the promise and stops the polling
  * @returns {Promise<*>} Resolves with whatever the condition returned. Rejects with a `TimeoutError` at the deadline, with the signal's reason when aborted, or with whatever the condition threw

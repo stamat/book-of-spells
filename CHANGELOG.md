@@ -84,7 +84,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   overshot and reported as a timeout. An `AbortSignal` stops it where the caller went away, an
   async condition is awaited before it counts, and a condition that throws rejects rather than
   being retried — a broken check is a bug, not a reason to keep asking. What it cannot do is beat
-  an observer: the answer is never fresher than the last `interval`, and 100ms is the default.
+  an observer: the answer is never fresher than the last `interval`, and 100ms is the default —
+  `interval: 0` asks again every tick, for the caller who knows the wait is short.
 
 ## [2.4.0] - 2026-08-21
 

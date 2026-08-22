@@ -1703,7 +1703,7 @@ export function getObjectValueByPath(obj, path) {
  *
  * @param {Function} condition Called immediately and then on every tick. May return a promise. Truthy ends the wait
  * @param {object} [options]
- * @param {number} [options.interval=100] Milliseconds between checks
+ * @param {number} [options.interval=100] Milliseconds between checks. `0` checks again every tick
  * @param {number} [options.timeout=10000] Milliseconds before giving up. `0` or `Infinity` waits forever, which leaks a timer if the condition never comes
  * @param {AbortSignal} [options.signal] Aborting rejects the promise and stops the polling
  * @returns {Promise<*>} Resolves with whatever the condition returned. Rejects with a `TimeoutError` at the deadline, with the signal's reason when aborted, or with whatever the condition threw
@@ -1728,7 +1728,7 @@ export function getObjectValueByPath(obj, path) {
 export function waitFor(condition, options = {}) {
   if (!isFunction(condition)) return Promise.reject(new TypeError('waitFor: condition must be a function'))
 
-  const interval = options.interval || 100
+  const interval = options.interval === undefined ? 100 : options.interval
   const timeout = options.timeout === undefined ? 10000 : options.timeout
   const signal = options.signal
   const deadline = timeout && timeout !== Infinity ? performance.now() + timeout : Infinity
