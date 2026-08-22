@@ -771,6 +771,14 @@ describe('whyNotSticky', () => {
     expect(finding.fix).toContain('clip')
   })
 
+  it('an ancestor scrolling only on the other axis is still a dead scrollport, not a nested one', () => {
+    const parent = layout('<div id="parent" style="overflow-y: hidden"><div id="sticky" style="position: sticky; top: 0"></div></div>')
+    scrollport(parent, false)
+    Object.defineProperty(parent, 'offsetWidth', { value: 100, configurable: true })
+    Object.defineProperty(parent, 'scrollWidth', { value: 300, configurable: true })
+    expect(codes('#sticky')).toEqual(['dead-scrollport'])
+  })
+
   it('reports a scrolling ancestor as the scrollport the element sticks inside, not as a fault', () => {
     const parent = layout('<div id="parent" style="overflow-y: auto"><div id="sticky" style="position: sticky; top: 0"></div></div>')
     scrollport(parent, true)

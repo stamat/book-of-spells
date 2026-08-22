@@ -1299,8 +1299,8 @@ export function getHorizontalScrollState(element, threshold = 0) {
 const SCROLLPORT_OVERFLOW = new Set(['hidden', 'scroll', 'auto', 'overlay'])
 
 const STICKY_AXES = [
-  { insets: ['top', 'bottom'], overflow: 'overflowY', size: 'height' },
-  { insets: ['left', 'right'], overflow: 'overflowX', size: 'width' }
+  { insets: ['top', 'bottom'], overflow: 'overflowY', size: 'height', scrolls: isVerticalScrollVisible },
+  { insets: ['left', 'right'], overflow: 'overflowX', size: 'width', scrolls: isHorizontalScrollVisible }
 ]
 
 function stickyFindings(element) {
@@ -1370,7 +1370,8 @@ function stickyFindings(element) {
     if (!axis) continue
 
     const declaration = '`' + axis.overflow + ': ' + ancestorStyle[axis.overflow] + '`'
-    findings.push(isScrollVisible(node) ? {
+    // Judged on the matched axis alone: a live scrollbar on the other axis moves nothing here.
+    findings.push(axis.scrolls(node) ? {
       code: 'nested-scrollport',
       element: element,
       culprit: node,
