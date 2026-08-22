@@ -583,7 +583,7 @@ export declare function getHorizontalScrollState(element: HTMLElement, threshold
  * and reporting it would fire on the most ordinary markup there is; and a containing block that is
  * not the element's parent, since `no-room` measures the parent.
  *
- * @param {string|HTMLElement} [target] The element to diagnose, or a selector for it. Left out, every sticky element on the page is diagnosed
+ * @param {string|Element|Array<Element>|NodeList} [target] The element or elements to diagnose, or a selector for them. Left out, every sticky element on the page is diagnosed
  * @returns {Array<object>} One finding per problem found, `[]` when none were
  * @example
  * // In the console: every sticky element on the page, and what is wrong with each
@@ -594,7 +594,7 @@ export declare function getHorizontalScrollState(element: HTMLElement, threshold
  * //       problem: 'this ancestor is the scrollport (`overflow-y: hidden`) and never scrolls...',
  * //       fix: '`overflow-y: clip` clips the same and creates no scrollport' }]
  */
-export declare function whyNotSticky(target?: string | HTMLElement): Array<object>;
+export declare function whyNotSticky(target?: string | Element | Array<Element> | NodeList): Array<object>;
 /**
  * Reports which section the reader is currently in, and calls back when that changes.
  *

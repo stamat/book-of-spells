@@ -1417,7 +1417,7 @@ function stickyFindings(element) {
  * and reporting it would fire on the most ordinary markup there is; and a containing block that is
  * not the element's parent, since `no-room` measures the parent.
  *
- * @param {string|HTMLElement} [target] The element to diagnose, or a selector for it. Left out, every sticky element on the page is diagnosed
+ * @param {string|Element|Array<Element>|NodeList} [target] The element or elements to diagnose, or a selector for them. Left out, every sticky element on the page is diagnosed
  * @returns {Array<object>} One finding per problem found, `[]` when none were
  * @example
  * // In the console: every sticky element on the page, and what is wrong with each
@@ -1431,16 +1431,11 @@ function stickyFindings(element) {
 export function whyNotSticky(target) {
   if (typeof document === 'undefined') return []
 
-  let elements = []
-  if (target === undefined) {
-    elements = Array.from(document.querySelectorAll('*')).filter(function (element) {
+  const elements = target === undefined
+    ? Array.from(document.querySelectorAll('*')).filter(function (element) {
       return getComputedStyle(element).position.endsWith('sticky')
     })
-  } else if (typeof target === 'string') {
-    elements = Array.from(document.querySelectorAll(target))
-  } else if (target instanceof HTMLElement) {
-    elements = [target]
-  }
+    : Array.from(query(target))
 
   return elements.flatMap(stickyFindings)
 }

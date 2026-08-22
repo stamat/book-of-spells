@@ -828,6 +828,12 @@ describe('whyNotSticky', () => {
     expect(whyNotSticky().map((finding) => finding.element.id)).toEqual(['sticky', 'other'])
   })
 
+  it('takes a list of elements the way every other helper here does', () => {
+    layout('<div id="parent"><div id="sticky" style="position: sticky"></div></div>')
+    expect(whyNotSticky(document.querySelectorAll('#sticky')).map((finding) => finding.code)).toEqual(['no-inset'])
+    expect(whyNotSticky([document.getElementById('sticky')]).map((finding) => finding.code)).toEqual(['no-inset'])
+  })
+
   it('returns nothing for a target that matches no element', () => {
     layout('<div id="parent"><div id="sticky" style="position: sticky; top: 0"></div></div>')
     expect(whyNotSticky('#nothing-here')).toEqual([])
