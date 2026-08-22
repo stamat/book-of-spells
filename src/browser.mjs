@@ -308,7 +308,7 @@ export function hashChange(callback, single) {
  * @param {function} callback Called with `false` when the user goes idle and `true` when they return
  * @param {object} [options]
  * @param {number} [options.timeout=60000] Milliseconds of no interaction that count as idle
- * @param {string|Array<string>} [options.events] Events that count as interaction, replacing the defaults — `pointerdown`, `pointermove`, `keydown`, `wheel`, `scroll`, `touchstart` and `resize`. Listened for on `window`, in the capturing phase, so a widget that stops its own events from propagating cannot read as the user having left, and events only `window` ever receives still arrive
+ * @param {string|Array<string>} [options.events] Events that count as interaction, replacing the defaults — `pointerdown`, `pointermove`, `keydown`, `wheel`, `scroll`, `touchstart` and `resize`. Listened for on `window`, in the capturing phase, so a widget that stops its own events from propagating cannot read as the user having left, and events only `window` ever receives still arrive. `scroll` is there for the scrollbar drag some browsers fire no pointer events for, and it cuts both ways: a page that scrolls itself — a carousel, a chat log pinned to its end — reads as a user for as long as it keeps moving. Such a page should pass the defaults minus `scroll`
  * @param {string} [options.channel] A `BroadcastChannel` name shared with the other tabs of this origin, making activity in any of them count in all of them. Left out, this tab answers for itself
  * @returns {object|null} `{ destroy }`, or `null` when there is no callback or no DOM
  * @example

@@ -32,7 +32,10 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   on `visibilitychange` for the same reason, since nothing may have run while it was away. That
   clock is `performance.now()`, so an NTP correction or a daylight-saving change cannot take the
   deadline with it. A pointer reporting the coordinates it reported last time is ignored, so
-  content moving under a parked cursor cannot pass for someone reading. Listening happens on
+  content moving under a parked cursor cannot pass for someone reading — scrolling is the one
+  self-movement that still can, `scroll` staying in the defaults for the scrollbar drag some
+  browsers fire no pointer events for, so a page that scrolls itself should pass `events`
+  without it. Listening happens on
   `window`, in the capturing phase: a widget that stops its own events from propagating cannot
   read as the user having left, and the events only `window` ever receives arrive too — `resize`
   is one of the defaults, the user being the one dragging the window. Answers for this tab alone
