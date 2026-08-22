@@ -279,11 +279,11 @@ export function hashChange(callback, single) {
 /**
  * Reports when the user has stopped interacting with the page, and when they come back.
  *
- * Idle means no interaction for `timeout` milliseconds — the callback gets `false` when that
- * runs out and `true` the moment anything happens again. Only the changes are reported: a
- * reader scrolling steadily for a minute is one `true` at the end of their pause, not one per
- * event. The page starts out counted as active, and that is not reported, since it is the
- * state every caller already has when it makes the call.
+ * Idle means no interaction for `timeout` milliseconds — the callback gets `false` once that
+ * runs out and `true` the moment the user comes back, so a video can pause itself, a poll can
+ * stop polling, or a session can end where it should. Only the changes are reported: a reader
+ * scrolling steadily gets one `true` at the end of their pause, not one per event, and the page
+ * starting out active is not reported at all, being the state every caller already has.
  *
  * There is a native `IdleDetector`, but it is Chromium-only, needs the `idle-detection`
  * permission, and answers a different question — whether the machine is idle or its screen
@@ -291,23 +291,20 @@ export function hashChange(callback, single) {
  *
  * What the clock says outranks what the timer says. A timer set for the idle deadline can run
  * late: a long task blocks it, a background tab has its timers clamped to a second, and a tab
- * Chrome has frozen may not run it for a minute. Waking late is therefore treated as proof the
+ * the browser has frozen may not run it at all. Waking late is therefore treated as proof the
  * user is idle rather than as a reason to doubt it, waking early re-arms for the remainder, and
- * returning to a hidden tab checks the deadline immediately in case nothing ran while it was
- * away. The clock is `performance.now()` — the wall clock jumps on an NTP correction or a
+ * a tab returning from hidden checks its deadline at once, since nothing may have run while it
+ * was away. The clock is `performance.now()` — the wall clock jumps on an NTP correction or a
  * daylight-saving change, and would take the deadline with it.
  *
  * Answers for this tab alone. Someone busy in a second tab of the same site reads as idle here,
  * which is the thing to know before wiring this to a logout — coordinating tabs needs a
  * `BroadcastChannel` and is not attempted.
  *
- * Listeners are registered on the capturing phase, so a widget that stops its own events from
- * propagating does not read as the user having left the page.
- *
  * @param {function} callback Called with `false` when the user goes idle and `true` when they return
  * @param {object} [options]
  * @param {number} [options.timeout=60000] Milliseconds of no interaction that count as idle
- * @param {string|Array<string>} [options.events] Events that count as interaction, replacing the defaults — `pointerdown`, `pointermove`, `keydown`, `wheel`, `scroll` and `touchstart`
+ * @param {string|Array<string>} [options.events] Events that count as interaction, replacing the defaults — `pointerdown`, `pointermove`, `keydown`, `wheel`, `scroll`, `touchstart` and `resize`. Listened for on `window`, in the capturing phase, so a widget that stops its own events from propagating cannot read as the user having left, and events only `window` ever receives still arrive
  * @returns {object|null} `{ destroy }`, or `null` when there is no callback or no DOM
  * @example
  * const activity = userActivity((active) => {
@@ -321,10 +318,10 @@ export function hashChange(callback, single) {
  * userActivity((active) => { if (!active) logout() }, { timeout: 30 * 60000 })
  */
 export function userActivity(callback, options = {}) {
-  if (!isFunction(callback) || typeof document === 'undefined') return null
+  if (!isFunction(callback) || typeof window === 'undefined' || typeof document === 'undefined') return null
 
   const timeout = options.timeout || 60000
-  const events = options.events ? [].concat(options.events) : ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll', 'touchstart']
+  const events = options.events ? [].concat(options.events) : ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll', 'touchstart', 'resize']
 
   let last = performance.now()
   let idle = false
@@ -365,13 +362,13 @@ export function userActivity(callback, options = {}) {
     check()
   }
 
-  for (const event of events) document.addEventListener(event, onActivity, { capture: true, passive: true })
+  for (const event of events) window.addEventListener(event, onActivity, { capture: true, passive: true })
   document.addEventListener('visibilitychange', onVisibility)
   arm(timeout)
 
   return {
     destroy: function() {
-      for (const event of events) document.removeEventListener(event, onActivity, { capture: true })
+      for (const event of events) window.removeEventListener(event, onActivity, { capture: true })
       document.removeEventListener('visibilitychange', onVisibility)
       clearTimeout(timer)
       timer = null

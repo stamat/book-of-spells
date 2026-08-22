@@ -76,7 +76,11 @@ describe('userActivity', () => {
   let clock = 0
   let nowSpy = null
 
-  const dispatch = (type) => document.dispatchEvent(new Event(type))
+  const dispatch = (type) => window.dispatchEvent(new Event(type))
+
+  // Fired at the document by the browser, never at the window, so it is dispatched where
+  // a real one lands rather than through the helper above.
+  const visibilityChange = () => document.dispatchEvent(new Event('visibilitychange'))
 
   // Time and timers move together, which is the ordinary case; a test wanting a late or a
   // frozen timer moves one without the other.
@@ -150,7 +154,7 @@ describe('userActivity', () => {
 
     // Frozen: time passed, the timer never ran.
     clock += 60000
-    dispatch('visibilitychange')
+    visibilityChange()
     expect(seen).toEqual([false])
   })
 
@@ -159,7 +163,7 @@ describe('userActivity', () => {
     observer = userActivity((active) => seen.push(active), { timeout: 1000 })
 
     clock += 400
-    dispatch('visibilitychange')
+    visibilityChange()
     expect(seen).toEqual([])
 
     advance(600)
@@ -192,5 +196,27 @@ describe('userActivity', () => {
   test('there is nothing to observe without a callback', () => {
     expect(userActivity()).toBe(null)
     expect(userActivity('not a function')).toBe(null)
+  })
+
+  test('a window resize counts, since the user is the one dragging the window', () => {
+    const seen = []
+    observer = userActivity((active) => seen.push(active), { timeout: 1000 })
+
+    advance(1000)
+    // Only window ever receives this one — a listener on document would never hear it.
+    window.dispatchEvent(new Event('resize'))
+    expect(seen).toEqual([false, true])
+  })
+
+  test('a widget that stops its own events from propagating cannot hide its user', () => {
+    const seen = []
+    observer = userActivity((active) => seen.push(active), { timeout: 1000 })
+    const gag = (event) => event.stopPropagation()
+    document.addEventListener('keydown', gag, true)
+
+    advance(1000)
+    document.body.dispatchEvent(new Event('keydown', { bubbles: true }))
+    document.removeEventListener('keydown', gag, true)
+    expect(seen).toEqual([false, true])
   })
 })

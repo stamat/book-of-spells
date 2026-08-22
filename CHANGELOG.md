@@ -31,9 +31,11 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   taken as proof the user is idle instead of a reason to doubt it — a tab returning from hidden
   checks its deadline on `visibilitychange` for the same reason, since nothing may have run
   while it was away. That clock is `performance.now()`, so an NTP correction or a
-  daylight-saving change cannot take the deadline with it. Listeners sit on the capturing
-  phase, so a widget that stops its own events from propagating does not read as the user
-  having left the page, and `destroy()` removes every one of them. Answers for this tab
+  daylight-saving change cannot take the deadline with it. Listening happens on
+  `window`, in the capturing phase: a widget that stops its own events from propagating cannot
+  read as the user having left, and the events only `window` ever receives arrive too — `resize`
+  is one of the defaults, the user being the one dragging the window. `destroy()` removes every
+  listener. Answers for this tab
   alone, which is the thing to know before wiring it to a logout: someone busy in a second
   tab of the same site reads as idle here.
 
