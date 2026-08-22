@@ -1303,6 +1303,11 @@ const STICKY_AXES = [
   { insets: ['left', 'right'], overflow: 'overflowX', css: 'overflow-x', size: 'width', scrolls: isHorizontalScrollVisible }
 ]
 
+// endsWith rather than equality because old Safari computes `position: -webkit-sticky`.
+const isSticky = function (style) {
+  return style.position.endsWith('sticky')
+}
+
 function stickyFindings(element) {
   // Every style of a detached element computes to the empty string in a real browser — jsdom
   // resolves inline styles regardless — so the checks below would read it as not sticky and
@@ -1319,7 +1324,7 @@ function stickyFindings(element) {
 
   const style = getComputedStyle(element)
 
-  if (!style.position.endsWith('sticky')) {
+  if (!isSticky(style)) {
     return [{
       code: 'not-sticky',
       element: element,
@@ -1437,7 +1442,7 @@ export function whyNotSticky(target) {
 
   const elements = target === undefined
     ? Array.from(document.querySelectorAll('*')).filter(function (element) {
-      return getComputedStyle(element).position.endsWith('sticky')
+      return isSticky(getComputedStyle(element))
     })
     : Array.from(query(target))
 
