@@ -326,6 +326,8 @@ export function userActivity(callback, options = {}) {
   let last = performance.now()
   let idle = false
   let timer = null
+  let lastX = null
+  let lastY = null
 
   const arm = function(delay) {
     timer = setTimeout(check, delay)
@@ -343,9 +345,26 @@ export function userActivity(callback, options = {}) {
     callback(false)
   }
 
+  // A pointer that has not moved is not a user. Content scrolling or animating under a parked
+  // cursor makes the browser fire move events carrying the coordinates it fired last time, and
+  // taking those for interaction would keep a page nobody is watching marked as read. Judged
+  // only where there are coordinates to judge: a synthetic move event carrying none is left
+  // alone rather than silently dropped.
+  const stationary = function(event) {
+    if (event.type !== 'pointermove' && event.type !== 'mousemove') return false
+    if (typeof event.clientX !== 'number') return false
+
+    const same = event.clientX === lastX && event.clientY === lastY
+    lastX = event.clientX
+    lastY = event.clientY
+    return same
+  }
+
   // An event costs a clock read and an assignment, so there is nothing here worth throttling,
   // and no timer to reset: the deadline extends itself the next time it comes due.
-  const onActivity = function() {
+  const onActivity = function(event) {
+    if (stationary(event)) return
+
     last = performance.now()
     if (!idle) return
 

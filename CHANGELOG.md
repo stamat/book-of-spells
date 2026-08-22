@@ -23,21 +23,21 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   can pause itself, a poll can stop polling, or a session can end where it should. Only the
   changes are reported: a reader scrolling steadily gets one `true` at the end of their pause,
   not one per event, and the page starting out active is not reported at all, being the state
-  every caller already has. The native `IdleDetector` is no substitute — Chromium-only,
-  gated behind the `idle-detection` permission, and answering whether the machine is idle or
-  its screen locked rather than whether this page is being read. The deadline is checked
-  against the clock rather than trusted to the timer that woke it: a timer clamped by a
-  background tab, frozen outright, or held up by a long task wakes late, and waking late is
-  taken as proof the user is idle instead of a reason to doubt it — a tab returning from hidden
-  checks its deadline on `visibilitychange` for the same reason, since nothing may have run
-  while it was away. That clock is `performance.now()`, so an NTP correction or a
-  daylight-saving change cannot take the deadline with it. Listening happens on
+  every caller already has. The native `IdleDetector` is no substitute — Chromium-only, gated
+  behind the `idle-detection` permission, and answering whether the machine is idle or its
+  screen locked rather than whether this page is being read. The deadline is checked against
+  the clock rather than trusted to the timer that woke it: a timer clamped by a background tab,
+  frozen outright, or held up by a long task wakes late, and waking late is taken as proof the
+  user is idle instead of a reason to doubt it — a tab returning from hidden checks its deadline
+  on `visibilitychange` for the same reason, since nothing may have run while it was away. That
+  clock is `performance.now()`, so an NTP correction or a daylight-saving change cannot take the
+  deadline with it. A pointer reporting the coordinates it reported last time is ignored, so
+  content moving under a parked cursor cannot pass for someone reading. Listening happens on
   `window`, in the capturing phase: a widget that stops its own events from propagating cannot
   read as the user having left, and the events only `window` ever receives arrive too — `resize`
-  is one of the defaults, the user being the one dragging the window. `destroy()` removes every
-  listener. Answers for this tab
-  alone, which is the thing to know before wiring it to a logout: someone busy in a second
-  tab of the same site reads as idle here.
+  is one of the defaults, the user being the one dragging the window. Answers for this tab
+  alone, which is the thing to know before wiring it to a logout: someone busy in a second tab
+  of the same site reads as idle here. `destroy()` removes every listener.
 
 - **`whyNotSticky` — why a sticky element is not sticking.** `position: sticky` fails silently:
   no error, no warning, an element that simply never moves. The usual cause is an ancestor with

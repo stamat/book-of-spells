@@ -77,6 +77,7 @@ describe('userActivity', () => {
   let nowSpy = null
 
   const dispatch = (type) => window.dispatchEvent(new Event(type))
+  const move = (x, y) => window.dispatchEvent(new MouseEvent('pointermove', { clientX: x, clientY: y }))
 
   // Fired at the document by the browser, never at the window, so it is dispatched where
   // a real one lands rather than through the helper above.
@@ -217,6 +218,35 @@ describe('userActivity', () => {
     advance(1000)
     document.body.dispatchEvent(new Event('keydown', { bubbles: true }))
     document.removeEventListener('keydown', gag, true)
+    expect(seen).toEqual([false, true])
+  })
+
+  test('a pointer that reports the place it already was is not a user', () => {
+    const seen = []
+    observer = userActivity((active) => seen.push(active), { timeout: 1000 })
+
+    advance(1000)
+    move(5, 5)
+    expect(seen).toEqual([false, true])
+
+    advance(1000)
+    expect(seen).toEqual([false, true, false])
+
+    // Content moving under a parked cursor: same coordinates, no user.
+    move(5, 5)
+    expect(seen).toEqual([false, true, false])
+
+    move(6, 5)
+    expect(seen).toEqual([false, true, false, true])
+  })
+
+  test('a move event carrying no coordinates is left alone rather than dropped', () => {
+    const seen = []
+    observer = userActivity((active) => seen.push(active), { timeout: 1000 })
+
+    advance(1000)
+    dispatch('pointermove')
+    dispatch('pointermove')
     expect(seen).toEqual([false, true])
   })
 })
