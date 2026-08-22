@@ -1708,7 +1708,7 @@ export function getObjectValueByPath(obj, path) {
  * @param {number} [options.timeout=10000] Milliseconds before giving up. `0` or `Infinity` waits forever, which leaks a timer if the condition never comes
  * @param {AbortSignal} [options.signal] Aborting rejects the promise and stops the polling
  * @returns {Promise<*>} Resolves with whatever the condition returned. Rejects with a `TimeoutError` at the deadline, with the signal's reason when aborted, or with whatever the condition threw
- * @see on
+ * @see module:dom.on
  * @example
  * const dataLayer = await waitFor(() => window.dataLayer)
  *
