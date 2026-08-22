@@ -221,6 +221,12 @@ describe('userActivity', () => {
     expect(userActivity('not a function')).toBe(null)
   })
 
+  test('a timeout that is not a positive number is refused, not remapped to the default', () => {
+    expect(userActivity(() => {}, { timeout: 0 })).toBe(null)
+    expect(userActivity(() => {}, { timeout: NaN })).toBe(null)
+    expect(userActivity(() => {}, { timeout: -1000 })).toBe(null)
+  })
+
   test('a window resize counts, since the user is the one dragging the window', () => {
     const seen = []
     observer = userActivity((active) => seen.push(active), { timeout: 1000 })
