@@ -1732,7 +1732,9 @@ export function waitFor(condition, options = {}) {
   const interval = options.interval === undefined ? 100 : options.interval
   const timeout = options.timeout === undefined ? 10000 : options.timeout
   const signal = options.signal
-  const deadline = timeout && timeout !== Infinity ? performance.now() + timeout : Infinity
+  // `0 || Infinity` and `now + Infinity` both land on an infinite deadline, so the two
+  // wait-forever spellings need no branch of their own.
+  const deadline = performance.now() + (timeout || Infinity)
 
   return new Promise((resolve, reject) => {
     let timer = null
