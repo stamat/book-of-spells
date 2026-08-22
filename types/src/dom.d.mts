@@ -570,7 +570,8 @@ export declare function getHorizontalScrollState(element: HTMLElement, threshold
  * a box that never scrolls at all. This reads the ancestors and names the culprit.
  *
  * Each finding carries a `code`, the `element` it is about, the `culprit` element to look at,
- * the `problem` in one sentence and a `fix`. The codes are `not-sticky`, `no-inset` (every inset
+ * the `problem` in one sentence and a `fix`. The codes are `detached` (not in the document, so
+ * nothing about it computes), `not-sticky`, `no-inset` (every inset
  * is `auto`, so there is no threshold to stick at), `no-room` (the containing block is no larger
  * than the element), `dead-scrollport` (an ancestor is the scrollport and never scrolls) and
  * `nested-scrollport` (the element sticks inside an ancestor rather than to the viewport, which

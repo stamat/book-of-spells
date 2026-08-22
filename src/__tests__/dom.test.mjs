@@ -793,6 +793,13 @@ describe('whyNotSticky', () => {
     expect(codes('#sticky')).toEqual(['not-sticky'])
   })
 
+  it('names a detached element instead of misreading its empty computed styles', () => {
+    const element = document.createElement('div')
+    element.style.position = 'sticky'
+    element.style.top = '0'
+    expect(whyNotSticky(element).map((finding) => finding.code)).toEqual(['detached'])
+  })
+
   it('blames the nearest scrolling ancestor, an outer scroller being out of reach behind it', () => {
     document.body.innerHTML = '<div id="outer" style="overflow-y: auto"><div id="parent" style="overflow-y: hidden"><div id="sticky" style="position: sticky; top: 0"></div></div></div>'
     box(document.getElementById('sticky'), 50)

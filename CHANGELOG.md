@@ -59,7 +59,9 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   the element legitimately sticks inside rather than to the viewport. What it cannot see is
   `contain` and `content-visibility` on an ancestor, and `html`/`body` overflow, whose value
   propagates to the viewport — so an empty result means nothing was visible from here, never that
-  the element sticks.
+  the element sticks. A detached element is named `detached` rather than diagnosed: a real
+  browser computes its every style to nothing, and reading that as `position` missing would
+  prescribe what the element may already declare.
 
 - **`waitFor` — for the value that arrives without telling anyone.** A third-party script that
   defines its global whenever it finishes, a widget that flips a flag, a player that becomes
