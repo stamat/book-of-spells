@@ -35,9 +35,16 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   content moving under a parked cursor cannot pass for someone reading. Listening happens on
   `window`, in the capturing phase: a widget that stops its own events from propagating cannot
   read as the user having left, and the events only `window` ever receives arrive too — `resize`
-  is one of the defaults, the user being the one dragging the window. Answers for this tab
-  alone, which is the thing to know before wiring it to a logout: someone busy in a second tab
-  of the same site reads as idle here. `destroy()` removes every listener.
+  is one of the defaults, the user being the one dragging the window. Answers for this tab alone
+  unless `channel` names a `BroadcastChannel`, in which case every tab of the origin using that
+  name agrees: activity in any of them counts in all of them. That is what a session deadline
+  wants — three tabs open and work happening in the third should not log the first two out — and
+  what a pausing video does not, a user reading elsewhere being exactly when this tab should
+  stop playing, so it is a name to opt into rather than a default. What goes out is throttled, a
+  message per `pointermove` being sixty a second to every other tab, and nothing is sent about
+  going idle: each tab derives that from the same activity and arrives there on its own. Where
+  `BroadcastChannel` is missing, each tab falls back to answering for itself. `destroy()` removes
+  every listener and leaves the channel.
 
 - **`whyNotSticky` — why a sticky element is not sticking.** `position: sticky` fails silently:
   no error, no warning, an element that simply never moves. The usual cause is an ancestor with

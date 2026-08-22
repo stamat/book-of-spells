@@ -297,14 +297,19 @@ export function hashChange(callback, single) {
  * was away. The clock is `performance.now()` — the wall clock jumps on an NTP correction or a
  * daylight-saving change, and would take the deadline with it.
  *
- * Answers for this tab alone. Someone busy in a second tab of the same site reads as idle here,
- * which is the thing to know before wiring this to a logout — coordinating tabs needs a
- * `BroadcastChannel` and is not attempted.
+ * Answers for this tab alone unless `channel` is given a name, in which case every tab of this
+ * origin using that name agrees: activity in any of them counts in all of them, and idle means
+ * all of them are. That is what a session deadline wants — three tabs open and work happening
+ * in the third should not log the first two out — and what a pausing video does not, since a
+ * user reading elsewhere is exactly when this tab should stop playing. Hence a name to opt in
+ * rather than a default. Where `BroadcastChannel` is missing, each tab falls back to answering
+ * for itself.
  *
  * @param {function} callback Called with `false` when the user goes idle and `true` when they return
  * @param {object} [options]
  * @param {number} [options.timeout=60000] Milliseconds of no interaction that count as idle
  * @param {string|Array<string>} [options.events] Events that count as interaction, replacing the defaults — `pointerdown`, `pointermove`, `keydown`, `wheel`, `scroll`, `touchstart` and `resize`. Listened for on `window`, in the capturing phase, so a widget that stops its own events from propagating cannot read as the user having left, and events only `window` ever receives still arrive
+ * @param {string} [options.channel] A `BroadcastChannel` name shared with the other tabs of this origin, making activity in any of them count in all of them. Left out, this tab answers for itself
  * @returns {object|null} `{ destroy }`, or `null` when there is no callback or no DOM
  * @example
  * const activity = userActivity((active) => {
@@ -316,6 +321,9 @@ export function hashChange(callback, single) {
  * // Warning someone before the deadline is two observers, not an extra option
  * userActivity((active) => { warning.hidden = active }, { timeout: 25 * 60000 })
  * userActivity((active) => { if (!active) logout() }, { timeout: 30 * 60000 })
+ *
+ * // A deadline the whole site agrees on, however many tabs are open
+ * userActivity((active) => { if (!active) logout() }, { timeout: 15 * 60000, channel: 'session' })
  */
 export function userActivity(callback, options = {}) {
   if (!isFunction(callback) || typeof window === 'undefined' || typeof document === 'undefined') return null
@@ -328,6 +336,15 @@ export function userActivity(callback, options = {}) {
   let timer = null
   let lastX = null
   let lastY = null
+
+  const channel = options.channel && typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(options.channel) : null
+  // Bounded against the deadline rather than fixed at a second: a post the throttle skips leaves
+  // the other tabs' idea of the last activity that much stale, which is nothing against a minute
+  // and most of the answer against a four-second timeout.
+  const beat = Math.min(1000, timeout / 10)
+  // Not zero: `performance.now()` starts near it, so a page's first second of activity would be
+  // throttled away as though a post had just gone out.
+  let lastPost = -Infinity
 
   const arm = function(delay) {
     timer = setTimeout(check, delay)
@@ -362,9 +379,7 @@ export function userActivity(callback, options = {}) {
 
   // An event costs a clock read and an assignment, so there is nothing here worth throttling,
   // and no timer to reset: the deadline extends itself the next time it comes due.
-  const onActivity = function(event) {
-    if (stationary(event)) return
-
+  const register = function() {
     last = performance.now()
     if (!idle) return
 
@@ -375,6 +390,27 @@ export function userActivity(callback, options = {}) {
     callback(true)
   }
 
+  // Posting is throttled where registering is not, because this one leaves the page: a message
+  // per `pointermove` is sixty a second to every other tab. Nothing is sent about going idle —
+  // each tab derives that from the same activity and arrives there on its own — and a message
+  // received is never posted onward, which would be two tabs keeping each other awake forever.
+  const broadcast = function() {
+    if (!channel) return
+
+    const posted = performance.now()
+    if (posted - lastPost < beat) return
+
+    lastPost = posted
+    channel.postMessage(1)
+  }
+
+  const onActivity = function(event) {
+    if (stationary(event)) return
+
+    register()
+    broadcast()
+  }
+
   const onVisibility = function() {
     if (document.visibilityState !== 'visible' || idle) return
     clearTimeout(timer)
@@ -383,12 +419,14 @@ export function userActivity(callback, options = {}) {
 
   for (const event of events) window.addEventListener(event, onActivity, { capture: true, passive: true })
   document.addEventListener('visibilitychange', onVisibility)
+  if (channel) channel.onmessage = register
   arm(timeout)
 
   return {
     destroy: function() {
       for (const event of events) window.removeEventListener(event, onActivity, { capture: true })
       document.removeEventListener('visibilitychange', onVisibility)
+      if (channel) channel.close()
       clearTimeout(timer)
       timer = null
     }

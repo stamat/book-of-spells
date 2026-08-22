@@ -249,4 +249,132 @@ describe('userActivity', () => {
     dispatch('pointermove')
     expect(seen).toEqual([false, true])
   })
+
+  // Across tabs, over a stubbed channel that delivers synchronously: a real `BroadcastChannel`
+  // delivers on a later task, which fake timers cannot flush. Left uncovered by that: delivery
+  // latency and ordering, and whether a browser has the API at all.
+  describe('across tabs', () => {
+    let channels = null
+    let original = null
+
+    class TestChannel {
+      constructor(name) {
+        this.name = name
+        this.onmessage = null
+        this.closed = false
+        if (!channels.has(name)) channels.set(name, [])
+        channels.get(name).push(this)
+      }
+
+      postMessage(data) {
+        for (const other of channels.get(this.name)) {
+          if (other !== this && !other.closed && other.onmessage) other.onmessage({ data })
+        }
+      }
+
+      close() {
+        this.closed = true
+      }
+    }
+
+    // A stand-in for the other tab: what it hears, and what it can say.
+    const otherTab = (name) => {
+      const tab = new globalThis.BroadcastChannel(name)
+      tab.heard = []
+      tab.onmessage = () => tab.heard.push(1)
+      return tab
+    }
+
+    beforeEach(() => {
+      channels = new Map()
+      original = globalThis.BroadcastChannel
+      globalThis.BroadcastChannel = TestChannel
+    })
+
+    afterEach(() => {
+      globalThis.BroadcastChannel = original
+    })
+
+    test('someone busy in another tab keeps this one from going idle', () => {
+      const seen = []
+      observer = userActivity((active) => seen.push(active), { timeout: 1000, channel: 'session' })
+      const other = otherTab('session')
+
+      advance(1000)
+      expect(seen).toEqual([false])
+
+      other.postMessage(1)
+      expect(seen).toEqual([false, true])
+    })
+
+    test('what happens in this tab is announced to the others', () => {
+      const other = otherTab('session')
+      observer = userActivity(() => {}, { timeout: 1000, channel: 'session' })
+
+      dispatch('keydown')
+      expect(other.heard).toEqual([1])
+    })
+
+    test('what another tab announces is not announced onward', () => {
+      const other = otherTab('session')
+      observer = userActivity(() => {}, { timeout: 1000, channel: 'session' })
+
+      // Two tabs echoing each other would keep the pair awake for as long as both are open.
+      other.postMessage(1)
+      expect(other.heard).toEqual([])
+    })
+
+    test('announcements are throttled however busy the user is', () => {
+      const other = otherTab('session')
+      observer = userActivity(() => {}, { timeout: 10000, channel: 'session' })
+
+      dispatch('keydown')
+      dispatch('keydown')
+      dispatch('keydown')
+      expect(other.heard).toEqual([1])
+
+      advance(1000)
+      dispatch('keydown')
+      expect(other.heard).toEqual([1, 1])
+    })
+
+    test('a tab left to itself says nothing and hears nothing', () => {
+      const other = otherTab('session')
+      const callback = jest.fn()
+      observer = userActivity(callback, { timeout: 1000 })
+
+      dispatch('keydown')
+      expect(other.heard).toEqual([])
+
+      advance(1000)
+      other.postMessage(1)
+      expect(callback).toHaveBeenCalledTimes(1) // the idle, and nothing the message caused
+    })
+
+    test('a destroyed observer leaves the channel', () => {
+      const other = otherTab('session')
+      const callback = jest.fn()
+      observer = userActivity(callback, { timeout: 1000, channel: 'session' })
+
+      // Idle first: a channel left open would wake it from here, which is the leak this proves
+      // is not there — a callback firing on listeners that are gone, and a timer armed behind it.
+      advance(1000)
+      observer.destroy()
+      observer = null
+
+      other.postMessage(1)
+      dispatch('keydown')
+      expect(callback).toHaveBeenCalledTimes(1)
+      expect(other.heard).toEqual([])
+    })
+
+    test('a browser without the channel still answers for its own tab', () => {
+      globalThis.BroadcastChannel = undefined
+      const seen = []
+      observer = userActivity((active) => seen.push(active), { timeout: 1000, channel: 'session' })
+
+      advance(1000)
+      expect(seen).toEqual([false])
+    })
+  })
 })
