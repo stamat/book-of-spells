@@ -346,8 +346,11 @@ export function userActivity(callback, options = {}) {
   // throttled away as though a post had just gone out.
   let lastPost = -Infinity
 
+  // `setTimeout` folds its delay into an int32, so past ~24.9 days — or at `Infinity` — it
+  // fires at once, and a deadline re-armed from here would spin at timer resolution forever.
+  // Clamped, a longer deadline just re-arms when the clamp runs out, `check` finding it not due.
   const arm = function(delay) {
-    timer = setTimeout(check, delay)
+    timer = setTimeout(check, Math.min(delay, 2147483647))
   }
 
   const check = function() {

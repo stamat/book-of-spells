@@ -183,6 +183,28 @@ describe('userActivity', () => {
     expect(seen).toEqual([false, true])
   })
 
+  test('a deadline past the timer ceiling arrives on time instead of at once', () => {
+    // Fake timers do not reproduce the int32 fold, so what this pins is the clamped re-arm
+    // chain landing on the deadline, not the overflow itself.
+    const seen = []
+    const day = 24 * 60 * 60 * 1000
+    observer = userActivity((active) => seen.push(active), { timeout: 30 * day })
+
+    advance(25 * day)
+    expect(seen).toEqual([])
+
+    advance(5 * day)
+    expect(seen).toEqual([false])
+  })
+
+  test('a timeout of Infinity never reports idle', () => {
+    const seen = []
+    observer = userActivity((active) => seen.push(active), { timeout: Infinity })
+
+    advance(2147483647 * 2)
+    expect(seen).toEqual([])
+  })
+
   test('a destroyed observer stops listening and stops counting', () => {
     const callback = jest.fn()
     observer = userActivity(callback, { timeout: 1000 })
