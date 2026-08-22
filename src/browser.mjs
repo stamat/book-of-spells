@@ -308,9 +308,9 @@ export function hashChange(callback, single) {
  * @param {function} callback Called with `false` when the user goes idle and `true` when they return
  * @param {object} [options]
  * @param {number} [options.timeout=60000] Milliseconds of no interaction that count as idle. `Infinity` never reports idle; zero or less is nothing to observe, answered with `null`
- * @param {string|Array<string>} [options.events] Events that count as interaction, replacing the defaults — `pointerdown`, `pointermove`, `keydown`, `wheel`, `scroll`, `touchstart` and `resize`. Listened for on `window`, in the capturing phase, so a widget that stops its own events from propagating cannot read as the user having left, and events only `window` ever receives still arrive. `scroll` is there for the scrollbar drag some browsers fire no pointer events for, and it cuts both ways: a page that scrolls itself — a carousel, a chat log pinned to its end — reads as a user for as long as it keeps moving. Such a page should pass the defaults minus `scroll`
+ * @param {string|Array<string>} [options.events] Events that count as interaction, replacing the defaults — `pointerdown`, `pointermove`, `keydown`, `wheel`, `scroll`, `touchstart` and `resize`. Listened for on `window`, in the capturing phase, so a widget that stops its own events from propagating cannot read as the user having left, and events only `window` ever receives still arrive. `scroll` is there for the scrollbar drag some browsers fire no pointer events for, and it cuts both ways: a page that scrolls itself — a carousel, a chat log pinned to its end — reads as a user for as long as it keeps moving. Such a page should pass the defaults minus `scroll`. Several events may share one space-separated string; an empty list is nothing to observe, answered with `null`
  * @param {string} [options.channel] A `BroadcastChannel` name shared with the other tabs of this origin, making activity in any of them count in all of them. What travels is the activity, never the verdict — each tab judges idle against its own `timeout`, so every observer sharing a name must share one, or the tab with the shortest deadline goes idle while the rest disagree. Left out, this tab answers for itself
- * @returns {object|null} `{ destroy }`, or `null` when there is no callback, no DOM, or no positive timeout
+ * @returns {object|null} `{ destroy }`, or `null` when there is no callback, no DOM, no positive timeout, or no events to listen for
  * @example
  * const activity = userActivity((active) => {
  *  if (!active) video.pause()
@@ -332,7 +332,12 @@ export function userActivity(callback, options = {}) {
   // A deadline of zero, NaN or less is not a deadline, and `||` would hand a computed-to-zero
   // session budget a silent fresh minute. Infinity passes: it means never idle.
   if (!(timeout > 0)) return null
-  const events = options.events ? [].concat(options.events) : ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll', 'touchstart', 'resize']
+  // Split the way the library's listener helpers split, so the documented `'click keydown'`
+  // form cannot land as one bogus event type nothing ever fires.
+  const events = [].concat(options.events === undefined ? ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll', 'touchstart', 'resize'] : options.events)
+    .flatMap(function(event) { return String(event).split(' ') })
+    .filter(Boolean)
+  if (!events.length) return null
 
   let last = performance.now()
   let idle = false

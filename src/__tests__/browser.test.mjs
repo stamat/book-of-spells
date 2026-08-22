@@ -227,6 +227,24 @@ describe('userActivity', () => {
     expect(userActivity(() => {}, { timeout: -1000 })).toBe(null)
   })
 
+  test('several events may share one space-separated string, the way the listener helpers take them', () => {
+    const seen = []
+    observer = userActivity((active) => seen.push(active), { timeout: 1000, events: 'click keydown' })
+
+    advance(1000)
+    dispatch('click')
+    expect(seen).toEqual([false, true])
+
+    advance(1000)
+    dispatch('keydown')
+    expect(seen).toEqual([false, true, false, true])
+  })
+
+  test('an empty events list is nothing to observe', () => {
+    expect(userActivity(() => {}, { events: [] })).toBe(null)
+    expect(userActivity(() => {}, { events: '' })).toBe(null)
+  })
+
   test('a window resize counts, since the user is the one dragging the window', () => {
     const seen = []
     observer = userActivity((active) => seen.push(active), { timeout: 1000 })
