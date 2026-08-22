@@ -297,6 +297,10 @@ export function hashChange(callback, single) {
  * away. The clock is `performance.now()` — the wall clock jumps on an NTP correction or a
  * daylight-saving change, and would take the deadline with it.
  *
+ * Answers for this tab alone. Someone busy in a second tab of the same site reads as idle here,
+ * which is the thing to know before wiring this to a logout — coordinating tabs needs a
+ * `BroadcastChannel` and is not attempted.
+ *
  * Listeners are registered on the capturing phase, so a widget that stops its own events from
  * propagating does not read as the user having left the page.
  *
@@ -311,6 +315,10 @@ export function hashChange(callback, single) {
  * }, { timeout: 30000 })
  *
  * activity.destroy() // stop listening
+ *
+ * // Warning someone before the deadline is two observers, not an extra option
+ * userActivity((active) => { warning.hidden = active }, { timeout: 25 * 60000 })
+ * userActivity((active) => { if (!active) logout() }, { timeout: 30 * 60000 })
  */
 export function userActivity(callback, options = {}) {
   if (!isFunction(callback) || typeof document === 'undefined') return null

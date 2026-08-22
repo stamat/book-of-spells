@@ -33,7 +33,9 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
   while it was away. That clock is `performance.now()`, so an NTP correction or a
   daylight-saving change cannot take the deadline with it. Listeners sit on the capturing
   phase, so a widget that stops its own events from propagating does not read as the user
-  having left the page, and `destroy()` removes every one of them.
+  having left the page, and `destroy()` removes every one of them. Answers for this tab
+  alone, which is the thing to know before wiring it to a logout: someone busy in a second
+  tab of the same site reads as idle here.
 
 - **`whyNotSticky` — why a sticky element is not sticking.** `position: sticky` fails silently:
   no error, no warning, an element that simply never moves. The usual cause is an ancestor with
