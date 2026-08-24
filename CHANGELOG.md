@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-08-24
+
 ### Added
 
 - **`clamp(value, min, max)`** — hold a number inside an inclusive range. `NaN` comes back as
