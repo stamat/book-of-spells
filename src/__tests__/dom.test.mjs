@@ -23,6 +23,7 @@ import {
   readOptions,
   scrollSpy,
   swipe,
+  drag,
   whyNotSticky
 } from '../dom.mjs'
 
@@ -837,5 +838,270 @@ describe('whyNotSticky', () => {
   it('returns nothing for a target that matches no element', () => {
     layout('<div id="parent"><div id="sticky" style="position: sticky; top: 0"></div></div>')
     expect(whyNotSticky('#nothing-here')).toEqual([])
+  })
+})
+
+
+// `drag` is the pointer half of a gesture: where the pointer is, every move, until it is let go.
+//
+// What is pinned here is the bookkeeping a caller cannot see and would be bitten by — one
+// gesture at a time, a cancelled gesture told apart from a finished one, the previous
+// coordinates belonging to this gesture rather than the last one, the moves heard on the
+// document so a row moved in the DOM mid-drag keeps reporting, the flick measured at the
+// release rather than at the last move, and everything put back on `destroy`. The arithmetic
+// on top of it — inertia, bounce — is left to the caller that asks for it.
+//
+// Deliberately not covered: pointer capture actually keeping a drag alive once the pointer has
+// left the element. That is the browser's behaviour and jsdom has none of it, so what is checked
+// is that capture is asked for and released, not what it then does. The same goes for
+// `touch-action` stopping a scroll: what is checked is the property, not the gesture — and an
+// unset one reads back as `undefined` here where a browser says `''`, which is why the negative
+// assertion is the honest one.
+describe('drag', () => {
+  const pointer = (type, props = {}) => {
+    const event = new Event(type, { bubbles: true, cancelable: true })
+    Object.assign(event, { pointerId: 1, pointerType: 'mouse', pageX: 0, pageY: 0, clientX: 0, clientY: 0 }, props)
+    return event
+  }
+  const heard = (element, ...types) => {
+    const seen = []
+    for (const type of types) element.addEventListener(type, (e) => seen.push([type, e.detail]))
+    return seen
+  }
+
+  let element
+  let handle
+  beforeEach(() => {
+    document.body.innerHTML = '<div id="drag-me"></div>'
+    element = document.getElementById('drag-me')
+    handle = null
+  })
+  afterEach(() => {
+    if (handle) handle.destroy()
+  })
+
+  it('reports where the pointer is, in page coordinates and in the viewport ones a rect answers in', () => {
+    const moves = []
+    handle = drag(element, (detail) => moves.push(detail))
+    element.dispatchEvent(pointer('pointerdown', { pageX: 10, pageY: 20, clientX: 10, clientY: 5 }))
+    element.dispatchEvent(pointer('pointermove', { pageX: 12, pageY: 40, clientX: 12, clientY: 25 }))
+    expect(moves).toHaveLength(1)
+    expect([moves[0].x, moves[0].y]).toEqual([12, 40])
+    expect([moves[0].clientX, moves[0].clientY]).toEqual([12, 25])
+    expect(moves[0].pointerType).toBe('mouse')
+  })
+
+  it('does not report the last gesture coordinates as this one previous ones', () => {
+    const moves = []
+    handle = drag(element, (detail) => moves.push(detail))
+    element.dispatchEvent(pointer('pointerdown', { pageX: 500, pageY: 500 }))
+    element.dispatchEvent(pointer('pointermove', { pageX: 505, pageY: 505 }))
+    element.dispatchEvent(pointer('pointerup', { pageX: 505, pageY: 505 }))
+
+    element.dispatchEvent(pointer('pointerdown', { pageX: 10, pageY: 10 }))
+    element.dispatchEvent(pointer('pointermove', { pageX: 12, pageY: 12 }))
+    const last = moves[moves.length - 1]
+    // 10, not 505 — the far side of the screen, and a delta nobody made.
+    expect([last.prevX, last.prevY]).toEqual([10, 10])
+  })
+
+  it('says nothing about a move that moved nowhere', () => {
+    const moves = []
+    handle = drag(element, (detail) => moves.push(detail))
+    element.dispatchEvent(pointer('pointerdown', { pageX: 10, pageY: 10, clientX: 10, clientY: 10 }))
+    element.dispatchEvent(pointer('pointermove', { pageX: 10, pageY: 10, clientX: 10, clientY: 10 }))
+    expect(moves).toHaveLength(0)
+    element.dispatchEvent(pointer('pointermove', { pageX: 10, pageY: 11, clientX: 10, clientY: 11 }))
+    expect(moves).toHaveLength(1)
+  })
+
+  it('reports a page that scrolled under a pointer that did not move', () => {
+    // The two pairs come apart here: `clientY` is where it was, `pageY` is not, and a caller
+    // reading page coordinates is owed the update.
+    const moves = []
+    handle = drag(element, (detail) => moves.push(detail))
+    element.dispatchEvent(pointer('pointerdown', { pageY: 10, clientY: 10 }))
+    element.dispatchEvent(pointer('pointermove', { pageY: 60, clientY: 10 }))
+    expect(moves).toHaveLength(1)
+    expect(moves[0].y).toBe(60)
+  })
+
+  it('takes one gesture at a time, because a second pointer is a pinch', () => {
+    const seen = heard(element, 'dragstart')
+    handle = drag(element, () => {})
+    element.dispatchEvent(pointer('pointerdown', { pointerId: 1 }))
+    element.dispatchEvent(pointer('pointerdown', { pointerId: 2 }))
+    expect(seen).toHaveLength(1)
+  })
+
+  it('ignores moves from a pointer that is not the one dragging', () => {
+    const moves = []
+    handle = drag(element, (detail) => moves.push(detail))
+    element.dispatchEvent(pointer('pointerdown', { pointerId: 1 }))
+    element.dispatchEvent(pointer('pointermove', { pointerId: 2, pageX: 99, pageY: 99 }))
+    expect(moves).toHaveLength(0)
+  })
+
+  it('hears the gesture on the document, so a row moved in the DOM mid-drag keeps reporting', () => {
+    // The spec hands capture to the document the moment the captured element is disconnected,
+    // and `insertBefore` on a connected node disconnects it first. From then on the moves land
+    // on the document and nothing below it — so that is where the gesture has to be heard.
+    document.body.innerHTML = '<ul><li id="drag-me"></li><li id="other"></li></ul>'
+    element = document.getElementById('drag-me')
+    const moves = []
+    handle = drag(element, (detail) => moves.push(detail))
+    element.dispatchEvent(pointer('pointerdown'))
+    document.getElementById('other').after(element)
+    document.body.dispatchEvent(pointer('pointermove', { pageY: 30, clientY: 30 }))
+    expect(moves).toHaveLength(1)
+    expect(moves[0].target).toBe(element)
+  })
+
+  it('measures the flick at the release, so a drag held still before letting go carries none', () => {
+    const clock = jest.spyOn(performance, 'now')
+    const ends = heard(element, 'dragend')
+    handle = drag(element, () => {})
+    clock.mockReturnValue(0)
+    element.dispatchEvent(pointer('pointerdown'))
+    clock.mockReturnValue(16)
+    element.dispatchEvent(pointer('pointermove', { pageY: 50, clientY: 50 }))
+    clock.mockReturnValue(500)
+    element.dispatchEvent(pointer('pointerup', { pageY: 50, clientY: 50 }))
+
+    clock.mockReturnValue(1000)
+    element.dispatchEvent(pointer('pointerdown'))
+    clock.mockReturnValue(1016)
+    element.dispatchEvent(pointer('pointermove', { pageY: 50, clientY: 50 }))
+    clock.mockReturnValue(1020)
+    element.dispatchEvent(pointer('pointerup', { pageY: 50, clientY: 50 }))
+    clock.mockRestore()
+
+    expect(ends[0][1].velocityY).toBe(0)
+    expect(ends[1][1].velocityY).toBeGreaterThan(0)
+  })
+
+  it('tells a cancelled gesture from a finished one, because the person never let go', () => {
+    const seen = heard(element, 'dragend', 'dragcancel')
+    handle = drag(element, () => {})
+    element.dispatchEvent(pointer('pointerdown'))
+    element.dispatchEvent(pointer('pointercancel'))
+    expect(seen.map(([type]) => type)).toEqual(['dragcancel'])
+    expect(element.getAttribute('dragging')).toBe('false')
+  })
+
+  it('a cancelled gesture never coasts, whatever it was carrying', () => {
+    const seen = heard(element, 'draginertia', 'draginertiaend')
+    handle = drag(element, { inertia: true })
+    element.dispatchEvent(pointer('pointerdown', { pageY: 0 }))
+    element.dispatchEvent(pointer('pointermove', { pageY: 200 }))
+    element.dispatchEvent(pointer('pointercancel'))
+    expect(seen).toEqual([])
+  })
+
+  it('says it is dragging while it is, and stops saying so when it is not', () => {
+    handle = drag(element, () => {})
+    expect(element.getAttribute('drag-enabled')).toBe('true')
+    expect(element.getAttribute('dragging')).toBe('false')
+    element.dispatchEvent(pointer('pointerdown'))
+    expect(element.getAttribute('dragging')).toBe('true')
+    element.dispatchEvent(pointer('pointerup'))
+    expect(element.getAttribute('dragging')).toBe('false')
+  })
+
+  it('takes the touch gesture with touch-action, and gives back what the page had', () => {
+    element.style.touchAction = 'pan-x'
+    handle = drag(element, () => {})
+    expect(element.style.touchAction).toBe('none')
+    handle.destroy()
+    handle = null
+    expect(element.style.touchAction).toBe('pan-x')
+  })
+
+  it('leaves the touch gesture alone when told to', () => {
+    handle = drag(element, { preventDefaultTouch: false })
+    expect(element.style.touchAction).not.toBe('none')
+  })
+
+  it('destroy takes the listeners and the attributes with it, mid-drag included', () => {
+    const moves = []
+    handle = drag(element, (detail) => moves.push(detail))
+    element.dispatchEvent(pointer('pointerdown'))
+    handle.destroy()
+    handle = null
+    element.dispatchEvent(pointer('pointermove', { pageX: 50 }))
+    expect(moves).toHaveLength(0)
+    expect(element.hasAttribute('drag-enabled')).toBe(false)
+    expect(element.hasAttribute('dragging')).toBe(false)
+  })
+
+  it('will not attach twice to the same element', () => {
+    handle = drag(element, () => {})
+    expect(drag(element, () => {})).toBeUndefined()
+  })
+
+  it('answers nothing for something that is not an element', () => {
+    expect(drag(null, () => {})).toBeUndefined()
+  })
+
+  // The second way in: a `pointerdown` already in hand. What a caller with one delegated
+  // listener over a list has, where attaching per row would be a listener per row and a
+  // re-attach every time the list grows one.
+  describe('started from a pointerdown', () => {
+    it('starts the gesture there and then, on the element the event was handled at', () => {
+      const seen = heard(element, 'dragstart', 'drag')
+      const down = pointer('pointerdown', { pageX: 5, pageY: 5, clientX: 5, clientY: 5 })
+      Object.defineProperty(down, 'currentTarget', { value: element })
+      handle = drag(down, () => {})
+      expect(seen.map(([type]) => type)).toEqual(['dragstart'])
+      element.dispatchEvent(pointer('pointermove', { pageX: 5, pageY: 25, clientX: 5, clientY: 25 }))
+      expect(seen.map(([type]) => type)).toEqual(['dragstart', 'drag'])
+      expect(seen[1][1].clientY).toBe(25)
+    })
+
+    it('writes nothing into an element the caller already owns', () => {
+      const down = pointer('pointerdown')
+      Object.defineProperty(down, 'currentTarget', { value: element })
+      handle = drag(down, () => {})
+      expect(element.hasAttribute('drag-enabled')).toBe(false)
+      expect(element.hasAttribute('dragging')).toBe(false)
+      expect(element.style.touchAction).not.toBe('none')
+    })
+
+    it('is one gesture: it takes its listeners away when the pointer is let go', () => {
+      const moves = []
+      const down = pointer('pointerdown')
+      Object.defineProperty(down, 'currentTarget', { value: element })
+      handle = drag(down, (detail) => moves.push(detail))
+      element.dispatchEvent(pointer('pointermove', { pageY: 10, clientY: 10 }))
+      element.dispatchEvent(pointer('pointerup'))
+      element.dispatchEvent(pointer('pointermove', { pageY: 80, clientY: 80 }))
+      expect(moves).toHaveLength(1)
+      handle = null
+    })
+
+    it('takes an explicit target when the event was handled somewhere else', () => {
+      // The delegated case: the listener is on a container, the gesture belongs to a handle.
+      document.body.innerHTML = '<div id="list"><span id="handle"></span></div>'
+      const list = document.getElementById('list')
+      const grip = document.getElementById('handle')
+      const seen = heard(grip, 'dragstart')
+      const down = pointer('pointerdown')
+      Object.defineProperty(down, 'currentTarget', { value: list })
+      handle = drag(down, { target: grip, callback: () => {} })
+      expect(seen).toHaveLength(1)
+    })
+
+    it('refuses a second gesture on an element already mid-gesture, because a second pointer is a pinch', () => {
+      // The delegated listener fires once per finger, so the refusal has to hold across calls,
+      // not inside one.
+      const down = pointer('pointerdown')
+      Object.defineProperty(down, 'currentTarget', { value: element })
+      handle = drag(down, () => {})
+      const seen = heard(element, 'dragstart')
+      const second = pointer('pointerdown', { pointerId: 2 })
+      Object.defineProperty(second, 'currentTarget', { value: element })
+      expect(drag(second, () => {})).toBeUndefined()
+      expect(seen).toHaveLength(0)
+    })
   })
 })

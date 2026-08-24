@@ -16,6 +16,70 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Changed
+
+- **`drag` runs on pointer events now, and captures the pointer.** It listened for
+  `mousedown`/`touchstart`: two code paths, and a pen answered by neither. One path now covers
+  mouse, touch **and pen**. The pointer is captured on the way in — touch and pen the browser
+  captures implicitly, the mouse it never did — so a mouse drag keeps reporting after it has
+  left the element, and whatever the pointer crosses on the way hears nothing of it. The moves
+  are still heard on the document for as long as the gesture lasts, as `mousemove` was, because
+  that is the one thing capture does not survive: the moment the captured element is
+  disconnected the
+  [spec hands the capture to the document](https://w3c.github.io/pointerevents/#implicit-release-of-pointer-capture),
+  and `insertBefore` on a connected node disconnects it first. A list that reorders itself by
+  moving the dragged row hits that on the first crossing. Everything this needs — pointer
+  events, pointer capture, `touch-action: none` — is in Safari 13 and
+  [iOS 13.2](https://caniuse.com/pointer); below that the listener attaches and nothing arrives.
+
+  Nothing in the contract moved: the same options, the same `callback`, the same `dragstart` /
+  `drag` / `dragend` / `draginertia` / `draginertiaend` events, the same `detail` fields, the
+  same `{ destroy }`. Existing callers need no change.
+
+### Added
+
+- **`drag` takes a `pointerdown` as well as an element**, starting that one gesture there and
+  then and taking its listeners away when the pointer is let go. That is what a caller with a
+  single *delegated* listener has, and the only shape that works over a list whose rows come and
+  go: attaching per row is a listener per row and a re-attach every time the list grows one.
+  `opts.target` says where to capture and dispatch when the listener is on a container and the
+  gesture belongs to a handle inside it. Started this way nothing is written into the element —
+  no `drag-enabled`, no `dragging`, no `touch-action` — because it is an element the caller
+  already owns, and `touch-action` is decided long before a `pointerdown` is dispatched.
+- **`dragcancel`, for a gesture the platform took away** — a touch it decided was a scroll, a
+  call arriving. There was no `pointercancel` or `touchcancel` path before, so a taken gesture
+  left `dragging` true for good: a lifted card that never came down. It fires instead of
+  `dragend`, never coasts into inertia, and drops the velocity it was carrying, because a
+  cancelled drag is not a drag anybody finished.
+- **`clientX` and `clientY` on the detail**, beside the page coordinates already there. They are
+  the ones `getBoundingClientRect` answers in, so anything comparing a drag against element
+  boxes stops converting by hand.
+- **`pointerType` on the detail** — `mouse`, `touch` or `pen`, for a caller that treats one
+  differently.
+
+### Fixed
+
+- **A `pointermove` that moved nowhere no longer reports one.** A pen changing pressure or tilt
+  sends one, and a `drag` carrying a delta of zero tells the caller nothing it can act on while
+  costing it a full handler. Both coordinate pairs are compared, because they come apart: a page
+  scrolling under a stationary pointer changes `pageY` and leaves `clientY` where it was, and a
+  caller reading page coordinates is owed that one.
+- **`drag` reported the previous gesture's coordinates as the new one's `prevX`/`prevY`.** The
+  first `drag` event after a fresh `pointerdown` carried a delta from wherever the last drag
+  ended, which on a second grab across the page is a jump nobody made.
+- **A drag held still before letting go no longer coasts.** The flick was measured up to the
+  last move rather than the release, so stopping the pointer and then lifting it still threw the
+  element wherever it had last been heading. The velocity window ends at the release now.
+- **`preventDefaultTouch` now takes the touch gesture with `touch-action: none` on the element**,
+  restored by `destroy`. Preventing the default on the events could not do it: by the time a
+  move arrives the browser has already decided the gesture is a scroll. Same option name, same
+  default, and it finally does what it says on a touchscreen.
+
+  Known and not changed: the events are named `dragstart`, `drag` and `dragend`, which are also
+  the native HTML drag and drop event names, so a page listening for the native ones on the same
+  element hears these too. Renaming them is a breaking change; `callback` is the way around it
+  for now.
+
 ## [2.5.0] - 2026-08-22
 
 ### Added

@@ -460,21 +460,61 @@ export declare const onSwipe: typeof swipe;
 /**
  * Drag event handler
  *
- * @param {HTMLElement} element The element to listen for drag gestures on
+ * Pointer events, and one gesture at a time. The pointer is captured on the way in - touch and
+ * pen the browser captures implicitly, the mouse it does not - so a mouse drag keeps reporting
+ * after it has left the element, and whatever the pointer crosses on the way hears nothing of
+ * it. What capture does not survive is the element leaving the document: the moment it is
+ * disconnected the spec hands the capture to the document, and `insertBefore` on a connected
+ * node disconnects it first, so a list that reorders itself by moving the dragged row loses it
+ * on the first crossing. The moves are heard on the document for as long as the gesture lasts,
+ * which is where they land either way. Everything this needs - pointer events, pointer capture,
+ * `touch-action` - is in Safari 13 and iOS 13.2; below that the listener attaches and nothing
+ * ever arrives.
+ *
+ * **Two ways in.** Hand it an element and it waits for a `pointerdown` of its own, for as long
+ * as it is attached. Hand it a `pointerdown` already in flight and it starts that one gesture
+ * now, taking its listeners away again when the pointer is let go - which is what a caller with
+ * a single *delegated* listener has, and the only shape that works over a list whose rows come
+ * and go. Attaching per row is a listener per row and a re-attach every time the list grows one;
+ * delegating is one listener whatever the list does.
+ *
+ * Started from an event, nothing is written into the element: no `drag-enabled`, no `dragging`,
+ * no `touch-action`. It is an element the caller already owns and has already styled, and
+ * `touch-action` is decided long before a `pointerdown` is dispatched, so setting it there would
+ * be a promise this cannot keep - put it on the handle in CSS.
+ *
+ * A gesture the platform takes away - a scroll it decided was one, a call arriving - reports
+ * `dragcancel` and no `dragend`, and never coasts into inertia. That distinction is the whole
+ * reason to listen for it: a cancelled drag is not a drag the person finished.
+ *
+ * `preventDefaultTouch` owns the touch gesture by putting `touch-action: none` on the element
+ * for as long as the handler is attached, restored by `destroy`. Preventing the default on the
+ * events cannot do it: by the time a `pointermove` arrives the browser has already decided the
+ * gesture is a scroll.
+ *
+ * The events are named `dragstart`, `drag` and `dragend`, which are also the names the native
+ * HTML drag and drop API uses. A page listening for the native ones on the same element will
+ * hear these too. Renaming them is a breaking change and has not been made; `callback` is the
+ * way to take one element's drags without that.
+ *
+ * @param {HTMLElement | PointerEvent} target The element to listen for drag gestures on, or a `pointerdown` already in hand to start one gesture from now
  * @param {object | Function} opts The options object or the callback to call when a drag gesture is detected
+ * @param {HTMLElement} [opts.target] Where to capture the pointer and dispatch the events, when started from an event. Defaults to that event's `currentTarget`, then its `target` - name it when the listener is on a container and the gesture belongs to a handle inside it
  * @param {boolean} [opts.inertia=false] Whether to enable inertia
  * @param {boolean} [opts.bounce=false] Whether to enable bounce when inertia is enabled
  * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
  * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
- * @param {number} [opts.velocityWindow=80] Time window (ms) over which flick velocity is measured
+ * @param {number} [opts.velocityWindow=80] Time window (ms) over which flick velocity is measured, ending at the release - a drag held still before letting go carries none
  * @param {number} [opts.maxVelocity=2] Cap on flick velocity magnitude (px/ms) to stop overshoot
- * @param {boolean} [opts.preventDefaultTouch=true] Whether to prevent the default touch behavior
+ * @param {boolean} [opts.preventDefaultTouch=true] Whether to take the touch gesture, with `touch-action: none` on the element. Ignored when started from an event - by then the browser has already decided whether the gesture is a scroll, so the handle's stylesheet is the only place it can be said
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
- * @returns {object | null} The destroy method to remove the event listeners
+ * @returns {object | undefined} The destroy method to remove the event listeners; nothing when refused - not an element, already attached, or already mid-gesture
  * @example
  * drag(document.getElementById('foo'), (e) => {
- *  console.log(e.x)
+ *  console.log(e.x)            // page coordinates
  *  console.log(e.y)
+ *  console.log(e.clientX)      // viewport coordinates, what getBoundingClientRect answers in
+ *  console.log(e.clientY)
  *  console.log(e.relativeX)
  *  console.log(e.relativeY)
  *  console.log(e.xPercentage)
@@ -483,15 +523,23 @@ export declare const onSwipe: typeof swipe;
  *  console.log(e.velocityY)
  *  console.log(e.prevX)
  *  console.log(e.prevY)
+ *  console.log(e.pointerType)  // 'mouse', 'touch' or 'pen'
+ * })
+ *
+ * // one delegated listener over a list, whatever the list does next
+ * list.addEventListener('pointerdown', (e) => {
+ *   const handle = e.target.closest('[data-handle]')
+ *   if (handle) drag(e, { target: handle, callback: (d) => reorder(d.clientY) })
  * })
  *
  * element.addEventListener('drag', (e) => { ... })
  * element.addEventListener('dragstart', (e) => { ... })
  * element.addEventListener('dragend', (e) => { ... })
+ * element.addEventListener('dragcancel', (e) => { ... })
  * element.addEventListener('draginertia', (e) => { ... })
  * element.addEventListener('draginertiaend', (e) => { ... })
  */
-export declare function drag(element: HTMLElement, opts: object | Function): object | null;
+export declare function drag(target: HTMLElement | PointerEvent, opts: object | Function): object | undefined;
 /**
  * Alias for drag
  *

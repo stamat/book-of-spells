@@ -917,24 +917,70 @@ export function swipe(element, callback, threshold = 150, timeThreshold = 0) {
  */
 export const onSwipe = swipe
 
+// Elements with a gesture in flight, whichever way it came in. A second `pointerdown` on one of
+// them is a pinch, and the first pointer's numbers are noise from then on - so it is refused
+// rather than allowed to fight the gesture in hand. Module-wide, because a delegated caller
+// starts a fresh instance per event and no instance can see the others.
+const dragging = new WeakSet()
+
 /**
  * Drag event handler
- * 
- * @param {HTMLElement} element The element to listen for drag gestures on
+ *
+ * Pointer events, and one gesture at a time. The pointer is captured on the way in - touch and
+ * pen the browser captures implicitly, the mouse it does not - so a mouse drag keeps reporting
+ * after it has left the element, and whatever the pointer crosses on the way hears nothing of
+ * it. What capture does not survive is the element leaving the document: the moment it is
+ * disconnected the spec hands the capture to the document, and `insertBefore` on a connected
+ * node disconnects it first, so a list that reorders itself by moving the dragged row loses it
+ * on the first crossing. The moves are heard on the document for as long as the gesture lasts,
+ * which is where they land either way. Everything this needs - pointer events, pointer capture,
+ * `touch-action` - is in Safari 13 and iOS 13.2; below that the listener attaches and nothing
+ * ever arrives.
+ *
+ * **Two ways in.** Hand it an element and it waits for a `pointerdown` of its own, for as long
+ * as it is attached. Hand it a `pointerdown` already in flight and it starts that one gesture
+ * now, taking its listeners away again when the pointer is let go - which is what a caller with
+ * a single *delegated* listener has, and the only shape that works over a list whose rows come
+ * and go. Attaching per row is a listener per row and a re-attach every time the list grows one;
+ * delegating is one listener whatever the list does.
+ *
+ * Started from an event, nothing is written into the element: no `drag-enabled`, no `dragging`,
+ * no `touch-action`. It is an element the caller already owns and has already styled, and
+ * `touch-action` is decided long before a `pointerdown` is dispatched, so setting it there would
+ * be a promise this cannot keep - put it on the handle in CSS.
+ *
+ * A gesture the platform takes away - a scroll it decided was one, a call arriving - reports
+ * `dragcancel` and no `dragend`, and never coasts into inertia. That distinction is the whole
+ * reason to listen for it: a cancelled drag is not a drag the person finished.
+ *
+ * `preventDefaultTouch` owns the touch gesture by putting `touch-action: none` on the element
+ * for as long as the handler is attached, restored by `destroy`. Preventing the default on the
+ * events cannot do it: by the time a `pointermove` arrives the browser has already decided the
+ * gesture is a scroll.
+ *
+ * The events are named `dragstart`, `drag` and `dragend`, which are also the names the native
+ * HTML drag and drop API uses. A page listening for the native ones on the same element will
+ * hear these too. Renaming them is a breaking change and has not been made; `callback` is the
+ * way to take one element's drags without that.
+ *
+ * @param {HTMLElement | PointerEvent} target The element to listen for drag gestures on, or a `pointerdown` already in hand to start one gesture from now
  * @param {object | Function} opts The options object or the callback to call when a drag gesture is detected
+ * @param {HTMLElement} [opts.target] Where to capture the pointer and dispatch the events, when started from an event. Defaults to that event's `currentTarget`, then its `target` - name it when the listener is on a container and the gesture belongs to a handle inside it
  * @param {boolean} [opts.inertia=false] Whether to enable inertia
  * @param {boolean} [opts.bounce=false] Whether to enable bounce when inertia is enabled
  * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
  * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
- * @param {number} [opts.velocityWindow=80] Time window (ms) over which flick velocity is measured
+ * @param {number} [opts.velocityWindow=80] Time window (ms) over which flick velocity is measured, ending at the release - a drag held still before letting go carries none
  * @param {number} [opts.maxVelocity=2] Cap on flick velocity magnitude (px/ms) to stop overshoot
- * @param {boolean} [opts.preventDefaultTouch=true] Whether to prevent the default touch behavior
+ * @param {boolean} [opts.preventDefaultTouch=true] Whether to take the touch gesture, with `touch-action: none` on the element. Ignored when started from an event - by then the browser has already decided whether the gesture is a scroll, so the handle's stylesheet is the only place it can be said
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
- * @returns {object | null} The destroy method to remove the event listeners
+ * @returns {object | undefined} The destroy method to remove the event listeners; nothing when refused - not an element, already attached, or already mid-gesture
  * @example
  * drag(document.getElementById('foo'), (e) => {
- *  console.log(e.x)
+ *  console.log(e.x)            // page coordinates
  *  console.log(e.y)
+ *  console.log(e.clientX)      // viewport coordinates, what getBoundingClientRect answers in
+ *  console.log(e.clientY)
  *  console.log(e.relativeX)
  *  console.log(e.relativeY)
  *  console.log(e.xPercentage)
@@ -943,25 +989,52 @@ export const onSwipe = swipe
  *  console.log(e.velocityY)
  *  console.log(e.prevX)
  *  console.log(e.prevY)
+ *  console.log(e.pointerType)  // 'mouse', 'touch' or 'pen'
  * })
- * 
+ *
+ * // one delegated listener over a list, whatever the list does next
+ * list.addEventListener('pointerdown', (e) => {
+ *   const handle = e.target.closest('[data-handle]')
+ *   if (handle) drag(e, { target: handle, callback: (d) => reorder(d.clientY) })
+ * })
+ *
  * element.addEventListener('drag', (e) => { ... })
  * element.addEventListener('dragstart', (e) => { ... })
  * element.addEventListener('dragend', (e) => { ... })
+ * element.addEventListener('dragcancel', (e) => { ... })
  * element.addEventListener('draginertia', (e) => { ... })
  * element.addEventListener('draginertiaend', (e) => { ... })
  */
-export function drag(element, opts) {
+export function drag(target, opts) {
+  // Two ways in, one gesture engine. An element is the standing offer - it waits for a
+  // `pointerdown` of its own, for as long as it is attached. A `pointerdown` already in hand is
+  // one gesture, starting now: which is what a caller with a *delegated* listener has, and the
+  // only shape that works over a list whose rows come and go. Told apart by the event's own
+  // type, so nothing has to be declared.
+  const fromEvent = !!target && typeof target === 'object' && target.type === 'pointerdown' && 'pointerId' in target
+  const element = fromEvent ? ((isObject(opts) && opts.target) || target.currentTarget || target.target) : target
+
   if (!element || !(element instanceof Element)) return
-  if (element.getAttribute('drag-enabled') === 'true') return
+  // The attribute guard is the standing offer's, not the gesture's: two `pointerdown` listeners
+  // on one element is the mistake worth refusing, and two gestures in a row over the same
+  // element is the normal case.
+  if (!fromEvent && element.getAttribute('drag-enabled') === 'true') return
+  if (fromEvent && dragging.has(element)) return
+
+  const doc = element.ownerDocument
 
   let x = 0
   let y = 0
+  let clientX = 0
+  let clientY = 0
   let prevX = 0
   let prevY = 0
   let velocityX = 0
   let velocityY = 0
-  let dragging = false
+  // `null` between gestures. No event carries `null`, so comparing ids says in one check whether
+  // a gesture is running and whether this pointer is the one running it.
+  let pointerId = null
+  let pointerType = ''
   let rect = null
   let inertiaId = null
   let inertiaTime = 0
@@ -988,9 +1061,6 @@ export function drag(element, opts) {
   options.bounceFactor = Math.abs(options.bounceFactor)
   options.maxVelocity = Math.abs(options.maxVelocity)
 
-  const now = function() {
-    return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
-  }
   const cap = function(v) {
     if (v > options.maxVelocity) return options.maxVelocity
     if (v < -options.maxVelocity) return -options.maxVelocity
@@ -1009,8 +1079,21 @@ export function drag(element, opts) {
     return { vx: cap((last.x - start.x) / dt), vy: cap((last.y - start.y) / dt) }
   }
 
-  element.setAttribute('drag-enabled', 'true')
-  element.setAttribute('dragging', 'false')
+  // Attributes and `touch-action` belong to the standing offer alone. Started from an event,
+  // this element is one the caller already owns and has already styled - writing undocumented
+  // attributes into it is the thing a delegated caller least wants - and `touch-action` is
+  // decided long before a `pointerdown` is dispatched, so setting it here would be a promise
+  // this cannot keep. The handle's stylesheet is where it belongs; see the note on the option.
+  if (!fromEvent) {
+    element.setAttribute('drag-enabled', 'true')
+    element.setAttribute('dragging', 'false')
+  }
+
+  // Kept so `destroy` can put back what the page had, rather than what this decided. Coerced,
+  // because an unset property is `''` in a browser and `undefined` where the style object does
+  // not model `touch-action` at all - and restoring `undefined` writes the word.
+  const ownTouchAction = element.style.touchAction || ''
+  if (!fromEvent && options.preventDefaultTouch) element.style.touchAction = 'none'
 
   const calcPageRelativeRect = function() {
     const origRect = element.getBoundingClientRect()
@@ -1023,17 +1106,32 @@ export function drag(element, opts) {
 
     return rect
   }
-  rect = calcPageRelativeRect()
 
   const handleStart = function(e) {
+    if (dragging.has(element)) return
+    dragging.add(element)
     samples = []
+    pointerId = e.pointerId
+    pointerType = e.pointerType || ''
     setXY(e)
-    dragging = true
+    // The gesture starts where it starts. Without this the first `drag` of a new gesture
+    // reports the last one's coordinates as `prevX`/`prevY`.
+    prevX = x
+    prevY = y
     rect = calcPageRelativeRect()
-    element.setAttribute('dragging', 'true')
-    // Track on document so the drag survives the pointer leaving the element
-    document.addEventListener('mousemove', handleMove)
-    document.addEventListener('mouseup', handleEnd)
+    if (!fromEvent) element.setAttribute('dragging', 'true')
+    // Touch and pen the browser captures implicitly, the mouse it does not - without this a
+    // mouse drag that leaves the element stops reporting. It throws when the id is not an
+    // active pointer, which a synthesised event is, or when the element is not connected.
+    if (element.setPointerCapture) {
+      try { element.setPointerCapture(e.pointerId) } catch { /* the document hears the gesture regardless */ }
+    }
+    // On the document, not the element: capture goes to the document the moment the captured
+    // element is disconnected, and `insertBefore` on a connected node disconnects it first - a
+    // row moved in the DOM mid-drag would stop hearing its own gesture.
+    doc.addEventListener('pointermove', handleMove)
+    doc.addEventListener('pointerup', handleEnd)
+    doc.addEventListener('pointercancel', handleCancel)
     if (inertiaId) {
       cancelAnimationFrame(inertiaId)
       inertiaId = null
@@ -1043,7 +1141,14 @@ export function drag(element, opts) {
   }
 
   const handleMove = function(e) {
-    if (!dragging) return
+    if (e.pointerId !== pointerId) return
+    // A pointer that reports the same place twice has not moved, and a `drag` carrying a delta
+    // of zero tells the caller nothing it can act on. Browsers do send these - a pressure or
+    // tilt change on a pen is a `pointermove` - and the caller's handler is the expensive part.
+    // Both pairs, because they can move apart: the page scrolling under a pointer that has not
+    // moved changes `pageY` and leaves `clientY` where it was, and a caller reading page
+    // coordinates is owed that one.
+    if (e.clientX === clientX && e.clientY === clientY && e.pageX === x && e.pageY === y) return
     setXY(e)
     const v = sampleVelocity()
     velocityX = v.vx
@@ -1054,29 +1159,53 @@ export function drag(element, opts) {
     element.dispatchEvent(event)
   }
 
-  const handleEnd = function() {
-    if (!dragging) return
-    dragging = false
-    element.setAttribute('dragging', 'false')
-    document.removeEventListener('mousemove', handleMove)
-    document.removeEventListener('mouseup', handleEnd)
+  const stop = function() {
+    dragging.delete(element)
+    if (!fromEvent) element.setAttribute('dragging', 'false')
+    doc.removeEventListener('pointermove', handleMove)
+    doc.removeEventListener('pointerup', handleEnd)
+    doc.removeEventListener('pointercancel', handleCancel)
+    if (element.hasPointerCapture && element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId)
+    pointerId = null
+  }
+
+  const handleEnd = function(e) {
+    if (e.pointerId !== pointerId) return
+    stop()
+    // The flick is what the pointer was doing as it let go, not the last time it moved: without
+    // a sample at the release, a drag held still before lifting coasts off wherever it was last
+    // heading.
+    const t = performance.now()
+    samples.push({ t: t, x: x, y: y })
     const v = sampleVelocity()
     velocityX = v.vx
     velocityY = v.vy
-    inertiaTime = now()
+    inertiaTime = t
     if (options.inertia) inertiaId = requestAnimationFrame(inertia)
     const event = new CustomEvent('dragend', { detail: getDetail() })
     element.dispatchEvent(event)
   }
 
+  // A cancelled gesture is not a finished one: no `dragend`, no throw, and the velocity it was
+  // carrying is dropped rather than spent coasting somewhere the person never let go.
+  const handleCancel = function(e) {
+    if (e.pointerId !== pointerId) return
+    stop()
+    velocityX = 0
+    velocityY = 0
+    samples = []
+    const event = new CustomEvent('dragcancel', { detail: getDetail() })
+    element.dispatchEvent(event)
+  }
+
   const setXY = function(e) {
-    const carrier = e.touches ? e.touches[0] : e
-    if (e.touches && options.preventDefaultTouch) e.preventDefault()
     prevX = x
     prevY = y
-    x = carrier.pageX
-    y = carrier.pageY
-    samples.push({ t: now(), x: x, y: y })
+    x = e.pageX
+    y = e.pageY
+    clientX = e.clientX
+    clientY = e.clientY
+    samples.push({ t: performance.now(), x: x, y: y })
     if (samples.length > 12) samples.shift()
   }
 
@@ -1090,6 +1219,8 @@ export function drag(element, opts) {
       target: element,
       x: x,
       y: y,
+      clientX: clientX,
+      clientY: clientY,
       relativeX: relativeX,
       relativeY: relativeY,
       xPercentage: xPercentage,
@@ -1097,7 +1228,8 @@ export function drag(element, opts) {
       velocityX: velocityX,
       velocityY: velocityY,
       prevX: prevX,
-      prevY: prevY
+      prevY: prevY,
+      pointerType: pointerType
     }
 
     if (xPercentage < 0) detail.xPercentage = 0
@@ -1109,7 +1241,7 @@ export function drag(element, opts) {
   }
 
   const inertia = function() {
-    const t = now()
+    const t = performance.now()
     const dt = t - inertiaTime
     inertiaTime = t
     x += velocityX * dt
@@ -1155,20 +1287,19 @@ export function drag(element, opts) {
     }
   }
 
-  element.addEventListener('mousedown', handleStart)
-  element.addEventListener('touchstart', handleStart)
-  element.addEventListener('touchmove', handleMove)
-  element.addEventListener('touchend', handleEnd)
+  if (fromEvent) handleStart(target)
+  else element.addEventListener('pointerdown', handleStart)
 
   return {
     //TODO: add manual start, move and end methods - for programmatic control
     destroy: function() {
-      element.removeEventListener('mousedown', handleStart)
-      element.removeEventListener('touchstart', handleStart)
-      element.removeEventListener('touchmove', handleMove)
-      element.removeEventListener('touchend', handleEnd)
-      document.removeEventListener('mousemove', handleMove)
-      document.removeEventListener('mouseup', handleEnd)
+      if (pointerId !== null) stop()
+      if (!fromEvent) {
+        element.removeEventListener('pointerdown', handleStart)
+        element.style.touchAction = ownTouchAction
+        element.removeAttribute('drag-enabled')
+        element.removeAttribute('dragging')
+      }
 
       if (inertiaId) {
         cancelAnimationFrame(inertiaId)
