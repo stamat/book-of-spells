@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-08-24
+
 ### Changed
 
 - **`drag` runs on pointer events now, and captures the pointer.** It listened for
