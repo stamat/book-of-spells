@@ -492,7 +492,13 @@ export declare const onSwipe: typeof swipe;
  * along - so `xPercentage` off a 24px handle answers a question about the handle, and the caller
  * wanting "how far along the track is this" has to do the sum itself. Pointed at the track it is
  * that number directly, held to 0-100 at the ends, which is a slider, a splitter or a
- * before-and-after comparison in one read.
+ * before-and-after comparison in one read. `maxVelocity: '0.5%'` caps the flick in that unit too.
+ *
+ * **`axis` is for a handle on a track.** The glide is two-dimensional and over once both velocities
+ * have decayed, and a slider reads one of them: a flick along a horizontal track carries some
+ * velocity across it too, and that one can outlive the one along the track by most of a second -
+ * the handle sat still at the wall, `draginertiaend` not yet said. Named, the other axis reads
+ * `0` in every `velocityX`/`velocityY` and carries nothing, so the glide is over when this one is.
  *
  * `preventDefaultTouch` owns the touch gesture by putting `touch-action: none` on the element
  * for as long as the handler is attached, restored by `destroy`. Preventing the default on the
@@ -513,7 +519,8 @@ export declare const onSwipe: typeof swipe;
  * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
  * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
  * @param {number} [opts.velocityWindow=80] Time window (ms) over which flick velocity is measured, ending at the release - a drag held still before letting go carries none
- * @param {number} [opts.maxVelocity=2] Cap on flick velocity magnitude (px/ms) to stop overshoot
+ * @param {number|string} [opts.maxVelocity=2] Cap on flick velocity magnitude, in pixels per millisecond - or, as a string ending in `%`, in per cent of `within` per millisecond, width for x and height for y: the unit the percentages are in, and the one that keeps the same flick reading the same on a narrow track and a wide one. Anything that does not parse as a number is the default
+ * @param {'x'|'y'} [opts.axis] The axis the flick and the glide run along; the velocity across it reads `0` and carries nothing. Anything else is both axes
  * @param {boolean} [opts.preventDefaultTouch=true] Whether to take the touch gesture, with `touch-action: none` on the element. Ignored when started from an event - by then the browser has already decided whether the gesture is a scroll, so the handle's stylesheet is the only place it can be said
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
  * @returns {object | undefined} The destroy method to remove the event listeners; nothing when refused - not an element, already attached, or already mid-gesture
@@ -534,8 +541,9 @@ export declare const onSwipe: typeof swipe;
  *  console.log(e.pointerType)  // 'mouse', 'touch' or 'pen'
  * })
  *
- * // a handle running along a track: 0-100 along the track, not along the handle
- * drag(handle, { within: track, callback: (d) => setPosition(d.xPercentage) })
+ * // a handle running along a track: 0-100 along the track, not along the handle, gliding along
+ * // it alone after a flick capped at half a per cent of the track per millisecond
+ * drag(handle, { within: track, inertia: true, axis: 'x', maxVelocity: '0.5%', callback: (d) => setPosition(d.xPercentage) })
  *
  * // one delegated listener over a list, whatever the list does next
  * list.addEventListener('pointerdown', (e) => {

@@ -958,7 +958,13 @@ const dragging = new WeakSet()
  * along - so `xPercentage` off a 24px handle answers a question about the handle, and the caller
  * wanting "how far along the track is this" has to do the sum itself. Pointed at the track it is
  * that number directly, held to 0-100 at the ends, which is a slider, a splitter or a
- * before-and-after comparison in one read.
+ * before-and-after comparison in one read. `maxVelocity: '0.5%'` caps the flick in that unit too.
+ *
+ * **`axis` is for a handle on a track.** The glide is two-dimensional and over once both velocities
+ * have decayed, and a slider reads one of them: a flick along a horizontal track carries some
+ * velocity across it too, and that one can outlive the one along the track by most of a second -
+ * the handle sat still at the wall, `draginertiaend` not yet said. Named, the other axis reads
+ * `0` in every `velocityX`/`velocityY` and carries nothing, so the glide is over when this one is.
  *
  * `preventDefaultTouch` owns the touch gesture by putting `touch-action: none` on the element
  * for as long as the handler is attached, restored by `destroy`. Preventing the default on the
@@ -979,7 +985,8 @@ const dragging = new WeakSet()
  * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
  * @param {number} [opts.bounceFactor=0.2] The bounce factor to apply when bounce is enabled
  * @param {number} [opts.velocityWindow=80] Time window (ms) over which flick velocity is measured, ending at the release - a drag held still before letting go carries none
- * @param {number} [opts.maxVelocity=2] Cap on flick velocity magnitude (px/ms) to stop overshoot
+ * @param {number|string} [opts.maxVelocity=2] Cap on flick velocity magnitude, in pixels per millisecond - or, as a string ending in `%`, in per cent of `within` per millisecond, width for x and height for y: the unit the percentages are in, and the one that keeps the same flick reading the same on a narrow track and a wide one. Anything that does not parse as a number is the default
+ * @param {'x'|'y'} [opts.axis] The axis the flick and the glide run along; the velocity across it reads `0` and carries nothing. Anything else is both axes
  * @param {boolean} [opts.preventDefaultTouch=true] Whether to take the touch gesture, with `touch-action: none` on the element. Ignored when started from an event - by then the browser has already decided whether the gesture is a scroll, so the handle's stylesheet is the only place it can be said
  * @param {Function} [opts.callback] The callback to call when a drag gesture is detected
  * @returns {object | undefined} The destroy method to remove the event listeners; nothing when refused - not an element, already attached, or already mid-gesture
@@ -1000,8 +1007,9 @@ const dragging = new WeakSet()
  *  console.log(e.pointerType)  // 'mouse', 'touch' or 'pen'
  * })
  *
- * // a handle running along a track: 0-100 along the track, not along the handle
- * drag(handle, { within: track, callback: (d) => setPosition(d.xPercentage) })
+ * // a handle running along a track: 0-100 along the track, not along the handle, gliding along
+ * // it alone after a flick capped at half a per cent of the track per millisecond
+ * drag(handle, { within: track, inertia: true, axis: 'x', maxVelocity: '0.5%', callback: (d) => setPosition(d.xPercentage) })
  *
  * // one delegated listener over a list, whatever the list does next
  * list.addEventListener('pointerdown', (e) => {
@@ -1059,6 +1067,7 @@ export function drag(target, opts) {
     bounceFactor: 0.2,
     velocityWindow: 80,
     maxVelocity: 2,
+    axis: null,
     callback: null,
     preventDefaultTouch: true
   }
@@ -1071,15 +1080,22 @@ export function drag(target, opts) {
 
   options.friction = Math.abs(options.friction)
   options.bounceFactor = Math.abs(options.bounceFactor)
-  options.maxVelocity = Math.abs(options.maxVelocity)
+  // A number is pixels per millisecond; a string ending in `%` is per cent of the measured box per
+  // millisecond, resolved into pixels at each press once the box is measured. A cap that does not
+  // parse is the default rather than a `NaN`, which `clamp` would read as no cap at all.
+  const capInPercent = typeof options.maxVelocity === 'string' && options.maxVelocity.trim().endsWith('%')
+  const cap = Math.abs(parseFloat(options.maxVelocity))
+  options.maxVelocity = Number.isNaN(cap) ? 2 : cap
+  let capX = options.maxVelocity
+  let capY = options.maxVelocity
 
   // The window and the cap are `sampleVelocity` and `clamp` in helpers, because a flick measured
   // over a window is the same sum wherever it is measured - and a caller sampling its own
   // gesture in percent rather than in pixels is the second one that wanted it.
   const measureVelocity = function() {
     const v = sampleVelocity(samples, options.velocityWindow)
-    velocityX = clamp(v.x || 0, -options.maxVelocity, options.maxVelocity)
-    velocityY = clamp(v.y || 0, -options.maxVelocity, options.maxVelocity)
+    velocityX = options.axis === 'y' ? 0 : clamp(v.x || 0, -capX, capX)
+    velocityY = options.axis === 'x' ? 0 : clamp(v.y || 0, -capY, capY)
   }
 
   // Attributes and `touch-action` belong to the standing offer alone. Started from an event,
@@ -1128,6 +1144,10 @@ export function drag(target, opts) {
     prevX = x
     prevY = y
     rect = calcPageRelativeRect()
+    if (capInPercent) {
+      capX = rect.width * options.maxVelocity / 100
+      capY = rect.height * options.maxVelocity / 100
+    }
     if (!fromEvent) element.setAttribute('dragging', 'true')
     // Touch and pen the browser captures implicitly, the mouse it does not - without this a
     // mouse drag that leaves the element stops reporting. It throws when the id is not an
@@ -1280,10 +1300,12 @@ export function drag(target, opts) {
     const detail = getDetail()
 
     if (velocityX !== 0 || velocityY !== 0) {
+      // Booked before the caller hears the frame: a `destroy()` from inside the callback or the
+      // event then cancels this frame, rather than the one already spent, and the glide stops.
+      inertiaId = requestAnimationFrame(inertia)
       if (options.callback) options.callback(detail)
       const event = new CustomEvent('draginertia', { detail: detail })
       element.dispatchEvent(event)
-      inertiaId = requestAnimationFrame(inertia)
     } else {
       inertiaId = null
       if (options.callback) options.callback(detail)

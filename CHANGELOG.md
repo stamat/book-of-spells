@@ -16,6 +16,36 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Added
+
+- **[`drag`](https://stamat.github.io/book-of-spells/module-dom.html#.drag) takes `axis`: the axis
+  the flick and the glide run along.** A glide is two-dimensional and over once both velocities
+  have decayed, and a slider reads one of them: a flick along a horizontal track carries some
+  velocity across it too, and that one can outlive the one along the track by most of a second —
+  the handle sat still at the wall, `draginertiaend` not yet said, and whatever the caller
+  reports as *settled* waiting on movement nobody could see. Named `'x'` or `'y'`, the other
+  axis reads `0` in every `velocityX`/`velocityY` and carries nothing, so the glide is over when
+  this one is. Anything else is both, which is what it was.
+
+  Extracted from [compare-images-slider](https://github.com/stamat/compare-images-slider), which
+  moved its glide onto `drag`'s and found `change` waiting on the axis it does not read.
+
+- **`drag` caps the flick in per cent when told to: `maxVelocity: '0.5%'`.** A number is pixels
+  per millisecond, as before. A string ending in `%` is per cent of `within` per millisecond —
+  width for x, height for y — which is the unit the percentages are already in, and the one that
+  keeps the same flick reading the same on a narrow track and a wide one: in pixels, a cap that
+  fits a 1000px track lets a flick carry five times as far, relative to the track, on a 200px one.
+  The sum was the one thing compare-images-slider still did itself, measuring at each press the
+  box `drag` had just measured. A cap that does not parse as a number is now the default, where it
+  was a `NaN` that `clamp` read as no cap at all.
+
+### Fixed
+
+- **`destroy()` from inside a glide frame now stops the glide.** The next frame was booked after
+  the callback and the `draginertia` event, so a caller ending the gesture from either cancelled
+  the frame already spent and the glide carried on as if nothing had been said. The frame is
+  booked first now.
+
 ## [2.7.0] - 2026-08-24
 
 ### Added

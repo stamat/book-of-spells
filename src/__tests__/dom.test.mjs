@@ -965,6 +965,36 @@ describe('drag', () => {
     expect(along).toEqual([100, 0])
   })
 
+  it('caps the flick in per cent of the box when told so, and the same flick then reads the same at every width', () => {
+    // jsdom lays nothing out, so the track is stated: once 200 wide, once 1000, the same 10px/ms
+    // flick along each. In pixels the cap is the cap; in per cent it is half a per cent of the
+    // track per millisecond, which is 1px/ms on the narrow one and 5px/ms on the wide one.
+    document.body.innerHTML = '<div id="track"><div id="grip"></div></div>'
+    const track = document.getElementById('track')
+    const grip = document.getElementById('grip')
+    const flickAlong = (width, maxVelocity) => {
+      track.getBoundingClientRect = () => ({ top: 0, left: 0, width, height: 50 })
+      const ends = heard(grip, 'dragend')
+      const clock = jest.spyOn(performance, 'now')
+      handle = drag(grip, { within: track, maxVelocity })
+      clock.mockReturnValue(0)
+      grip.dispatchEvent(pointer('pointerdown'))
+      clock.mockReturnValue(10)
+      grip.dispatchEvent(pointer('pointermove', { pageX: 100, clientX: 100 }))
+      grip.dispatchEvent(pointer('pointerup', { pageX: 100, clientX: 100 }))
+      clock.mockRestore()
+      handle.destroy()
+      handle = null
+      return ends[0][1].velocityX
+    }
+    expect(flickAlong(200, 2)).toBe(2)
+    expect(flickAlong(1000, 2)).toBe(2)
+    expect(flickAlong(200, '0.5%')).toBe(1)
+    expect(flickAlong(1000, '0.5%')).toBe(5)
+    // A cap that is not a number is the default, not a NaN that outlives the gesture.
+    expect(flickAlong(200, 'fast')).toBe(2)
+  })
+
   it('takes one gesture at a time, because a second pointer is a pinch', () => {
     const seen = heard(element, 'dragstart')
     handle = drag(element, () => {})
@@ -1035,6 +1065,53 @@ describe('drag', () => {
     element.dispatchEvent(pointer('pointermove', { pageY: 200 }))
     element.dispatchEvent(pointer('pointercancel'))
     expect(seen).toEqual([])
+  })
+
+  it('a glide destroyed from inside its own frame stops there', () => {
+    jest.useFakeTimers()
+    let frames = 0
+    element.addEventListener('draginertia', () => {
+      frames++
+      if (frames === 2) {
+        handle.destroy()
+        handle = null
+      }
+    })
+    handle = drag(element, { inertia: true })
+    element.dispatchEvent(pointer('pointerdown'))
+    jest.advanceTimersByTime(16)
+    element.dispatchEvent(pointer('pointermove', { pageX: 50, clientX: 50 }))
+    jest.advanceTimersByTime(16)
+    element.dispatchEvent(pointer('pointerup', { pageX: 50, clientX: 50 }))
+    jest.advanceTimersByTime(16 * 20)
+    jest.useRealTimers()
+    expect(frames).toBe(2)
+  })
+
+  it('a glide along one axis is over when that axis has decayed, whatever the other was carrying', () => {
+    jest.useFakeTimers()
+    // A nudge along x under a flick along y - what a flick along a horizontal track looks like
+    // to the axis it is not about. 30 frames is enough for the nudge to decay and not the flick.
+    const glide = (opts) => {
+      const seen = heard(element, 'dragend', 'draginertiaend')
+      handle = drag(element, { inertia: true, ...opts })
+      element.dispatchEvent(pointer('pointerdown'))
+      jest.advanceTimersByTime(16)
+      element.dispatchEvent(pointer('pointermove', { pageX: 2, pageY: 100, clientX: 2, clientY: 100 }))
+      jest.advanceTimersByTime(16)
+      element.dispatchEvent(pointer('pointerup', { pageX: 2, pageY: 100, clientX: 2, clientY: 100 }))
+      jest.advanceTimersByTime(16 * 30)
+      handle.destroy()
+      handle = null
+      return seen
+    }
+    const along = glide({ axis: 'x' })
+    expect(along[0][1].velocityY).toBe(0)
+    expect(along.map(([type]) => type)).toEqual(['dragend', 'draginertiaend'])
+    const both = glide({})
+    expect(both[0][1].velocityY).toBeGreaterThan(0)
+    expect(both.map(([type]) => type)).toEqual(['dragend'])
+    jest.useRealTimers()
   })
 
   it('says it is dragging while it is, and stops saying so when it is not', () => {
