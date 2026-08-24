@@ -976,6 +976,14 @@ const dragging = new WeakSet()
  * hear these too. Renaming them is a breaking change and has not been made; `callback` is the
  * way to take one element's drags without that.
  *
+ * **What shaped it.** [compare-images-slider](https://github.com/stamat/compare-images-slider) is
+ * the handle on a track: `within`, `axis`, and a flick capped in per cent because a comparison
+ * slider is the same gesture at every width. `splitter-elemental` in
+ * [book-of-elements](https://github.com/stamat/book-of-elements) is that read on either axis, and
+ * `rearrange-elemental` is the delegated way in - one `pointerdown` over rows that come and go,
+ * losing the pointer capture on the first `insertBefore`. Every option above is one of those
+ * three hitting a wall, not a guess at what a caller might want.
+ *
  * @param {HTMLElement | PointerEvent} target The element to listen for drag gestures on, or a `pointerdown` already in hand to start one gesture from now
  * @param {object | Function} opts The options object or the callback to call when a drag gesture is detected
  * @param {HTMLElement} [opts.target] Where to capture the pointer and dispatch the events, when started from an event. Defaults to that event's `currentTarget`, then its `target` - name it when the listener is on a container and the gesture belongs to a handle inside it
