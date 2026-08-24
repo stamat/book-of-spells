@@ -16,6 +16,8 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-08-24
+
 ### Added
 
 - **[`drag`](https://stamat.github.io/book-of-spells/module-dom.html#.drag) takes `axis`: the axis
