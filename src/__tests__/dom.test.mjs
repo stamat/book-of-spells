@@ -926,6 +926,45 @@ describe('drag', () => {
     expect(moves[0].y).toBe(60)
   })
 
+  it('measures the percentages against the track when one is named, not against the handle on it', () => {
+    // jsdom lays nothing out, so both boxes are stated rather than measured: a 200-wide track
+    // starting at 100, and a 20-wide handle sitting at 140 - the shape of every slider there is.
+    document.body.innerHTML = '<div id="track"><div id="grip"></div></div>'
+    const track = document.getElementById('track')
+    const grip = document.getElementById('grip')
+    track.getBoundingClientRect = () => ({ top: 0, left: 100, width: 200, height: 50 })
+    grip.getBoundingClientRect = () => ({ top: 0, left: 140, width: 20, height: 50 })
+
+    const along = []
+    handle = drag(grip, { within: track, callback: (d) => along.push(d.xPercentage) })
+    grip.dispatchEvent(pointer('pointerdown', { pageX: 150, clientX: 150 }))
+    grip.dispatchEvent(pointer('pointermove', { pageX: 200, clientX: 200 }))
+    // Half way along the track, not half way along the grip.
+    expect(along).toEqual([50])
+
+    handle.destroy()
+    const own = []
+    handle = drag(grip, (d) => own.push(d.xPercentage))
+    grip.dispatchEvent(pointer('pointerdown', { pageX: 150, clientX: 150 }))
+    grip.dispatchEvent(pointer('pointermove', { pageX: 200, clientX: 200 }))
+    // The same pointer, the default box: 60px past a grip that is 20 wide, held at the end.
+    expect(own).toEqual([100])
+  })
+
+  it('holds the percentages at the ends when the pointer leaves the track', () => {
+    document.body.innerHTML = '<div id="track"><div id="grip"></div></div>'
+    const track = document.getElementById('track')
+    const grip = document.getElementById('grip')
+    track.getBoundingClientRect = () => ({ top: 0, left: 100, width: 200, height: 50 })
+
+    const along = []
+    handle = drag(grip, { within: track, callback: (d) => along.push(d.xPercentage) })
+    grip.dispatchEvent(pointer('pointerdown', { pageX: 150, clientX: 150 }))
+    grip.dispatchEvent(pointer('pointermove', { pageX: 4000, clientX: 4000 }))
+    grip.dispatchEvent(pointer('pointermove', { pageX: -4000, clientX: -4000 }))
+    expect(along).toEqual([100, 0])
+  })
+
   it('takes one gesture at a time, because a second pointer is a pinch', () => {
     const seen = heard(element, 'dragstart')
     handle = drag(element, () => {})

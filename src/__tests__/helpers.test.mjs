@@ -35,6 +35,8 @@ import {
   randomIntInclusive,
   fixed,
   percentage,
+  clamp,
+  sampleVelocity,
   pick,
   reject,
   getObjectValueByPath,
@@ -593,6 +595,45 @@ test('percentage', () => {
   expect(percentage(0, 10)).toBe(0)
   expect(percentage(NaN, 10)).toBe(0)
   expect(percentage(10, NaN)).toBe(0)
+})
+
+test('a number is held inside its range, and NaN is not quietly turned into a bound', () => {
+  expect(clamp(5, 0, 10)).toBe(5)
+  expect(clamp(-1, 0, 10)).toBe(0)
+  expect(clamp(11, 0, 10)).toBe(10)
+  expect(clamp(0, 0, 10)).toBe(0)
+  expect(clamp(10, 0, 10)).toBe(10)
+  // How a magnitude is capped with its sign kept, which is what a flick wants.
+  expect(clamp(-8, -2, 2)).toBe(-2)
+  expect(clamp(8, -2, 2)).toBe(2)
+  expect(clamp(NaN, 0, 10)).toBe(NaN)
+})
+
+test('a velocity is measured over the window, not between the last two samples', () => {
+  // The last pair alone says 5 per ms, which is the spike this exists to smooth: over the
+  // whole 30ms the gesture travelled 10, and that is what a flick should carry.
+  const samples = [{ t: 0, x: 0 }, { t: 20, x: 5 }, { t: 30, x: 10 }]
+  expect(sampleVelocity(samples, 80).x).toBeCloseTo(10 / 30)
+  // A window shorter than the gesture keeps only what is inside it.
+  expect(sampleVelocity(samples, 10).x).toBeCloseTo(5 / 10)
+})
+
+test('the answer wears the shape of the samples, one key at a time or two', () => {
+  expect(sampleVelocity([{ t: 0, x: 0, y: 0 }, { t: 10, x: 5, y: -10 }])).toEqual({ x: 0.5, y: -1 })
+  expect(sampleVelocity([{ t: 0, position: 0 }, { t: 10, position: 8 }])).toEqual({ position: 0.8 })
+  // `t` is the timestamp, never a dimension, and a field that is not a number is not a speed.
+  expect(sampleVelocity([{ t: 0, x: 0, label: 'a' }, { t: 10, x: 5, label: 'b' }])).toEqual({ x: 0.5 })
+})
+
+test('a gesture too short to have a speed reads zero for its own keys, and empty for none', () => {
+  // Zero rather than nothing: a caller reading `.x` off an empty object multiplies undefined
+  // into NaN, and a stuck NaN is the bug that outlives the gesture.
+  expect(sampleVelocity([{ t: 5, x: 20, y: 3 }])).toEqual({ x: 0, y: 0 })
+  expect(sampleVelocity([])).toEqual({})
+  expect(sampleVelocity(null)).toEqual({})
+  // Two samples stamped the same millisecond travelled a distance in no time, which is a
+  // question with no answer rather than an infinite speed.
+  expect(sampleVelocity([{ t: 7, x: 0 }, { t: 7, x: 50 }])).toEqual({ x: 0 })
 })
 
 test('pick', () => {

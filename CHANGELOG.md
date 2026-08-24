@@ -16,6 +16,49 @@ Versions before 1.2.0 predate this file; see the [git tags](https://github.com/s
 
 ## [Unreleased]
 
+### Added
+
+- **`clamp(value, min, max)`** — hold a number inside an inclusive range. `NaN` comes back as
+  `NaN` rather than as a bound, because neither comparison is true of it and a range check that
+  quietly answered `0` would be the wrong number wearing a right one's clothes. Capping a
+  magnitude while keeping its sign is `clamp(v, -max, max)`, which is what `drag`'s
+  `maxVelocity` now is.
+
+- **`sampleVelocity(samples, windowMs)`** — how fast a gesture is moving, out of the samples it
+  has left behind, measured over a window of time rather than between the last two. A
+  single-frame delta spikes on a quick flick — one large jump between two events sends whatever
+  reads it straight to an extreme — and averaging the displacement over the last `windowMs`
+  smooths those spikes out.
+
+  Every numeric field except `t` is measured, so the answer wears the shape of the samples:
+  `{ t, x, y }` comes back as `{ x, y }`, `{ t, position }` as `{ position }`. One pass whatever
+  the number of dimensions. Fewer than two samples is not a speed and reads zero for the keys
+  the samples do carry — not an empty object a caller reads `undefined` out of and multiplies
+  into a `NaN` that outlives the gesture — and two samples stamped the same millisecond are a
+  question with no answer rather than an infinite speed.
+
+  Both were `drag`'s own, written twice: once here and once in
+  [compare-images-slider](https://github.com/stamat/compare-images-slider), which samples its
+  gesture in per cent where this one samples pixels. Two copies of one sum is the reason it is a
+  helper.
+
+### Changed
+
+- **`drag` takes `within`: the box the percentages are about.** `relativeX`/`relativeY` and
+  `xPercentage`/`yPercentage` are measured against the element being dragged, which is the right
+  answer right up until the thing being dragged is a handle running along a track. A grip is a
+  few pixels of the track it slides on, so `xPercentage` off it answers a question about the
+  grip, and every caller wanting *how far along the track is this* did the sum itself. Name the
+  track and it is that number directly, held to `0`–`100` at the ends — a slider, a splitter or
+  a before-and-after comparison in one read. Inertia bounces off the same box.
+
+  Nothing moved for callers that do not pass it: the default is the element being dragged, and
+  anything that is not an element falls back to that default.
+
+  ```javascript
+  drag(handle, { within: track, callback: (d) => setPosition(d.xPercentage) })
+  ```
+
 ## [2.6.0] - 2026-08-24
 
 ### Changed

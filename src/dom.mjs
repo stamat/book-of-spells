@@ -1,6 +1,6 @@
 /** @module dom */
 
-import { transformDashToCamelCase, transformCamelCaseToDash, stringToNumber, isArray, isString, isObject, isFunction, shallowMerge, percentage } from './helpers.mjs'
+import { transformDashToCamelCase, transformCamelCaseToDash, stringToNumber, isArray, isString, isObject, isFunction, shallowMerge, percentage, clamp, sampleVelocity } from './helpers.mjs'
 import { encodeHtmlEntities, decodeHtmlEntities } from './entities.mjs'
 
 /**
@@ -953,6 +953,13 @@ const dragging = new WeakSet()
  * `dragcancel` and no `dragend`, and never coasts into inertia. That distinction is the whole
  * reason to listen for it: a cancelled drag is not a drag the person finished.
  *
+ * **`within` is what makes the percentages worth reading.** They are measured against the element
+ * being dragged unless it names another, and a handle is a few pixels of the track it runs
+ * along - so `xPercentage` off a 24px handle answers a question about the handle, and the caller
+ * wanting "how far along the track is this" has to do the sum itself. Pointed at the track it is
+ * that number directly, held to 0-100 at the ends, which is a slider, a splitter or a
+ * before-and-after comparison in one read.
+ *
  * `preventDefaultTouch` owns the touch gesture by putting `touch-action: none` on the element
  * for as long as the handler is attached, restored by `destroy`. Preventing the default on the
  * events cannot do it: by the time a `pointermove` arrives the browser has already decided the
@@ -966,6 +973,7 @@ const dragging = new WeakSet()
  * @param {HTMLElement | PointerEvent} target The element to listen for drag gestures on, or a `pointerdown` already in hand to start one gesture from now
  * @param {object | Function} opts The options object or the callback to call when a drag gesture is detected
  * @param {HTMLElement} [opts.target] Where to capture the pointer and dispatch the events, when started from an event. Defaults to that event's `currentTarget`, then its `target` - name it when the listener is on a container and the gesture belongs to a handle inside it
+ * @param {HTMLElement} [opts.within] The box `relativeX`/`relativeY` and `xPercentage`/`yPercentage` are measured against, and the one inertia bounces off. Defaults to the element being dragged; name the track when the thing being dragged is a handle running along one. Anything that is not an element falls back to that default
  * @param {boolean} [opts.inertia=false] Whether to enable inertia
  * @param {boolean} [opts.bounce=false] Whether to enable bounce when inertia is enabled
  * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
@@ -991,6 +999,9 @@ const dragging = new WeakSet()
  *  console.log(e.prevY)
  *  console.log(e.pointerType)  // 'mouse', 'touch' or 'pen'
  * })
+ *
+ * // a handle running along a track: 0-100 along the track, not along the handle
+ * drag(handle, { within: track, callback: (d) => setPosition(d.xPercentage) })
  *
  * // one delegated listener over a list, whatever the list does next
  * list.addEventListener('pointerdown', (e) => {
@@ -1041,6 +1052,7 @@ export function drag(target, opts) {
   let samples = []
 
   const options = {
+    within: null,
     inertia: false,
     bounce: false,
     friction: 0.9,
@@ -1061,22 +1073,13 @@ export function drag(target, opts) {
   options.bounceFactor = Math.abs(options.bounceFactor)
   options.maxVelocity = Math.abs(options.maxVelocity)
 
-  const cap = function(v) {
-    if (v > options.maxVelocity) return options.maxVelocity
-    if (v < -options.maxVelocity) return -options.maxVelocity
-    return v
-  }
-  const sampleVelocity = function() {
-    if (samples.length < 2) return { vx: 0, vy: 0 }
-    const last = samples[samples.length - 1]
-    let start = samples[0]
-    for (let i = samples.length - 1; i >= 0; i--) {
-      start = samples[i]
-      if (last.t - samples[i].t >= options.velocityWindow) break
-    }
-    const dt = last.t - start.t
-    if (dt <= 0) return { vx: 0, vy: 0 }
-    return { vx: cap((last.x - start.x) / dt), vy: cap((last.y - start.y) / dt) }
+  // The window and the cap are `sampleVelocity` and `clamp` in helpers, because a flick measured
+  // over a window is the same sum wherever it is measured - and a caller sampling its own
+  // gesture in percent rather than in pixels is the second one that wanted it.
+  const measureVelocity = function() {
+    const v = sampleVelocity(samples, options.velocityWindow)
+    velocityX = clamp(v.x || 0, -options.maxVelocity, options.maxVelocity)
+    velocityY = clamp(v.y || 0, -options.maxVelocity, options.maxVelocity)
   }
 
   // Attributes and `touch-action` belong to the standing offer alone. Started from an event,
@@ -1095,8 +1098,14 @@ export function drag(target, opts) {
   const ownTouchAction = element.style.touchAction || ''
   if (!fromEvent && options.preventDefaultTouch) element.style.touchAction = 'none'
 
+  // What the relative coordinates and the percentages are measured against, and what inertia
+  // bounces off: the element being dragged, unless `within` names the box it is being dragged
+  // inside. A handle is 24px of the track it runs along, so a percentage of the handle is a
+  // number about the wrong box.
+  const measured = options.within instanceof Element ? options.within : element
+
   const calcPageRelativeRect = function() {
-    const origRect = element.getBoundingClientRect()
+    const origRect = measured.getBoundingClientRect()
     const rect = {
       top: origRect.top + window.scrollY,
       left: origRect.left + window.scrollX,
@@ -1150,9 +1159,7 @@ export function drag(target, opts) {
     // coordinates is owed that one.
     if (e.clientX === clientX && e.clientY === clientY && e.pageX === x && e.pageY === y) return
     setXY(e)
-    const v = sampleVelocity()
-    velocityX = v.vx
-    velocityY = v.vy
+    measureVelocity()
     const detail = getDetail()
     if (options.callback) options.callback(detail)
     const event = new CustomEvent('drag', { detail: detail })
@@ -1177,9 +1184,7 @@ export function drag(target, opts) {
     // heading.
     const t = performance.now()
     samples.push({ t: t, x: x, y: y })
-    const v = sampleVelocity()
-    velocityX = v.vx
-    velocityY = v.vy
+    measureVelocity()
     inertiaTime = t
     if (options.inertia) inertiaId = requestAnimationFrame(inertia)
     const event = new CustomEvent('dragend', { detail: getDetail() })

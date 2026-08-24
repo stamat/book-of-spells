@@ -1470,6 +1470,77 @@ export function percentage(num, total) {
 }
 
 /**
+ * Hold a number inside an inclusive range.
+ *
+ * `NaN` comes back as `NaN`: neither comparison is true of it, and a range check that quietly
+ * turned it into a bound would be the wrong answer wearing a right one's clothes.
+ *
+ * @param {number} value The number to hold
+ * @param {number} min Lowest it may be
+ * @param {number} max Highest it may be
+ * @returns {number}
+ * @example
+ * clamp(5, 0, 10) // => 5
+ * clamp(-1, 0, 10) // => 0
+ * clamp(11, 0, 10) // => 10
+ * clamp(-8, -2, 2) // => -2, which is how a magnitude is capped with its sign kept
+ */
+export function clamp(value, min, max) {
+  if (value < min) return min
+  if (value > max) return max
+  return value
+}
+
+/**
+ * How fast a gesture is moving, out of the samples it has left behind.
+ *
+ * Measured over a window of time rather than between the last two samples. A single-frame
+ * delta spikes on a quick flick - one large jump between two events sends whatever reads it
+ * straight to an extreme - and averaging the displacement over the last `windowMs` of movement
+ * is what smooths those spikes out.
+ *
+ * Every numeric field except `t` is measured, so the answer wears the shape of the samples:
+ * `{ t, x, y }` comes back as `{ x, y }`, and `{ t, position }` as `{ position }`. One pass
+ * whatever the number of dimensions, because the window is the expensive part and it is the
+ * same window for all of them.
+ *
+ * Fewer than two samples is not a speed. That comes back as zero for the keys the samples do
+ * carry, rather than as an empty object a caller would read `undefined` out of and multiply
+ * into `NaN`; an empty list carries no keys, so it comes back empty.
+ *
+ * @param {Array<object>} samples Ordered oldest to newest, each one `{ t, ...numbers }` where `t` is a timestamp in milliseconds
+ * @param {number} [windowMs=80] How far back from the newest sample to measure
+ * @returns {object} One velocity per numeric key, in that key's units per millisecond
+ * @example
+ * sampleVelocity([{ t: 0, x: 0 }, { t: 10, x: 5 }]) // => { x: 0.5 }
+ * sampleVelocity([{ t: 0, x: 0, y: 0 }, { t: 10, x: 5, y: -10 }]) // => { x: 0.5, y: -1 }
+ * sampleVelocity([{ t: 0, position: 20 }]) // => { position: 0 }
+ */
+export function sampleVelocity(samples, windowMs = 80) {
+  const result = {}
+  if (!samples || !samples.length) return result
+
+  const last = samples[samples.length - 1]
+  const keys = Object.keys(last).filter((key) => key !== 't' && typeof last[key] === 'number')
+  for (const key of keys) result[key] = 0
+  if (samples.length < 2) return result
+
+  // Back to the oldest sample still inside the window, and no further.
+  let start = samples[0]
+  for (let i = samples.length - 1; i >= 0; i--) {
+    start = samples[i]
+    if (last.t - samples[i].t >= windowMs) break
+  }
+
+  const dt = last.t - start.t
+  // Two samples stamped the same millisecond describe a distance travelled in no time, which is
+  // not a fast gesture - it is a question with no answer, and zero is the honest one.
+  if (dt <= 0) return result
+  for (const key of keys) result[key] = (last[key] - start[key]) / dt
+  return result
+}
+
+/**
  * Pick properties from an object, returning a new object with only the picked properties
  *
  * @param {object} obj The object to pick properties from

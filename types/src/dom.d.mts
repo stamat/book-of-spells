@@ -487,6 +487,13 @@ export declare const onSwipe: typeof swipe;
  * `dragcancel` and no `dragend`, and never coasts into inertia. That distinction is the whole
  * reason to listen for it: a cancelled drag is not a drag the person finished.
  *
+ * **`within` is what makes the percentages worth reading.** They are measured against the element
+ * being dragged unless it names another, and a handle is a few pixels of the track it runs
+ * along - so `xPercentage` off a 24px handle answers a question about the handle, and the caller
+ * wanting "how far along the track is this" has to do the sum itself. Pointed at the track it is
+ * that number directly, held to 0-100 at the ends, which is a slider, a splitter or a
+ * before-and-after comparison in one read.
+ *
  * `preventDefaultTouch` owns the touch gesture by putting `touch-action: none` on the element
  * for as long as the handler is attached, restored by `destroy`. Preventing the default on the
  * events cannot do it: by the time a `pointermove` arrives the browser has already decided the
@@ -500,6 +507,7 @@ export declare const onSwipe: typeof swipe;
  * @param {HTMLElement | PointerEvent} target The element to listen for drag gestures on, or a `pointerdown` already in hand to start one gesture from now
  * @param {object | Function} opts The options object or the callback to call when a drag gesture is detected
  * @param {HTMLElement} [opts.target] Where to capture the pointer and dispatch the events, when started from an event. Defaults to that event's `currentTarget`, then its `target` - name it when the listener is on a container and the gesture belongs to a handle inside it
+ * @param {HTMLElement} [opts.within] The box `relativeX`/`relativeY` and `xPercentage`/`yPercentage` are measured against, and the one inertia bounces off. Defaults to the element being dragged; name the track when the thing being dragged is a handle running along one. Anything that is not an element falls back to that default
  * @param {boolean} [opts.inertia=false] Whether to enable inertia
  * @param {boolean} [opts.bounce=false] Whether to enable bounce when inertia is enabled
  * @param {number} [opts.friction=0.9] The friction to apply when inertia is enabled
@@ -525,6 +533,9 @@ export declare const onSwipe: typeof swipe;
  *  console.log(e.prevY)
  *  console.log(e.pointerType)  // 'mouse', 'touch' or 'pen'
  * })
+ *
+ * // a handle running along a track: 0-100 along the track, not along the handle
+ * drag(handle, { within: track, callback: (d) => setPosition(d.xPercentage) })
  *
  * // one delegated listener over a list, whatever the list does next
  * list.addEventListener('pointerdown', (e) => {

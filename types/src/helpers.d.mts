@@ -717,6 +717,49 @@ export declare function fixed(number: number, digits: number): number;
  */
 export declare function percentage(num: number, total: number): number;
 /**
+ * Hold a number inside an inclusive range.
+ *
+ * `NaN` comes back as `NaN`: neither comparison is true of it, and a range check that quietly
+ * turned it into a bound would be the wrong answer wearing a right one's clothes.
+ *
+ * @param {number} value The number to hold
+ * @param {number} min Lowest it may be
+ * @param {number} max Highest it may be
+ * @returns {number}
+ * @example
+ * clamp(5, 0, 10) // => 5
+ * clamp(-1, 0, 10) // => 0
+ * clamp(11, 0, 10) // => 10
+ * clamp(-8, -2, 2) // => -2, which is how a magnitude is capped with its sign kept
+ */
+export declare function clamp(value: number, min: number, max: number): number;
+/**
+ * How fast a gesture is moving, out of the samples it has left behind.
+ *
+ * Measured over a window of time rather than between the last two samples. A single-frame
+ * delta spikes on a quick flick - one large jump between two events sends whatever reads it
+ * straight to an extreme - and averaging the displacement over the last `windowMs` of movement
+ * is what smooths those spikes out.
+ *
+ * Every numeric field except `t` is measured, so the answer wears the shape of the samples:
+ * `{ t, x, y }` comes back as `{ x, y }`, and `{ t, position }` as `{ position }`. One pass
+ * whatever the number of dimensions, because the window is the expensive part and it is the
+ * same window for all of them.
+ *
+ * Fewer than two samples is not a speed. That comes back as zero for the keys the samples do
+ * carry, rather than as an empty object a caller would read `undefined` out of and multiply
+ * into `NaN`; an empty list carries no keys, so it comes back empty.
+ *
+ * @param {Array<object>} samples Ordered oldest to newest, each one `{ t, ...numbers }` where `t` is a timestamp in milliseconds
+ * @param {number} [windowMs=80] How far back from the newest sample to measure
+ * @returns {object} One velocity per numeric key, in that key's units per millisecond
+ * @example
+ * sampleVelocity([{ t: 0, x: 0 }, { t: 10, x: 5 }]) // => { x: 0.5 }
+ * sampleVelocity([{ t: 0, x: 0, y: 0 }, { t: 10, x: 5, y: -10 }]) // => { x: 0.5, y: -1 }
+ * sampleVelocity([{ t: 0, position: 20 }]) // => { position: 0 }
+ */
+export declare function sampleVelocity(samples: Array<object>, windowMs?: number): object;
+/**
  * Pick properties from an object, returning a new object with only the picked properties
  *
  * @param {object} obj The object to pick properties from
