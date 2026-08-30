@@ -682,6 +682,12 @@ export function proportionalParentCoverResize(elements, ratio = 1, offset = 0) {
 /**
  * If provided element is visible. Checks if the element is not visibility hidden or display none, has no opacity, and has a width and height.
  * 
+ * Answers `false` for everything where there is no layout to consult - jsdom, and any other DOM
+ * without a renderer behind it - because the fallback path ends on the element having a box, and
+ * nothing in such an environment ever has one. That is honest rather than useful: a DOM that
+ * renders nothing cannot say what is visible. Code that has to run under one wants a narrower
+ * question it can actually answer - whether the element sits inside a `[hidden]` ancestor, say.
+ * 
  * @param {HTMLElement} element The element to check
  * @returns {boolean} True if the element is visible, false otherwise
  * 
@@ -735,6 +741,8 @@ export function getFocusableElements(from = document) {
 
 /**
  * Returns all visible focusable elements from a given element or the document.
+ * 
+ * Empty where there is no layout to consult, since {@link isVisible} decides every row.
  * 
  * @see {@link getFocusableElements}
  * @see {@link isVisible}
